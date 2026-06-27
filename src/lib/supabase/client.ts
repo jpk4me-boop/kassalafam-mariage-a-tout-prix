@@ -1,4 +1,4 @@
-import { createBrowserClient } from "@supabase/ssr";
+﻿import { createBrowserClient } from "@supabase/ssr";
 
 import type { Database } from "@/lib/types/database";
 
@@ -16,18 +16,10 @@ export function createClient() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    // En l'absence de configuration (ex. build sans secrets), on évite de
-    // casser le rendu : un placeholder valide est utilisé. Les appels réseau
-    // n'ont lieu que dans des gestionnaires d'événements, jamais au rendu.
-    if (typeof window !== "undefined") {
-      console.warn(
-        "[Supabase] NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY manquantes.",
-      );
-    }
+    throw new Error(
+      "Supabase env manquantes: NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY doivent être définies.",
+    );
   }
 
-  return createBrowserClient<Database>(
-    url ?? "https://placeholder.supabase.co",
-    anonKey ?? "placeholder-anon-key",
-  );
+  return createBrowserClient<Database>(url, anonKey);
 }
