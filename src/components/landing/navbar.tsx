@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { Logo } from "./logo";
 
 const NAV_LINKS = [
@@ -16,12 +18,26 @@ const NAV_LINKS = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(Boolean(data.session));
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthed(Boolean(session));
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
@@ -58,18 +74,29 @@ export function Navbar() {
           </ul>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <a
-              href="#"
-              className="text-sm font-semibold text-choco-600 transition-colors hover:text-choco-800"
-            >
-              Se connecter
-            </a>
-            <a
-              href="#"
-              className="rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
-            >
-              Créer mon profil
-            </a>
+            {authed ? (
+              <Link
+                href="/dashboard"
+                className="rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
+              >
+                Espace membre
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold text-choco-600 transition-colors hover:text-choco-800"
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
+                >
+                  Créer mon profil
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -100,18 +127,32 @@ export function Navbar() {
               ))}
             </ul>
             <div className="mt-2 flex flex-col gap-2 border-t border-champagne-500/20 p-2">
-              <a
-                href="#"
-                className="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-choco-600"
-              >
-                Se connecter
-              </a>
-              <a
-                href="#"
-                className="rounded-xl bg-gradient-to-br from-choco-600 to-choco-800 px-4 py-2.5 text-center text-sm font-semibold text-cream-50"
-              >
-                Créer mon profil
-              </a>
+              {authed ? (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl bg-gradient-to-br from-choco-600 to-choco-800 px-4 py-2.5 text-center text-sm font-semibold text-cream-50"
+                >
+                  Espace membre
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-choco-600"
+                  >
+                    Se connecter
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setOpen(false)}
+                    className="rounded-xl bg-gradient-to-br from-choco-600 to-choco-800 px-4 py-2.5 text-center text-sm font-semibold text-cream-50"
+                  >
+                    Créer mon profil
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         ) : null}
