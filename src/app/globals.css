@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/*
+  KASSALAFAM — MARIAGE À TOUT PRIX
+  Palette premium africaine chaleureuse : ivoire/crème chaud,
+  chocolat marron & cacao, or champagne / caramel en accent,
+  texte brun foncé (jamais noir pur). Dégradés subtils & halos lumineux.
+*/
+
+@theme {
+  /* Ivoire / crème chaud (fond) */
+  --color-cream-50: #fdf8ef;
+  --color-cream-100: #f8efdf;
+  --color-cream-200: #f0e3cc;
+  --color-cream-300: #e3cfac;
+
+  /* Chocolat marron chaud */
+  --color-choco-400: #a06a45; /* cacao doux */
+  --color-choco-500: #8a5a3c; /* chocolat secondaire */
+  --color-choco-600: #6b3f2a; /* chocolat principal */
+  --color-choco-700: #573322; /* chocolat profond mais chaud */
+  --color-choco-800: #45291b; /* plus profond, chaud et lisible */
+
+  /* Or champagne / caramel (accent) */
+  --color-champagne-300: #ecd4a2;
+  --color-champagne-400: #e1bf7b;
+  --color-champagne-500: #d6a85a;
+  --color-champagne-600: #bd8c41;
+
+  /* Texte sombre chaud (pas de noir pur) */
+  --color-ink-700: #3d2a1e;
+  --color-ink-800: #2b1a12;
+  --color-ink-900: #241510;
+
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --shadow-glow: 0 0 80px -20px rgba(214, 168, 90, 0.45);
+  --shadow-card: 0 24px 60px -30px rgba(69, 41, 27, 0.5);
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
+  --animate-shimmer: shimmer 6s linear infinite;
+  --animate-marquee: marquee 38s linear infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+:root {
+  --background: #fdf8ef;
+  --foreground: #2b1a12;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-cream-50);
+    color: var(--color-ink-800);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-champagne-400);
+    color: var(--color-choco-800);
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  /* Texte doré / caramel dégradé */
+  .text-gold-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-champagne-600),
+      var(--color-champagne-300),
+      var(--color-champagne-500)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Carte vitrée / glassmorphism (crème chaud) */
+  .glass {
+    background: rgba(253, 248, 239, 0.66);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(214, 168, 90, 0.3);
+  }
+
+  .glass-dark {
+    background: rgba(43, 26, 18, 0.55);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(214, 168, 90, 0.22);
+  }
+
+  /* Filet doré dégradé */
+  .gold-hairline {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(214, 168, 90, 0.55),
+      transparent
+    );
+  }
+}
