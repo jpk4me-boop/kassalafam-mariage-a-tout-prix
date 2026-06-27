@@ -150,16 +150,17 @@ create table if not exists public.matches (
   status     public.match_status not null default 'pending',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint matches_distinct_users check (user_a <> user_b),
-  -- Paire unique quel que soit l'ordre (a,b) / (b,a).
-  constraint matches_unique_pair unique (
-    least(user_a, user_b),
-    greatest(user_a, user_b)
-  )
+  constraint matches_distinct_users check (user_a <> user_b)
 );
 
 create index if not exists matches_user_a_idx on public.matches (user_a);
 create index if not exists matches_user_b_idx on public.matches (user_b);
+
+-- Paire unique quel que soit l'ordre (a,b) / (b,a).
+-- Un index unique sur expressions est requis : PostgreSQL n'accepte pas
+-- d'expression dans une contrainte UNIQUE inline.
+create unique index if not exists matches_unique_pair
+  on public.matches (least(user_a, user_b), greatest(user_a, user_b));
 
 drop trigger if exists trg_matches_updated_at on public.matches;
 create trigger trg_matches_updated_at
