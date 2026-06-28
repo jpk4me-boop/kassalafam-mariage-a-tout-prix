@@ -113,9 +113,9 @@ export default async function AdminVerificationPage({
           Vérification des profils
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-700/70">
-          Consultation en lecture seule des profils membres et de leur statut de
-          vérification. L’approbation et le rejet seront activés ultérieurement
-          (L3-B2) via un chemin serveur sécurisé.
+          Profils membres et statut de vérification. L’approbation et le rejet
+          (motif obligatoire) sont actifs via un chemin serveur sécurisé. La
+          mise en pause arrivera après migration (L3-B2B).
         </p>
       </header>
 
