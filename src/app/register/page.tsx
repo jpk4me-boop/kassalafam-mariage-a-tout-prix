@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, MailCheck } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { REMEMBER_EMAIL_KEY } from "@/lib/auth/remember";
 import { AuthShell } from "@/components/auth/auth-shell";
 import {
   FormError,
@@ -14,6 +15,7 @@ import {
   Label,
   PrimaryButton,
 } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -53,6 +56,12 @@ export default function RegisterPage() {
       );
       setLoading(false);
       return;
+    }
+
+    if (remember) {
+      window.localStorage.setItem(REMEMBER_EMAIL_KEY, email.trim());
+    } else {
+      window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
     }
 
     // Si la confirmation d'email est requise, aucune session n'est ouverte.
@@ -129,10 +138,9 @@ export default function RegisterPage() {
 
         <div>
           <Label htmlFor="password">Mot de passe</Label>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="new-password"
             required
             minLength={8}
@@ -145,10 +153,9 @@ export default function RegisterPage() {
 
         <div>
           <Label htmlFor="confirm">Confirmer le mot de passe</Label>
-          <Input
+          <PasswordInput
             id="confirm"
             name="confirm"
-            type="password"
             autoComplete="new-password"
             required
             placeholder="••••••••"
@@ -157,6 +164,18 @@ export default function RegisterPage() {
             disabled={loading}
           />
         </div>
+
+        <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-ink-700">
+          <input
+            type="checkbox"
+            name="remember"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-champagne-500/40 accent-choco-600 focus:ring-2 focus:ring-champagne-400/40"
+          />
+          Se souvenir de moi
+        </label>
 
         <PrimaryButton type="submit" disabled={loading} className="mt-2">
           {loading ? (

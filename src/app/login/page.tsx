@@ -1,13 +1,15 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { REMEMBER_EMAIL_KEY } from "@/lib/auth/remember";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { FormError, Input, Label, PrimaryButton } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 
 function LoginForm() {
   const router = useRouter();
@@ -16,8 +18,18 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Préremplit l'email si l'utilisateur avait coché « Se souvenir de moi ».
+  useEffect(() => {
+    const saved = window.localStorage.getItem(REMEMBER_EMAIL_KEY);
+    if (saved) {
+      setEmail(saved);
+      setRemember(true);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +50,12 @@ function LoginForm() {
       );
       setLoading(false);
       return;
+    }
+
+    if (remember) {
+      window.localStorage.setItem(REMEMBER_EMAIL_KEY, email.trim());
+    } else {
+      window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
     }
 
     router.replace(redirectTo);
@@ -66,10 +84,9 @@ function LoginForm() {
 
       <div>
         <Label htmlFor="password">Mot de passe</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           placeholder="••••••••"
@@ -78,6 +95,18 @@ function LoginForm() {
           disabled={loading}
         />
       </div>
+
+      <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-ink-700">
+        <input
+          type="checkbox"
+          name="remember"
+          checked={remember}
+          onChange={(e) => setRemember(e.target.checked)}
+          disabled={loading}
+          className="h-4 w-4 rounded border-champagne-500/40 accent-choco-600 focus:ring-2 focus:ring-champagne-400/40"
+        />
+        Se souvenir de moi
+      </label>
 
       <PrimaryButton type="submit" disabled={loading} className="mt-2">
         {loading ? (
