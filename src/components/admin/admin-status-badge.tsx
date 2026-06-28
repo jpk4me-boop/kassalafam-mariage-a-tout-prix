@@ -1,4 +1,4 @@
-import { BadgeCheck, Clock, TriangleAlert } from "lucide-react";
+import { BadgeCheck, Clock, Pause, TriangleAlert } from "lucide-react";
 
 import type { ProfileVerificationStatus } from "@/lib/types/database";
 
@@ -21,6 +21,11 @@ const CONFIG: Record<
     label: "Rejeté",
     Icon: TriangleAlert,
     className: "border-red-500/30 bg-red-500/10 text-red-800",
+  },
+  paused: {
+    label: "En pause",
+    Icon: Pause,
+    className: "border-amber-500/40 bg-amber-400/15 text-amber-800",
   },
 };
 

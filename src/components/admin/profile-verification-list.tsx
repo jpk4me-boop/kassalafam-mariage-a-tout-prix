@@ -21,6 +21,16 @@ function formatDate(iso: string | null): string {
   return DATE_FMT.format(new Date(iso));
 }
 
+/** Le motif administratif (colonne verification_rejection_reason) n'a de sens
+ *  que pour les statuts rejected et paused. */
+function hasMotif(status: ProfileVerificationStatus): boolean {
+  return status === "rejected" || status === "paused";
+}
+
+function motifLabel(status: ProfileVerificationStatus): string {
+  return status === "paused" ? "Motif de pause" : "Motif de rejet";
+}
+
 export function ProfileVerificationList({
   rows,
   emailById,
@@ -48,7 +58,7 @@ export function ProfileVerificationList({
               <th className="px-4 py-3 font-medium">Statut</th>
               <th className="px-4 py-3 font-medium">Créé le</th>
               <th className="px-4 py-3 font-medium">Mis à jour</th>
-              <th className="px-4 py-3 font-medium">Motif de rejet</th>
+              <th className="px-4 py-3 font-medium">Motif</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
@@ -78,9 +88,14 @@ export function ProfileVerificationList({
                   {formatDate(row.updated_at)}
                 </td>
                 <td className="px-4 py-3 text-ink-700/70">
-                  {row.verification_status === "rejected" &&
+                  {hasMotif(row.verification_status) &&
                   row.verification_rejection_reason ? (
-                    row.verification_rejection_reason
+                    <span>
+                      <span className="text-ink-700/45">
+                        {motifLabel(row.verification_status)} :{" "}
+                      </span>
+                      {row.verification_rejection_reason}
+                    </span>
                   ) : (
                     <span className="text-ink-700/40">—</span>
                   )}
@@ -129,10 +144,17 @@ export function ProfileVerificationList({
               </dd>
             </dl>
 
-            {row.verification_status === "rejected" &&
+            {hasMotif(row.verification_status) &&
             row.verification_rejection_reason ? (
-              <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-800/90">
-                Motif : {row.verification_rejection_reason}
+              <p
+                className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+                  row.verification_status === "paused"
+                    ? "border-amber-500/25 bg-amber-400/5 text-amber-800/90"
+                    : "border-red-500/20 bg-red-500/5 text-red-800/90"
+                }`}
+              >
+                {motifLabel(row.verification_status)} :{" "}
+                {row.verification_rejection_reason}
               </p>
             ) : null}
 

@@ -8,7 +8,11 @@
 
 export type Gender = "homme" | "femme";
 export type MatchStatus = "pending" | "accepted" | "rejected";
-export type ProfileVerificationStatus = "pending" | "approved" | "rejected";
+export type ProfileVerificationStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "paused";
 
 export type ProfileRow = {
   id: string;

@@ -62,6 +62,47 @@ export async function approveProfileAction(
   return { ok: true };
 }
 
+export async function pauseProfileAction(
+  profileId: string,
+  reasonRaw: string,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { ok: false, error: auth.error };
+  if (!profileId) return { ok: false, error: "Profil introuvable." };
+
+  // Le motif de pause réutilise la colonne verification_rejection_reason
+  // (motif administratif), sans renommage de colonne.
+  const reason = (reasonRaw ?? "").trim();
+  if (reason.length < REJECTION_REASON_MIN) {
+    return {
+      ok: false,
+      error: `Le motif de pause doit contenir au moins ${REJECTION_REASON_MIN} caractères.`,
+    };
+  }
+  if (reason.length > REJECTION_REASON_MAX) {
+    return {
+      ok: false,
+      error: `Le motif de pause ne doit pas dépasser ${REJECTION_REASON_MAX} caractères.`,
+    };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({
+      verification_status: "paused",
+      verification_reviewed_at: new Date().toISOString(),
+      verification_reviewed_by: auth.adminId,
+      verification_rejection_reason: reason,
+    })
+    .eq("id", profileId);
+
+  if (error) return { ok: false, error: "Mise à jour impossible. Réessayez." };
+
+  revalidatePath("/admin/verification");
+  return { ok: true };
+}
+
 export async function rejectProfileAction(
   profileId: string,
   reasonRaw: string,

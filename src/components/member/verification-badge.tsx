@@ -1,4 +1,4 @@
-import { BadgeCheck, Clock, TriangleAlert } from "lucide-react";
+import { BadgeCheck, Clock, Pause, TriangleAlert } from "lucide-react";
 
 import type { ProfileVerificationStatus } from "@/lib/types/database";
 
@@ -31,6 +31,11 @@ const STATUS_CONFIG: Record<ProfileVerificationStatus, StatusConfig> = {
     label: "Profil à corriger",
     Icon: TriangleAlert,
     className: "border-red-500/30 bg-red-500/10 text-red-800",
+  },
+  paused: {
+    label: "Vérification en pause",
+    Icon: Pause,
+    className: "border-amber-500/30 bg-amber-400/10 text-amber-800",
   },
 };
 
