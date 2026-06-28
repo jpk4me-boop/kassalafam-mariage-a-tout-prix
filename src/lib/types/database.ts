@@ -8,6 +8,7 @@
 
 export type Gender = "homme" | "femme";
 export type MatchStatus = "pending" | "accepted" | "rejected";
+export type ProfileVerificationStatus = "pending" | "approved" | "rejected";
 
 export type ProfileRow = {
   id: string;
@@ -20,6 +21,14 @@ export type ProfileRow = {
   bio: string | null;
   blur_photos: boolean;
   is_premium: boolean;
+  // Vérification admin — LECTURE SEULE côté membre.
+  // Protégée en base par le trigger trg_profiles_guard_verification :
+  // un membre ne peut jamais écrire ces champs. Ne jamais les inclure
+  // dans un upsert côté front.
+  verification_status: ProfileVerificationStatus;
+  verification_reviewed_at: string | null;
+  verification_reviewed_by: string | null;
+  verification_rejection_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +44,12 @@ export type ProfileInsert = {
   bio?: string | null;
   blur_photos?: boolean;
   is_premium?: boolean;
+  // Réservés au back-office (service_role serveur). Le front membre ne doit
+  // JAMAIS renseigner ces champs : ils sont rejetés par le trigger de garde.
+  verification_status?: ProfileVerificationStatus;
+  verification_reviewed_at?: string | null;
+  verification_reviewed_by?: string | null;
+  verification_rejection_reason?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -113,6 +128,7 @@ export interface Database {
     Enums: {
       gender: Gender;
       match_status: MatchStatus;
+      profile_verification_status: ProfileVerificationStatus;
     };
     CompositeTypes: Record<string, never>;
   };
