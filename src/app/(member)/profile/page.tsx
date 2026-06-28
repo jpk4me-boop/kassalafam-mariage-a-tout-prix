@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import type { Gender, ProfileRow } from "@/lib/types/database";
+import type {
+  Gender,
+  ProfileRow,
+  ProfileVerificationStatus,
+} from "@/lib/types/database";
+import { VerificationBadge } from "@/components/member/verification-badge";
 import {
   FormError,
   FormSuccess,
@@ -43,6 +48,10 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  // Vérification admin — LECTURE SEULE. Jamais envoyée dans l'upsert.
+  const [verificationStatus, setVerificationStatus] =
+    useState<ProfileVerificationStatus>("pending");
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -72,6 +81,8 @@ export default function ProfilePage() {
           bio: profile.bio ?? "",
           blur_photos: profile.blur_photos ?? true,
         });
+        setVerificationStatus(profile.verification_status ?? "pending");
+        setRejectionReason(profile.verification_rejection_reason ?? null);
       }
       setLoading(false);
     }
@@ -144,13 +155,28 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h1 className="font-serif text-3xl font-semibold text-choco-700 sm:text-4xl">
-          Mon profil
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-3xl font-semibold text-choco-700 sm:text-4xl">
+            Mon profil
+          </h1>
+          <VerificationBadge status={verificationStatus} />
+        </div>
         <p className="mt-2 text-ink-700/75">
           Présentez-vous avec sincérité. Ces informations préparent vos futures
           mises en relation.
         </p>
+
+        {verificationStatus === "rejected" && rejectionReason ? (
+          <div
+            role="status"
+            className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-800"
+          >
+            <p className="font-medium">Motif à corriger</p>
+            <p className="mt-1 whitespace-pre-line text-red-800/85">
+              {rejectionReason}
+            </p>
+          </div>
+        ) : null}
       </section>
 
       <form

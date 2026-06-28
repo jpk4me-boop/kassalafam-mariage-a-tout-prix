@@ -12,12 +12,15 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { isProfileComplete } from "@/lib/profile";
-import type { ProfileRow } from "@/lib/types/database";
+import type { ProfileRow, ProfileVerificationStatus } from "@/lib/types/database";
+import { VerificationBadge } from "@/components/member/verification-badge";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
+  const [verificationStatus, setVerificationStatus] =
+    useState<ProfileVerificationStatus>("pending");
 
   useEffect(() => {
     let active = true;
@@ -39,6 +42,7 @@ export default function DashboardPage() {
       const profile = (data as ProfileRow | null) ?? null;
       setFirstName(profile?.first_name ?? null);
       setComplete(isProfileComplete(profile));
+      setVerificationStatus(profile?.verification_status ?? "pending");
       setLoading(false);
     }
 
@@ -92,9 +96,12 @@ export default function DashboardPage() {
           </span>
 
           <div className="flex-1">
-            <h2 className="font-serif text-xl font-semibold text-choco-700">
-              {complete ? "Profil complet" : "Profil incomplet"}
-            </h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="font-serif text-xl font-semibold text-choco-700">
+                {complete ? "Profil complet" : "Profil incomplet"}
+              </h2>
+              <VerificationBadge status={verificationStatus} />
+            </div>
             <p className="mt-1 text-sm text-ink-700/75">
               {complete
                 ? "Toutes les informations essentielles sont renseignées. Vous êtes prêt(e)."
