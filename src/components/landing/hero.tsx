@@ -1,6 +1,7 @@
+import Image from "next/image";
 import { ArrowRight, BadgeCheck, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { Reveal } from "./reveal";
-import { FloatingProfileCard } from "./floating-profile-card";
+import heroCouple from "./kassalafam-hero-couple.png";
 
 const BADGES = [
   { icon: BadgeCheck, label: "Profils vérifiés" },
@@ -92,55 +93,22 @@ export function Hero() {
           </Reveal>
         </div>
 
-        {/* Colonne visuelle : cartes de profils flottantes */}
-        <Reveal delay={0.2} className="relative hidden h-[30rem] lg:block">
-          <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-champagne-400/30 to-choco-500/20 blur-2xl" />
+        {/* Colonne visuelle : couple en tenue de mariage */}
+        <Reveal delay={0.2} className="relative mt-2 lg:mt-0">
+          {/* Glow doux fondu dans le crème/doré de la landing */}
+          <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2.5rem] bg-gradient-to-br from-champagne-400/30 via-cream-200/25 to-choco-500/15 blur-3xl" />
 
-          <div className="absolute left-2 top-6 animate-float [animation-delay:-1s]">
-            <FloatingProfileCard
-              initial="A"
-              age={28}
-              city="Dakar"
-              matched={92}
-              gradient="bg-gradient-to-br from-choco-400 to-choco-700"
+          <div className="relative overflow-hidden rounded-[2rem] shadow-card ring-1 ring-inset ring-champagne-500/25">
+            <Image
+              src={heroCouple}
+              alt="Couple africain heureux en tenue de mariage"
+              priority
+              placeholder="blur"
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              className="h-auto w-full object-cover"
             />
-          </div>
-
-          <div className="absolute right-0 top-28 animate-float-slow [animation-delay:-3s]">
-            <FloatingProfileCard
-              initial="M"
-              age={31}
-              city="Abidjan"
-              matched={87}
-              gradient="bg-gradient-to-br from-champagne-500 to-choco-500"
-            />
-          </div>
-
-          <div className="absolute bottom-2 left-10 animate-float [animation-delay:-5s]">
-            <FloatingProfileCard
-              initial="F"
-              age={26}
-              city="Bamako"
-              matched={95}
-              gradient="bg-gradient-to-br from-ink-700 to-choco-600"
-            />
-          </div>
-
-          {/* Pastille de confiance flottante */}
-          <div className="absolute right-6 bottom-12 animate-float-slow [animation-delay:-2s]">
-            <div className="flex items-center gap-3 rounded-2xl glass px-4 py-3 shadow-card">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-choco-600 text-cream-50">
-                <ShieldCheck size={18} />
-              </span>
-              <div className="flex flex-col leading-tight">
-                <span className="text-sm font-semibold text-choco-700">
-                  Vérifié à la main
-                </span>
-                <span className="text-xs text-ink-700/70">
-                  Modération humaine
-                </span>
-              </div>
-            </div>
+            {/* Fondu doux vers le crème pour harmoniser l'image au fond */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-cream-50/70 to-transparent" />
           </div>
         </Reveal>
       </div>
