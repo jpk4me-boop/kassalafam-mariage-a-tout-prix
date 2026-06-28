@@ -26,10 +26,16 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "pending", label: "En attente" },
   { key: "approved", label: "Approuvés" },
   { key: "rejected", label: "Rejetés" },
+  { key: "paused", label: "En pause" },
 ];
 
 function isFilterKey(value: string | undefined): value is ProfileVerificationStatus {
-  return value === "pending" || value === "approved" || value === "rejected";
+  return (
+    value === "pending" ||
+    value === "approved" ||
+    value === "rejected" ||
+    value === "paused"
+  );
 }
 
 export default async function AdminVerificationPage({
@@ -96,6 +102,7 @@ export default async function AdminVerificationPage({
     pending: rows.filter((r) => r.verification_status === "pending").length,
     approved: rows.filter((r) => r.verification_status === "approved").length,
     rejected: rows.filter((r) => r.verification_status === "rejected").length,
+    paused: rows.filter((r) => r.verification_status === "paused").length,
   };
 
   const visibleRows =
