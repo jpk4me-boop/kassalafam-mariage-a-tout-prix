@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { Check, Pause, X } from "lucide-react";
 
 import type { ProfileVerificationStatus } from "@/lib/types/database";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
@@ -35,7 +35,7 @@ function DisabledActions() {
         disabled
         title="Approbation disponible en L3-B2"
         aria-label="Approuver (bientôt disponible)"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-emerald-600/25 bg-emerald-600/5 px-3 py-1.5 text-xs font-semibold text-emerald-700/70 opacity-60"
+        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-emerald-600/40 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700/80 opacity-75"
       >
         <Check size={13} />
         Approuver
@@ -45,10 +45,20 @@ function DisabledActions() {
         disabled
         title="Rejet disponible en L3-B2"
         aria-label="Rejeter (bientôt disponible)"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-red-500/25 bg-red-500/5 px-3 py-1.5 text-xs font-semibold text-red-800/70 opacity-60"
+        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-800/80 opacity-75"
       >
         <X size={13} />
         Rejeter
+      </button>
+      <button
+        type="button"
+        disabled
+        title="Mise en pause disponible en L3-B2"
+        aria-label="Mettre en pause (bientôt disponible)"
+        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-champagne-500/45 bg-champagne-400/20 px-3 py-1.5 text-xs font-semibold text-choco-700/80 opacity-75"
+      >
+        <Pause size={13} />
+        Pause
       </button>
     </div>
   );
