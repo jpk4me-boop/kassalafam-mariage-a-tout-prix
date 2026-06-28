@@ -1,7 +1,6 @@
-import { Check, Pause, X } from "lucide-react";
-
 import type { ProfileVerificationStatus } from "@/lib/types/database";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { ProfileActions } from "@/components/admin/profile-actions";
 
 export type AdminProfileRow = {
   id: string;
@@ -20,48 +19,6 @@ const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
   return DATE_FMT.format(new Date(iso));
-}
-
-/**
- * Boutons d'action de modération — DÉSACTIVÉS dans ce lot (L3-B1, lecture
- * seule). L'écriture (approbation / rejet) arrivera en L3-B2 via un chemin
- * serveur sécurisé (service_role). Aucune logique d'écriture ici.
- */
-function DisabledActions() {
-  return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        disabled
-        title="Approbation disponible en L3-B2"
-        aria-label="Approuver (bientôt disponible)"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-emerald-600/40 bg-emerald-600/10 px-3 py-1.5 text-xs font-semibold text-emerald-700/80 opacity-75"
-      >
-        <Check size={13} />
-        Approuver
-      </button>
-      <button
-        type="button"
-        disabled
-        title="Rejet disponible en L3-B2"
-        aria-label="Rejeter (bientôt disponible)"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-800/80 opacity-75"
-      >
-        <X size={13} />
-        Rejeter
-      </button>
-      <button
-        type="button"
-        disabled
-        title="Mise en pause disponible en L3-B2"
-        aria-label="Mettre en pause (bientôt disponible)"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-champagne-500/45 bg-champagne-400/20 px-3 py-1.5 text-xs font-semibold text-choco-700/80 opacity-75"
-      >
-        <Pause size={13} />
-        Pause
-      </button>
-    </div>
-  );
 }
 
 export function ProfileVerificationList({
@@ -129,7 +86,10 @@ export function ProfileVerificationList({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <DisabledActions />
+                  <ProfileActions
+                    profileId={row.id}
+                    status={row.verification_status}
+                  />
                 </td>
               </tr>
             ))}
@@ -177,7 +137,10 @@ export function ProfileVerificationList({
             ) : null}
 
             <div className="mt-3">
-              <DisabledActions />
+              <ProfileActions
+                profileId={row.id}
+                status={row.verification_status}
+              />
             </div>
           </li>
         ))}
