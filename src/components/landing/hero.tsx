@@ -11,25 +11,55 @@ const BADGES = [
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 sm:pt-36 sm:pb-28">
-      {/* Halos lumineux d'arrière-plan */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-champagne-400/25 blur-3xl" />
-        <div className="absolute right-[-6rem] top-32 h-80 w-80 rounded-full bg-choco-500/15 blur-3xl" />
-        <div className="absolute bottom-0 left-[-4rem] h-72 w-72 rounded-full bg-champagne-500/15 blur-3xl" />
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, var(--color-choco-700) 1px, transparent 0)",
-            backgroundSize: "28px 28px",
-          }}
+    <section className="relative isolate overflow-hidden bg-cream-50">
+      {/* Ambiance floutée (même image) : sert uniquement à fondre les bords
+          autour du couple, à DROITE. Masquée côté gauche pour ne pas créer de
+          bande grise derrière le texte (la gauche reste crème pur). */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent 0%, transparent 50%, black 85%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0%, transparent 50%, black 85%)",
+        }}
+      >
+        <Image
+          src={heroCouple}
+          alt=""
+          aria-hidden
+          fill
+          sizes="100vw"
+          className="scale-110 object-cover object-center blur-2xl opacity-40"
         />
       </div>
 
-      <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]">
-        {/* Colonne texte */}
-        <div className="flex flex-col items-start">
+      {/* Image nette du couple, entière (dézoomée) et ancrée à droite :
+          on voit le haut des têtes, le buste et le bouquet sans rognage. */}
+      <div className="absolute inset-0 z-[1]">
+        <Image
+          src={heroCouple}
+          alt="Couple africain heureux en tenue de mariage"
+          priority
+          fill
+          sizes="100vw"
+          className="object-contain object-right"
+        />
+      </div>
+
+      {/* Voile crème à gauche : fondu large et très progressif vers transparent,
+          sans arrêt net, pour que la zone texte se fonde dans le crème. */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[2]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, var(--color-cream-50) 0%, var(--color-cream-50) 28%, color-mix(in srgb, var(--color-cream-50) 70%, transparent) 46%, transparent 80%)",
+        }}
+      />
+
+      <div className="relative z-10 mx-auto flex min-h-[80vh] max-w-6xl items-center px-4 pt-32 pb-20 sm:px-6 sm:pt-36 sm:pb-28">
+        {/* Colonne texte posée directement sur l'image */}
+        <div className="flex max-w-xl flex-col items-start">
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-champagne-500/40 bg-cream-100/80 px-4 py-1.5 text-xs font-semibold text-choco-600 shadow-sm">
               <Sparkles size={14} className="text-champagne-600" />
@@ -92,25 +122,6 @@ export function Hero() {
             </ul>
           </Reveal>
         </div>
-
-        {/* Colonne visuelle : couple en tenue de mariage */}
-        <Reveal delay={0.2} className="relative mt-2 lg:mt-0">
-          {/* Glow doux fondu dans le crème/doré de la landing */}
-          <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2.5rem] bg-gradient-to-br from-champagne-400/30 via-cream-200/25 to-choco-500/15 blur-3xl" />
-
-          <div className="relative overflow-hidden rounded-[2rem] shadow-card ring-1 ring-inset ring-champagne-500/25">
-            <Image
-              src={heroCouple}
-              alt="Couple africain heureux en tenue de mariage"
-              priority
-              placeholder="blur"
-              sizes="(max-width: 1024px) 100vw, 45vw"
-              className="h-auto w-full object-cover"
-            />
-            {/* Fondu doux vers le crème pour harmoniser l'image au fond */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-cream-50/70 to-transparent" />
-          </div>
-        </Reveal>
       </div>
     </section>
   );
