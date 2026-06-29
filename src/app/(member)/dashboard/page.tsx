@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isProfileComplete } from "@/lib/profile";
 import type { ProfileRow, ProfileVerificationStatus } from "@/lib/types/database";
 import { VerificationBadge } from "@/components/member/verification-badge";
+import { MemberNotificationsPanel } from "@/components/member/member-notifications-panel";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -119,6 +120,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Notifications de vérification (L3-C) */}
+      <MemberNotificationsPanel />
 
       <p className="text-sm text-ink-700/55">
         Les mises en relation, la messagerie et l’accompagnement arriveront

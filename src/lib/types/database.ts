@@ -87,6 +87,30 @@ export type MessageRow = {
   created_at: string;
 }
 
+export type MemberNotificationRow = {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string;
+  verification_status: ProfileVerificationStatus | null;
+  related_profile_id: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export type MemberNotificationInsert = {
+  id?: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string;
+  verification_status?: ProfileVerificationStatus | null;
+  related_profile_id?: string | null;
+  read_at?: string | null;
+  created_at?: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -124,6 +148,12 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<MessageRow>;
+        Relationships: [];
+      };
+      member_notifications: {
+        Row: MemberNotificationRow;
+        Insert: MemberNotificationInsert;
+        Update: Partial<MemberNotificationInsert>;
         Relationships: [];
       };
     };

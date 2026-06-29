@@ -10,6 +10,37 @@ import {
   REJECTION_REASON_MIN,
   REJECTION_REASON_MAX,
 } from "@/lib/admin/verification";
+import {
+  buildVerificationNotification,
+  type VerificationNotificationStatus,
+} from "@/lib/notifications";
+
+/**
+ * Crée la notification membre après une action admin réussie. Best-effort :
+ * une notification qui échoue ne doit PAS faire échouer le changement de statut
+ * déjà appliqué. L'échec est journalisé de façon sécurisée (aucun secret) plutôt
+ * que masqué. profileId == auth.users.id (relation 1:1 profiles/users).
+ */
+async function createVerificationNotification(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  status: VerificationNotificationStatus,
+  motif: string | null,
+): Promise<void> {
+  const notif = buildVerificationNotification(status, motif);
+  const { error } = await admin.from("member_notifications").insert({
+    user_id: userId,
+    type: notif.type,
+    title: notif.title,
+    body: notif.body,
+    verification_status: status,
+    related_profile_id: userId,
+  });
+  if (error) {
+    // Log sécurisé : message d'erreur Supabase uniquement (jamais de clé).
+    console.error("[notifications] création échouée:", error.message);
+  }
+}
 
 /**
  * Server Actions de modération — SERVEUR UNIQUEMENT (L3-B2A).
@@ -58,7 +89,10 @@ export async function approveProfileAction(
 
   if (error) return { ok: false, error: "Mise à jour impossible. Réessayez." };
 
+  await createVerificationNotification(admin, profileId, "approved", null);
+
   revalidatePath("/admin/verification");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -99,7 +133,10 @@ export async function pauseProfileAction(
 
   if (error) return { ok: false, error: "Mise à jour impossible. Réessayez." };
 
+  await createVerificationNotification(admin, profileId, "paused", reason);
+
   revalidatePath("/admin/verification");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -138,6 +175,9 @@ export async function rejectProfileAction(
 
   if (error) return { ok: false, error: "Mise à jour impossible. Réessayez." };
 
+  await createVerificationNotification(admin, profileId, "rejected", reason);
+
   revalidatePath("/admin/verification");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
