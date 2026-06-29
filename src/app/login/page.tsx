@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -14,22 +14,31 @@ import { PasswordInput } from "@/components/ui/password-input";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Empêche l'open redirect : on n'accepte qu'un chemin interne relatif
+  // (commence par "/" mais pas "//"), sinon on retombe sur /dashboard.
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/dashboard";
 
   // Préremplit l'email si l'utilisateur avait coché « Se souvenir de moi ».
-  useEffect(() => {
-    const saved = window.localStorage.getItem(REMEMBER_EMAIL_KEY);
-    if (saved) {
-      setEmail(saved);
-      setRemember(true);
-    }
-  }, []);
+  // Lazy initializers : on lit localStorage au premier rendu client (ce
+  // composant n'est rendu que côté client, derrière <Suspense>, à cause de
+  // useSearchParams) plutôt que via un setState synchrone dans un effet.
+  const [email, setEmail] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : (window.localStorage.getItem(REMEMBER_EMAIL_KEY) ?? ""),
+  );
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(REMEMBER_EMAIL_KEY) !== null,
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
