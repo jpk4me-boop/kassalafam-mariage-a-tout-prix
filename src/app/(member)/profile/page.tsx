@@ -6,6 +6,7 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type {
   Gender,
+  MaritalStatus,
   ProfileRow,
   ProfileVerificationStatus,
 } from "@/lib/types/database";
@@ -28,7 +29,9 @@ type FormState = {
   birth_date: string;
   country: string;
   city: string;
+  marital_status: "" | MaritalStatus;
   bio: string;
+  partner_expectations: string;
   blur_photos: boolean;
 };
 
@@ -38,7 +41,9 @@ const EMPTY_FORM: FormState = {
   birth_date: "",
   country: "",
   city: "",
+  marital_status: "",
   bio: "",
+  partner_expectations: "",
   blur_photos: true,
 };
 
@@ -78,7 +83,9 @@ export default function ProfilePage() {
           birth_date: profile.birth_date ?? "",
           country: profile.country ?? "",
           city: profile.city ?? "",
+          marital_status: profile.marital_status ?? "",
           bio: profile.bio ?? "",
+          partner_expectations: profile.partner_expectations ?? "",
           blur_photos: profile.blur_photos ?? true,
         });
         setVerificationStatus(profile.verification_status ?? "pending");
@@ -106,6 +113,10 @@ export default function ProfilePage() {
       setError("Merci d’indiquer votre genre.");
       return;
     }
+    if (!form.marital_status) {
+      setError("Merci d’indiquer votre situation matrimoniale.");
+      return;
+    }
 
     setSaving(true);
     const supabase = createClient();
@@ -127,8 +138,10 @@ export default function ProfilePage() {
         birth_date: form.birth_date || null,
         country: form.country.trim() || null,
         city: form.city.trim() || null,
+        marital_status: form.marital_status || null,
         intention: INTENTION_VALUE,
         bio: form.bio.trim() || null,
+        partner_expectations: form.partner_expectations.trim() || null,
         blur_photos: form.blur_photos,
       },
       { onConflict: "id" },
@@ -264,6 +277,32 @@ export default function ProfilePage() {
         </div>
 
         <div>
+          <Label htmlFor="marital_status">Situation matrimoniale</Label>
+          <Select
+            id="marital_status"
+            name="marital_status"
+            required
+            value={form.marital_status}
+            onChange={(e) =>
+              update("marital_status", e.target.value as MaritalStatus)
+            }
+            disabled={saving}
+          >
+            <option value="" disabled>
+              Sélectionner…
+            </option>
+            <option value="celibataire">Célibataire</option>
+            <option value="divorce">Divorcé(e)</option>
+            <option value="veuf">Veuf / Veuve</option>
+            <option value="separe">Séparé(e)</option>
+          </Select>
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            Une présentation honnête favorise des mises en relation sincères et
+            respectueuses.
+          </p>
+        </div>
+
+        <div>
           <Label htmlFor="intention">Intention</Label>
           <Input
             id="intention"
@@ -280,7 +319,7 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <Label htmlFor="bio">Bio</Label>
+          <Label htmlFor="bio">Présentation</Label>
           <Textarea
             id="bio"
             name="bio"
@@ -290,6 +329,25 @@ export default function ProfilePage() {
             onChange={(e) => update("bio", e.target.value)}
             disabled={saving}
           />
+        </div>
+
+        <div>
+          <Label htmlFor="partner_expectations">
+            Attentes envers le futur conjoint
+          </Label>
+          <Textarea
+            id="partner_expectations"
+            name="partner_expectations"
+            maxLength={2000}
+            placeholder="Décrivez les qualités, valeurs et le projet de vie que vous recherchez chez un futur conjoint…"
+            value={form.partner_expectations}
+            onChange={(e) => update("partner_expectations", e.target.value)}
+            disabled={saving}
+          />
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            Soyez précis(e) et bienveillant(e) : cela aide à préparer des
+            rencontres réellement compatibles.
+          </p>
         </div>
 
         {/* Confidentialité des photos */}

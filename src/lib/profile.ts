@@ -7,7 +7,9 @@ export const REQUIRED_PROFILE_FIELDS = [
   "birth_date",
   "country",
   "city",
+  "marital_status",
   "bio",
+  "partner_expectations",
 ] as const satisfies readonly (keyof ProfileRow)[];
 
 /** Un profil est complet quand tous les champs requis sont renseignés. */
