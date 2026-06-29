@@ -7,6 +7,7 @@ import { Loader2, MailCheck } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { REMEMBER_EMAIL_KEY } from "@/lib/auth/remember";
+import { getSiteUrl } from "@/lib/site-url";
 import { AuthShell } from "@/components/auth/auth-shell";
 import {
   FormError,
@@ -43,9 +44,16 @@ export default function RegisterPage() {
 
     setLoading(true);
     const supabase = createClient();
+    // Redirection explicite du lien de confirmation : ne dépend plus seulement
+    // du « Site URL » Supabase. En prod (NEXT_PUBLIC_SITE_URL défini), pointe
+    // toujours vers le domaine de production. /login existe déjà et le client
+    // navigateur y récupère la session via detectSessionInUrl.
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: {
+        emailRedirectTo: `${getSiteUrl()}/login`,
+      },
     });
 
     if (signUpError) {
