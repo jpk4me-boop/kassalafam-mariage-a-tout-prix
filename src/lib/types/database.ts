@@ -7,6 +7,7 @@
  */
 
 export type Gender = "homme" | "femme";
+export type MaritalStatus = "celibataire" | "divorce" | "veuf" | "separe";
 export type MatchStatus = "pending" | "accepted" | "rejected";
 export type ProfileVerificationStatus =
   | "pending"
@@ -21,8 +22,10 @@ export type ProfileRow = {
   birth_date: string | null;
   country: string | null;
   city: string | null;
+  marital_status: MaritalStatus | null;
   intention: string;
   bio: string | null;
+  partner_expectations: string | null;
   blur_photos: boolean;
   is_premium: boolean;
   // Vérification admin — LECTURE SEULE côté membre.
@@ -44,8 +47,10 @@ export type ProfileInsert = {
   birth_date?: string | null;
   country?: string | null;
   city?: string | null;
+  marital_status?: MaritalStatus | null;
   intention?: string;
   bio?: string | null;
+  partner_expectations?: string | null;
   blur_photos?: boolean;
   is_premium?: boolean;
   // Réservés au back-office (service_role serveur). Le front membre ne doit
