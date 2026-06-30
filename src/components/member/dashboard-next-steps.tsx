@@ -148,6 +148,13 @@ export function DashboardNextSteps({
             </p>
           </div>
         </div>
+        <Link
+          href="/discover"
+          className="mt-4 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-choco-700 transition-colors hover:text-choco-800"
+        >
+          Découvrir l’espace
+          <ArrowRight size={15} />
+        </Link>
       </article>
 
       {/* 5. Prochaines étapes (pleine largeur) */}
