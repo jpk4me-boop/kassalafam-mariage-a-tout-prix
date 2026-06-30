@@ -15,11 +15,13 @@ import { isProfileComplete } from "@/lib/profile";
 import type { ProfileRow, ProfileVerificationStatus } from "@/lib/types/database";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { MemberNotificationsPanel } from "@/components/member/member-notifications-panel";
+import { DashboardNextSteps } from "@/components/member/dashboard-next-steps";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
+  const [blurPhotos, setBlurPhotos] = useState(true);
   const [verificationStatus, setVerificationStatus] =
     useState<ProfileVerificationStatus>("pending");
 
@@ -43,6 +45,7 @@ export default function DashboardPage() {
       const profile = (data as ProfileRow | null) ?? null;
       setFirstName(profile?.first_name ?? null);
       setComplete(isProfileComplete(profile));
+      setBlurPhotos(profile?.blur_photos ?? true);
       setVerificationStatus(profile?.verification_status ?? "pending");
       setLoading(false);
     }
@@ -120,6 +123,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Cartes utiles après complétion du profil (L3C-A) */}
+      <DashboardNextSteps
+        complete={complete}
+        verificationStatus={verificationStatus}
+        blurPhotos={blurPhotos}
+      />
 
       {/* Notifications de vérification (L3-C) */}
       <MemberNotificationsPanel />
