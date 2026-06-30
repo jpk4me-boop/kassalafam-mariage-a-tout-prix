@@ -83,6 +83,8 @@ export type PhotoRow = {
   profile_id: string;
   storage_path: string;
   is_primary: boolean;
+  mime_type: string | null;
+  size_bytes: number | null;
   created_at: string;
   updated_at: string;
 }

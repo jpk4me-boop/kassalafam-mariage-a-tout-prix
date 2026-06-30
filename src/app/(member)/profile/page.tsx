@@ -12,6 +12,7 @@ import type {
 } from "@/lib/types/database";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
+import { ProfilePhotos } from "@/components/member/profile-photos";
 import {
   FormError,
   FormSuccess,
@@ -385,6 +386,9 @@ export default function ProfilePage() {
           )}
         </PrimaryButton>
       </form>
+
+      {/* Photos de profil — gestion privée du membre connecté (L3D-A) */}
+      <ProfilePhotos />
     </div>
   );
 }
