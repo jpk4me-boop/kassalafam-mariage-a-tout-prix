@@ -10,14 +10,18 @@ import {
 } from "lucide-react";
 
 import { PageBackNav } from "@/components/member/page-back-nav";
+import { DiscoverCriteria } from "@/components/member/discover-criteria";
 
 /**
- * Espace « Découverte des profils » — coquille de préparation (L3C-B).
+ * Espace « Découverte des profils » — préparation (L3C-B puis L3C-C).
  *
- * Page volontairement STATIQUE et présentationnelle : elle n'effectue AUCUNE
- * requête et ne liste AUCUN profil membre. Le matching réel n'est pas activé.
- * Elle prépare l'attente de manière sobre et rassurante, et renvoie le membre
- * vers la complétion de son profil.
+ * La page reste « en préparation » et ne liste JAMAIS d'autres profils membres.
+ * Le matching réel n'est pas activé.
+ *
+ * Le cadre (en-tête, principes, cartes, CTA) est statique. La section
+ * « Mes critères de découverte » (DiscoverCriteria) est un îlot client qui lit
+ * UNIQUEMENT le profil du membre connecté pour en afficher un résumé — aucune
+ * autre donnée membre n'est interrogée.
  *
  * L'accès est protégé par le middleware (préfixe « /discover » dans
  * PROTECTED_PREFIXES) au même titre que /dashboard et /profile : un visiteur
@@ -79,6 +83,9 @@ export default function DiscoverPage() {
           ))}
         </div>
       </section>
+
+      {/* Mes critères de découverte (L3C-C) — résumé du profil du membre connecté */}
+      <DiscoverCriteria />
 
       {/* Cartes de préparation */}
       <section className="grid gap-4 sm:grid-cols-2">
