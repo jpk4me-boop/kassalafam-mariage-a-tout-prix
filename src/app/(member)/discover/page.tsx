@@ -9,6 +9,8 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { PageBackNav } from "@/components/member/page-back-nav";
+
 /**
  * Espace « Découverte des profils » — coquille de préparation (L3C-B).
  *
@@ -38,6 +40,8 @@ const PRINCIPLES = [
 export default function DiscoverPage() {
   return (
     <div className="flex flex-col gap-8">
+      <PageBackNav />
+
       {/* En-tête */}
       <section>
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-champagne-600">

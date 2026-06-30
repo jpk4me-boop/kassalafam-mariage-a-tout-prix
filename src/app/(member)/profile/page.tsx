@@ -11,6 +11,7 @@ import type {
   ProfileVerificationStatus,
 } from "@/lib/types/database";
 import { VerificationBadge } from "@/components/member/verification-badge";
+import { PageBackNav } from "@/components/member/page-back-nav";
 import {
   FormError,
   FormSuccess,
@@ -167,6 +168,8 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageBackNav />
+
       <section>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-serif text-3xl font-semibold text-choco-700 sm:text-4xl">
