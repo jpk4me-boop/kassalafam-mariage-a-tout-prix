@@ -8,6 +8,15 @@
 
 export type Gender = "homme" | "femme";
 export type MaritalStatus = "celibataire" | "divorce" | "veuf" | "separe";
+/**
+ * Préférence VOLONTAIRE d'espace de découverte choisie par le membre (L3C-C).
+ * Ce n'est PAS une religion déclarée publiquement : valeur privée, modifiable,
+ * jamais déduite automatiquement ni exposée aux autres membres.
+ */
+export type DiscoveryUniverse =
+  | "christian_marriage"
+  | "islamic_marriage"
+  | "open_marriage";
 export type MatchStatus = "pending" | "accepted" | "rejected";
 export type ProfileVerificationStatus =
   | "pending"
@@ -28,6 +37,9 @@ export type ProfileRow = {
   partner_expectations: string | null;
   blur_photos: boolean;
   is_premium: boolean;
+  // Préférence volontaire d'espace de découverte (L3C-C). NULL = aucun choix.
+  // Privée : jamais exposée aux autres membres dans cette phase.
+  discovery_universe: DiscoveryUniverse | null;
   // Vérification admin — LECTURE SEULE côté membre.
   // Protégée en base par le trigger trg_profiles_guard_verification :
   // un membre ne peut jamais écrire ces champs. Ne jamais les inclure
@@ -53,6 +65,7 @@ export type ProfileInsert = {
   partner_expectations?: string | null;
   blur_photos?: boolean;
   is_premium?: boolean;
+  discovery_universe?: DiscoveryUniverse | null;
   // Réservés au back-office (service_role serveur). Le front membre ne doit
   // JAMAIS renseigner ces champs : ils sont rejetés par le trigger de garde.
   verification_status?: ProfileVerificationStatus;

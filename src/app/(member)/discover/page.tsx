@@ -11,6 +11,7 @@ import {
 
 import { PageBackNav } from "@/components/member/page-back-nav";
 import { DiscoverCriteria } from "@/components/member/discover-criteria";
+import { DiscoverUniverses } from "@/components/member/discover-universes";
 
 /**
  * Espace « Découverte des profils » — préparation (L3C-B puis L3C-C).
@@ -86,6 +87,10 @@ export default function DiscoverPage() {
 
       {/* Mes critères de découverte (L3C-C) — résumé du profil du membre connecté */}
       <DiscoverCriteria />
+
+      {/* Choisir mon univers de découverte (L3C-C) — préférence volontaire,
+          enregistrée uniquement sur le profil connecté */}
+      <DiscoverUniverses />
 
       {/* Cartes de préparation */}
       <section className="grid gap-4 sm:grid-cols-2">
