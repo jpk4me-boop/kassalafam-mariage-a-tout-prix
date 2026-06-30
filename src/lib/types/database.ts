@@ -89,6 +89,35 @@ export type PhotoRow = {
   updated_at: string;
 }
 
+/**
+ * Candidat de découverte (L3D-B PR1) — projection SÛRE renvoyée par la RPC
+ * `public.discover_candidates`. Ne contient JAMAIS birth_date (seul `age`
+ * calculé est exposé), storage_path, verification_*, email, bio ni
+ * partner_expectations. Voir la migration 20260630020000_discover_candidates_rpc.
+ */
+export type DiscoverCandidate = {
+  id: string;
+  first_name: string | null;
+  age: number | null;
+  city: string | null;
+  country: string | null;
+  marital_status: MaritalStatus | null;
+  intention: string;
+  discovery_universe: DiscoveryUniverse | null;
+  has_photo: boolean;
+  is_blurred: boolean;
+};
+
+/**
+ * Candidat enrichi côté SERVEUR d'une URL signée éphémère de sa photo
+ * principale (TTL court). `signedUrl` est `null` si le candidat n'a pas de
+ * photo (`has_photo=false`) ou a choisi de flouter (`is_blurred=true`).
+ * `storage_path` n'est JAMAIS inclus dans cette charge utile exposable.
+ */
+export type DiscoverCandidateWithPhoto = DiscoverCandidate & {
+  signedUrl: string | null;
+};
+
 export type MatchRow = {
   id: string;
   user_a: string;
@@ -178,7 +207,13 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      // L3D-B PR1 — lecture sécurisée des candidats de découverte.
+      discover_candidates: {
+        Args: { p_universe: string; p_limit?: number; p_offset?: number };
+        Returns: DiscoverCandidate[];
+      };
+    };
     Enums: {
       gender: Gender;
       match_status: MatchStatus;
