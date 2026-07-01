@@ -118,6 +118,14 @@ export type DiscoverCandidateWithPhoto = DiscoverCandidate & {
   signedUrl: string | null;
 };
 
+/**
+ * Résultat de la RPC `public.express_interest` (L3D-B PR3) :
+ *   - `created` : intérêt enregistré (viewer → cible, `pending`) ;
+ *   - `already` : intérêt déjà exprimé par le viewer (ou paire `rejected`) ;
+ *   - `matched` : intérêt mutuel (la cible avait déjà exprimé le sien → `accepted`).
+ */
+export type ExpressInterestResult = "created" | "already" | "matched";
+
 export type MatchRow = {
   id: string;
   user_a: string;
@@ -212,6 +220,11 @@ export interface Database {
       discover_candidates: {
         Args: { p_universe: string; p_limit?: number; p_offset?: number };
         Returns: DiscoverCandidate[];
+      };
+      // L3D-B PR3 — expression d'un intérêt (écriture contrôlée dans matches).
+      express_interest: {
+        Args: { p_target: string; p_universe: string };
+        Returns: ExpressInterestResult;
       };
     };
     Enums: {

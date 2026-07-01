@@ -144,5 +144,39 @@ export async function DiscoverFeed({
     );
   }
 
-  return <DiscoverFeedView candidates={candidates} universe={universe} />;
+  // États d'intérêt du viewer parmi les candidats affichés :
+  //   - « sent »    : intérêt SORTANT en attente (user_a = viewer, pending) ;
+  //   - « matched » : intérêt mutuel (accepted, quel que soit l'initiateur).
+  // Les intérêts ENTRANTS en attente (user_a = cible) ne sont PAS révélés.
+  const initialStates: Record<string, "sent" | "matched"> = {};
+  const ids = candidates.map((c) => c.id);
+  if (ids.length > 0) {
+    const list = ids.join(",");
+    const { data: rels, error: relError } = await supabase
+      .from("matches")
+      .select("user_a, user_b, status")
+      .or(
+        `and(user_a.eq.${user.id},user_b.in.(${list})),and(user_b.eq.${user.id},user_a.in.(${list}))`,
+      );
+    if (relError) {
+      console.error("[discover-feed] lecture intérêts échouée:", relError.message);
+    } else {
+      for (const r of rels ?? []) {
+        const otherId = r.user_a === user.id ? r.user_b : r.user_a;
+        if (r.status === "accepted") {
+          initialStates[otherId] = "matched";
+        } else if (r.status === "pending" && r.user_a === user.id) {
+          initialStates[otherId] = "sent";
+        }
+      }
+    }
+  }
+
+  return (
+    <DiscoverFeedView
+      candidates={candidates}
+      universe={universe}
+      initialStates={initialStates}
+    />
+  );
 }
