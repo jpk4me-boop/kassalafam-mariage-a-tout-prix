@@ -11,6 +11,7 @@ import { Logo } from "@/components/landing/logo";
 
 const MEMBER_LINKS = [
   { label: "Tableau de bord", href: "/dashboard" },
+  { label: "Rencontres", href: "/matches" },
   { label: "Mon profil", href: "/profile" },
 ];
 

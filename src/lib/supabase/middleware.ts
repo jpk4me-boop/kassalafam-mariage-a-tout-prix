@@ -6,7 +6,13 @@ import type { Database } from "@/lib/types/database";
 /** Routes réservées aux utilisateurs connectés (membres + back-office admin).
  *  Le contrôle fin du rôle admin (allowlist) est fait dans le Server Component
  *  de la page admin ; ici on garantit seulement qu'un anonyme est redirigé. */
-const PROTECTED_PREFIXES = ["/dashboard", "/profile", "/discover", "/admin"];
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/profile",
+  "/discover",
+  "/matches",
+  "/admin",
+];
 /** Routes d'authentification : un membre déjà connecté est redirigé ailleurs. */
 const AUTH_PREFIXES = ["/login", "/register"];
 

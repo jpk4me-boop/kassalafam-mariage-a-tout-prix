@@ -135,6 +135,51 @@ export type MatchRow = {
   updated_at: string;
 }
 
+/**
+ * L3D-C — Nature d'une relation renvoyée par `public.list_my_relationships` :
+ *   - `received` : intérêt entrant EN ATTENTE (l'autre m'a exprimé un intérêt) ;
+ *   - `sent`     : intérêt sortant EN ATTENTE (je l'ai exprimé, sans réponse) ;
+ *   - `matched`  : intérêt mutuel accepté.
+ */
+export type RelationshipKind = "received" | "sent" | "matched";
+
+/**
+ * Projection SÛRE d'une relation (L3D-C) renvoyée par `list_my_relationships`.
+ * Décrit UNIQUEMENT l'autre membre via des champs non sensibles (jamais
+ * birth_date — seul `age` calculé —, storage_path, verification_*, email, bio,
+ * partner_expectations). `match_id` sert à répondre via `respond_to_interest`.
+ */
+export type RelationshipItem = {
+  match_id: string;
+  other_id: string;
+  kind: RelationshipKind;
+  status: MatchStatus;
+  first_name: string | null;
+  age: number | null;
+  city: string | null;
+  country: string | null;
+  marital_status: MaritalStatus | null;
+  intention: string;
+  has_photo: boolean;
+  is_blurred: boolean;
+};
+
+/**
+ * Relation enrichie côté SERVEUR d'une URL signée éphémère de la photo
+ * principale de l'autre membre (même règle que la découverte : `signedUrl` est
+ * `null` si pas de photo ou si l'autre a choisi de flouter). `storage_path`
+ * n'est JAMAIS inclus dans cette charge utile exposable.
+ */
+export type RelationshipItemWithPhoto = RelationshipItem & {
+  signedUrl: string | null;
+};
+
+/**
+ * Résultat de la RPC `public.respond_to_interest` (L3D-C) : le statut résultant
+ * du match. Idempotent côté UX — une 2e réponse renvoie l'état déjà figé.
+ */
+export type RespondInterestResult = "accepted" | "rejected";
+
 export type MessageRow = {
   id: string;
   match_id: string;
@@ -225,6 +270,16 @@ export interface Database {
       express_interest: {
         Args: { p_target: string; p_universe: string };
         Returns: ExpressInterestResult;
+      };
+      // L3D-C — réponse à un intérêt reçu (seule la cible, sur un match pending).
+      respond_to_interest: {
+        Args: { p_match: string; p_decision: string };
+        Returns: RespondInterestResult;
+      };
+      // L3D-C — lecture curée des relations de l'appelant (reçus/envoyés/matches).
+      list_my_relationships: {
+        Args: Record<string, never>;
+        Returns: RelationshipItem[];
       };
     };
     Enums: {
