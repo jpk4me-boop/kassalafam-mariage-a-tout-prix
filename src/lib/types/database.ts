@@ -281,6 +281,22 @@ export interface Database {
         Args: Record<string, never>;
         Returns: RelationshipItem[];
       };
+      // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
+      send_message: {
+        Args: { p_match: string; p_content: string };
+        Returns: MessageRow;
+      };
+      // L3E-PR1 — lecture ordonnée du fil d'un match accepté (garde can_message).
+      get_conversation_messages: {
+        Args: { p_match: string };
+        Returns: MessageRow[];
+      };
+      // L3E-PR1 — marque comme lus les messages REÇUS d'un match accepté.
+      // Retourne le nombre de messages marqués. Ne modifie jamais le contenu.
+      mark_conversation_read: {
+        Args: { p_match: string };
+        Returns: number;
+      };
     };
     Enums: {
       gender: Gender;
