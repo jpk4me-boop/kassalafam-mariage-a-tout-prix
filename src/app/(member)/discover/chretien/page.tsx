@@ -4,7 +4,8 @@ export default function DiscoverChretienPage() {
   return (
     <DiscoverUniversePage
       title="Rencontre / Mariage chrétien"
-      description="Cet espace réunira progressivement les membres qui choisissent une démarche de mariage sérieuse dans un cadre de valeurs chrétiennes, avec confidentialité, respect et profils vérifiés."
+      description="Découvrez des profils qui partagent une démarche de mariage sérieuse dans un cadre de valeurs chrétiennes — confidentialité, respect et profils vérifiés."
+      universe="christian_marriage"
     />
   );
 }

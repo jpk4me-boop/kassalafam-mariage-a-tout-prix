@@ -4,7 +4,8 @@ export default function DiscoverIslamiquePage() {
   return (
     <DiscoverUniversePage
       title="Rencontre / Mariage islamique"
-      description="Cet espace réunira progressivement les membres qui choisissent une démarche de mariage sérieuse dans un cadre de pudeur, de respect familial et de valeurs islamiques."
+      description="Découvrez des profils orientés vers un mariage sérieux dans un cadre de pudeur, de respect familial et de valeurs islamiques — confidentialité et profils vérifiés."
+      universe="islamic_marriage"
     />
   );
 }
