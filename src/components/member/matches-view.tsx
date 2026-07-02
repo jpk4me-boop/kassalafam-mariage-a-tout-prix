@@ -11,6 +11,7 @@ import {
   Loader2,
   Lock,
   MapPin,
+  MessageCircle,
   Send,
   UserRound,
   X,
@@ -290,10 +291,19 @@ export function MatchesView({
                       En attente de réponse
                     </span>
                   ) : (
-                    <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-600/30 bg-emerald-600/10 px-4 py-2 text-sm font-medium text-emerald-700">
-                      <HeartHandshake size={14} />
-                      Intérêt mutuel
-                    </span>
+                    <>
+                      <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-600/30 bg-emerald-600/10 px-4 py-2 text-sm font-medium text-emerald-700">
+                        <HeartHandshake size={14} />
+                        Intérêt mutuel
+                      </span>
+                      <Link
+                        href={`/matches/${item.match_id}`}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-4 py-2 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
+                      >
+                        <MessageCircle size={14} />
+                        Envoyer un message
+                      </Link>
+                    </>
                   )}
                 </div>
               </li>
