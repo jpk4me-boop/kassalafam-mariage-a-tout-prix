@@ -162,6 +162,10 @@ export type RelationshipItem = {
   intention: string;
   has_photo: boolean;
   is_blurred: boolean;
+  // L3E-PR3 — aperçu messagerie (null / 0 pour les relations non 'matched').
+  last_message_content: string | null;
+  last_message_at: string | null;
+  unread_count: number;
 };
 
 /**
