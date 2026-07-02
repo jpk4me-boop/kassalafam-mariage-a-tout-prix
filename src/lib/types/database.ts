@@ -166,6 +166,14 @@ export type RelationshipItem = {
   last_message_content: string | null;
   last_message_at: string | null;
   unread_count: number;
+  // L3F-A — sécurité messagerie (colonnes ajoutées EN FIN, après les 15
+  // historiques). `blocked_by_me` : true UNIQUEMENT si l'appelant a créé le
+  // blocage (sert à décider l'affichage de « Débloquer »). Il n'existe
+  // volontairement AUCUN champ « blocked_by_other ». `messaging_available` :
+  // false dès qu'un blocage existe dans un sens OU l'autre — état NEUTRE qui ne
+  // révèle jamais l'origine du blocage. L'historique reste toujours lisible.
+  blocked_by_me: boolean;
+  messaging_available: boolean;
 };
 
 /**
@@ -183,6 +191,21 @@ export type RelationshipItemWithPhoto = RelationshipItem & {
  * du match. Idempotent côté UX — une 2e réponse renvoie l'état déjà figé.
  */
 export type RespondInterestResult = "accepted" | "rejected";
+
+/**
+ * L3F-A — Motifs de signalement d'un message (`public.report_message`).
+ * Valeurs techniques STRICTES : elles doivent correspondre exactement au CHECK
+ * de `safety_reports.reason` en base. Les libellés français sont une couche UI.
+ */
+export type SafetyReportReason =
+  | "harassment"
+  | "sexual_content"
+  | "scam"
+  | "hate"
+  | "threat"
+  | "impersonation"
+  | "spam"
+  | "other";
 
 export type MessageRow = {
   id: string;
@@ -300,6 +323,27 @@ export interface Database {
       mark_conversation_read: {
         Args: { p_match: string };
         Returns: number;
+      };
+      // L3F-A — bloque l'AUTRE participant d'un match. Le client ne transmet que
+      // le matchId ; blocker_id (= auth.uid()) et l'autre membre sont déduits
+      // côté serveur. Insert idempotent.
+      block_match_participant: {
+        Args: { p_match: string };
+        Returns: undefined;
+      };
+      // L3F-A — retire UNIQUEMENT le blocage créé par l'appelant vers p_target.
+      // Ne peut jamais supprimer le blocage créé par l'autre membre. Idempotent.
+      unblock_profile: {
+        Args: { p_target: string };
+        Returns: undefined;
+      };
+      // L3F-A — signale un message REÇU. Le serveur vérifie toutes les
+      // appartenances et déduit reporter_id / reported_user_id / match_id ; le
+      // client ne transmet QUE p_message, p_reason et p_details facultatif.
+      // Retourne l'id du signalement (idempotent : même id si déjà signalé).
+      report_message: {
+        Args: { p_message: string; p_reason: string; p_details?: string | null };
+        Returns: string;
       };
     };
     Enums: {
