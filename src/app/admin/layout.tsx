@@ -24,6 +24,23 @@ export default function AdminLayout({
             Back-office
           </span>
         </div>
+        {/* Navigation back-office discrète (pas d'état actif : Server Component). */}
+        <nav className="border-t border-champagne-500/15">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-1 px-4 py-2 sm:px-6">
+            <Link
+              href="/admin/verification"
+              className="rounded-full px-3 py-1.5 text-sm font-medium text-ink-700/70 transition-colors hover:text-choco-700"
+            >
+              Vérification des profils
+            </Link>
+            <Link
+              href="/admin/reports"
+              className="rounded-full px-3 py-1.5 text-sm font-medium text-ink-700/70 transition-colors hover:text-choco-700"
+            >
+              Signalements
+            </Link>
+          </div>
+        </nav>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         {children}
