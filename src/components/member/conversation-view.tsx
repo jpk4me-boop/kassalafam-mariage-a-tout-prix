@@ -705,7 +705,7 @@ export function ConversationView({
                     className={
                       mine
                         ? "max-w-[80%] rounded-2xl rounded-br-md bg-gradient-to-br from-choco-600 to-choco-800 px-3.5 py-2 text-sm text-cream-50 shadow-[0_10px_24px_-16px_rgba(43,26,18,0.8)]"
-                        : "max-w-[80%] rounded-2xl rounded-bl-md border border-champagne-500/30 bg-cream-100/70 px-3.5 py-2 text-sm text-ink-800"
+                        : "max-w-[80%] rounded-2xl rounded-bl-md border border-champagne-500/40 bg-champagne-300/60 px-3.5 py-2 text-sm text-ink-800"
                     }
                   >
                     <p className="whitespace-pre-wrap break-words">{m.content}</p>
