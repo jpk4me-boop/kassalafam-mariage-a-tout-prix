@@ -207,6 +207,45 @@ export type SafetyReportReason =
   | "spam"
   | "other";
 
+/**
+ * L3F-A / L3F-C1 — Cycle de vie d'un signalement (`safety_reports.status`).
+ * Valeurs techniques STRICTES : elles correspondent exactement au CHECK
+ * `safety_reports_status_valid` en base. Les libellés français sont une couche
+ * UI (voir `src/lib/admin/safety-reports.ts`).
+ */
+export type SafetyReportStatus =
+  | "open"
+  | "reviewing"
+  | "resolved"
+  | "dismissed";
+
+/**
+ * L3F-C1 — Ligne de `public.safety_reports` telle que lue par le back-office
+ * (client `service_role`, SERVEUR uniquement — la table a RLS activée sans
+ * aucune policy et ses privilèges membres sont révoqués).
+ *
+ * Le contenu et la date du message signalé sont des SNAPSHOTS pris au moment du
+ * signalement : ils restent lisibles même après suppression du message, du
+ * match ou du profil (FK en ON DELETE SET NULL). Ne JAMAIS relire `messages`
+ * en live pour reconstituer le contenu — le snapshot fait foi.
+ */
+export type SafetyReportRow = {
+  id: string;
+  reporter_id: string | null;
+  reported_user_id: string | null;
+  match_id: string | null;
+  message_id: string | null;
+  reason: SafetyReportReason;
+  details: string | null;
+  message_content_snapshot: string;
+  message_created_at_snapshot: string;
+  status: SafetyReportStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  resolution_note: string | null;
+  created_at: string;
+};
+
 export type MessageRow = {
   id: string;
   match_id: string;
@@ -283,6 +322,17 @@ export interface Database {
         Row: MemberNotificationRow;
         Insert: MemberNotificationInsert;
         Update: Partial<MemberNotificationInsert>;
+        Relationships: [];
+      };
+      // L3F-C1 — LECTURE SEULE côté back-office (client service_role serveur).
+      // Aucune écriture directe via ce client : les seules écritures légitimes
+      // passent par les RPC SECURITY DEFINER (report_message). Insert/Update
+      // sont volontairement `never` pour INTERDIRE STATIQUEMENT toute écriture
+      // accidentelle (.insert()/.update()) via le client Supabase typé.
+      safety_reports: {
+        Row: SafetyReportRow;
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
     };
