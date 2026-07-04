@@ -24,6 +24,15 @@ export type ProfileVerificationStatus =
   | "rejected"
   | "paused";
 
+/**
+ * L3F-C3A — Sanction de compte, INDÉPENDANTE de la vérification de profil.
+ * `active` : compte normal ; `suspended` : interactions restreintes (les effets
+ * d'enforcement — découverte, intérêts, messagerie, photos — arrivent en
+ * C3B–C3D). Écrit EXCLUSIVEMENT par la RPC `admin_set_account_status`
+ * (service_role) ; jamais par le membre (garde `guard_profiles_admin_fields`).
+ */
+export type AccountStatus = "active" | "suspended";
+
 export type ProfileRow = {
   id: string;
   first_name: string | null;
@@ -48,6 +57,13 @@ export type ProfileRow = {
   verification_reviewed_at: string | null;
   verification_reviewed_by: string | null;
   verification_rejection_reason: string | null;
+  // L3F-C3A — Sanction de compte. LECTURE SEULE côté membre (protégée en base
+  // par la garde trg_profiles_guard_admin_fields, INSERT + UPDATE). Ne jamais
+  // les inclure dans un upsert côté front.
+  account_status: AccountStatus;
+  suspended_at: string | null;
+  suspended_by: string | null;
+  suspension_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,11 +83,16 @@ export type ProfileInsert = {
   is_premium?: boolean;
   discovery_universe?: DiscoveryUniverse | null;
   // Réservés au back-office (service_role serveur). Le front membre ne doit
-  // JAMAIS renseigner ces champs : ils sont rejetés par le trigger de garde.
+  // JAMAIS renseigner ces champs : ils sont rejetés par le trigger de garde
+  // (verification_* ET account_* — L3F-C3A, INSERT + UPDATE).
   verification_status?: ProfileVerificationStatus;
   verification_reviewed_at?: string | null;
   verification_reviewed_by?: string | null;
   verification_rejection_reason?: string | null;
+  account_status?: AccountStatus;
+  suspended_at?: string | null;
+  suspended_by?: string | null;
+  suspension_reason?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -267,6 +288,32 @@ export type SafetyReportActionRow = {
   created_at: string;
 };
 
+/**
+ * L3F-C3A — Ligne du journal APPEND-ONLY `public.account_moderation_actions` :
+ * une entrée par transition de compte (`active` ↔ `suspended`), écrite
+ * EXCLUSIVEMENT par la RPC `admin_set_account_status` (service_role). DISTINCT
+ * de [[safety_report_actions]] (cycle de vie des signalements).
+ *
+ * CONFIDENTIALITÉ : aucun email du membre sanctionné n'est stocké —
+ * `profile_id_snapshot` (UUID) est la référence d'audit minimale et survit à la
+ * suppression du profil (`profile_id` FK ON DELETE SET NULL). `actor_id`
+ * (auth.users.id) peut devenir NULL si l'admin est supprimé ;
+ * `actor_email_snapshot` conserve alors la trace. `report_id` lie éventuellement
+ * la sanction à un signalement d'origine. Table immuable (trigger).
+ */
+export type AccountModerationActionRow = {
+  id: string;
+  profile_id: string | null;
+  profile_id_snapshot: string;
+  actor_id: string | null;
+  actor_email_snapshot: string | null;
+  report_id: string | null;
+  previous_status: AccountStatus;
+  new_status: AccountStatus;
+  reason: string;
+  created_at: string;
+};
+
 export type MessageRow = {
   id: string;
   match_id: string;
@@ -366,6 +413,16 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // L3F-C3A — journal append-only de modération des comptes, LECTURE SEULE
+      // côté back-office (service_role). Écriture uniquement via la RPC
+      // admin_set_account_status ; jamais d'écriture directe via ce client typé
+      // (d'où Insert/Update = never). Immuable en base (trigger).
+      account_moderation_actions: {
+        Row: AccountModerationActionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -442,6 +499,25 @@ export interface Database {
           p_actor_id: string;
         };
         Returns: SafetyReportRow;
+      };
+      // L3F-C3A — suspension/réactivation transactionnelle d'un compte
+      // (service_role uniquement, jamais authenticated). p_expected_status porte
+      // l'état vu par l'admin (concurrence optimiste). p_actor_id vient de
+      // requireAdmin() côté serveur ; son email est relu depuis auth.users.
+      // p_report_id (option) doit viser p_profile_id. Erreurs métier stables :
+      // PROFILE_NOT_FOUND, ACCOUNT_STATUS_CONFLICT, INVALID_ACCOUNT_STATUS,
+      // INVALID_ACCOUNT_TRANSITION, REASON_REQUIRED, REASON_LENGTH_INVALID,
+      // ACTOR_NOT_FOUND, REPORT_NOT_FOUND, REPORT_PROFILE_MISMATCH.
+      admin_set_account_status: {
+        Args: {
+          p_profile_id: string;
+          p_expected_status: string;
+          p_new_status: string;
+          p_reason: string;
+          p_actor_id: string;
+          p_report_id?: string | null;
+        };
+        Returns: ProfileRow;
       };
     };
     Enums: {
