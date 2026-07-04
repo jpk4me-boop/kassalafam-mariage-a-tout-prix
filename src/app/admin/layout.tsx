@@ -39,6 +39,12 @@ export default function AdminLayout({
             >
               Signalements
             </Link>
+            <Link
+              href="/admin/members"
+              className="rounded-full px-3 py-1.5 text-sm font-medium text-ink-700/70 transition-colors hover:text-choco-700"
+            >
+              Comptes membres
+            </Link>
           </div>
         </nav>
       </header>

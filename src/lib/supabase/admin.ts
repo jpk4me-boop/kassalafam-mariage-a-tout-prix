@@ -1,3 +1,8 @@
+// Protection COMPILE-TIME : toute tentative d'import de ce module depuis un
+// bundle client fait échouer le build. Complète (sans remplacer) la garde
+// runtime `typeof window` ci-dessous. Clé service_role : serveur uniquement.
+import "server-only";
+
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/types/database";
