@@ -22,20 +22,13 @@ export type AdminMemberRow = {
   first_name: string | null;
   email: string | null;
   account_status: AccountStatus;
-  suspended_at: string | null;
   suspension_reason: string | null;
-  created_at: string;
+  // Dates DÉJÀ FORMATÉES côté serveur (fuseau métier Africa/Douala). Aucun
+  // formatage de date n'est fait ici : un rendu dépendant du fuseau du
+  // navigateur pendant l'hydratation provoquerait un mismatch (React #418).
+  createdAtLabel: string;
+  suspendedAtLabel: string | null;
 };
-
-const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return DATE_FMT.format(new Date(iso));
-}
 
 function memberLabel(row: AdminMemberRow): string {
   return row.first_name?.trim() || row.email?.trim() || "ce membre";
@@ -50,7 +43,7 @@ function SuspensionDetail({ row }: { row: AdminMemberRow }) {
     <div className="text-xs">
       <p className="text-ink-700/70">
         <span className="text-ink-700/45">Depuis&nbsp;: </span>
-        {formatDate(row.suspended_at)}
+        {row.suspendedAtLabel ?? "—"}
       </p>
       {row.suspension_reason ? (
         <p className="mt-0.5 whitespace-pre-wrap break-words text-ink-700/75">
@@ -208,7 +201,7 @@ export function MemberModerationList({
                       <AccountStatusBadge status={row.account_status} />
                     </td>
                     <td className="px-4 py-3 text-ink-700/70">
-                      {formatDate(row.created_at)}
+                      {row.createdAtLabel}
                     </td>
                     <td className="px-4 py-3">
                       <SuspensionDetail row={row} />
@@ -251,7 +244,7 @@ export function MemberModerationList({
                 <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                   <dt className="text-ink-700/50">Inscrit le</dt>
                   <dd className="text-right text-ink-700/75">
-                    {formatDate(row.created_at)}
+                    {row.createdAtLabel}
                   </dd>
                 </dl>
 

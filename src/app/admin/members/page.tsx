@@ -28,6 +28,21 @@ type ProfileModerationRow = {
   created_at: string;
 };
 
+// Formatage des dates CÔTÉ SERVEUR avec le fuseau métier EXPLICITE
+// (Africa/Douala). La chaîne est calculée une seule fois au rendu serveur puis
+// sérialisée : le navigateur affiche exactement le même texte à l'hydratation,
+// quel que soit son fuseau local — ce qui élimine le mismatch React #418.
+const BUSINESS_DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Africa/Douala",
+});
+
+function formatBusinessDate(iso: string | null): string | null {
+  if (!iso) return null;
+  return BUSINESS_DATE_FMT.format(new Date(iso));
+}
+
 export default async function AdminMembersPage() {
   // 1. Authentification + contrôle admin — 100 % côté serveur (session anon).
   //    Modèle identique à /admin/verification et /admin/reports.
@@ -89,15 +104,17 @@ export default async function AdminMembersPage() {
     }
 
     // Aplatissement : on sérialise des objets PLATS vers le Client Component
-    // (email joint ici, jamais de Map ni de champ interne côté navigateur).
+    // (email joint ici, jamais de Map ni de champ interne côté navigateur). Les
+    // dates sont formatées ICI (serveur, fuseau métier) : le Client Component ne
+    // fait aucun formatage dépendant du fuseau du navigateur (cf. React #418).
     rows = profiles.map((p) => ({
       id: p.id,
       first_name: p.first_name,
       email: emailById.get(p.id) ?? null,
       account_status: p.account_status,
-      suspended_at: p.suspended_at,
       suspension_reason: p.suspension_reason,
-      created_at: p.created_at,
+      createdAtLabel: formatBusinessDate(p.created_at) ?? "—",
+      suspendedAtLabel: formatBusinessDate(p.suspended_at),
     }));
   } catch (err) {
     // Détail journalisé côté SERVEUR uniquement : jamais renvoyé au navigateur.
