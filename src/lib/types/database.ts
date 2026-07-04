@@ -246,6 +246,27 @@ export type SafetyReportRow = {
   created_at: string;
 };
 
+/**
+ * L3F-C2A — Ligne du journal APPEND-ONLY `public.safety_report_actions` : une
+ * entrée par transition de statut d'un signalement, écrite EXCLUSIVEMENT par la
+ * fonction transactionnelle `admin_transition_safety_report` (service_role).
+ *
+ * `new_status` ne peut jamais être `open` (aucune réouverture au MVP).
+ * `actor_id` (auth.users.id) peut devenir NULL si le compte admin est supprimé
+ * (FK ON DELETE SET NULL) ; `actor_email_snapshot` conserve alors la trace de
+ * l'acteur. La table est immuable : aucune UPDATE/DELETE possible.
+ */
+export type SafetyReportActionRow = {
+  id: string;
+  report_id: string;
+  actor_id: string | null;
+  actor_email_snapshot: string | null;
+  previous_status: SafetyReportStatus;
+  new_status: Exclude<SafetyReportStatus, "open">;
+  note: string | null;
+  created_at: string;
+};
+
 export type MessageRow = {
   id: string;
   match_id: string;
@@ -335,6 +356,16 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // L3F-C2A — journal append-only, LECTURE SEULE côté back-office
+      // (service_role). Écriture uniquement via la RPC
+      // admin_transition_safety_report ; jamais d'écriture directe via ce
+      // client typé (d'où Insert/Update = never). Immuable en base (trigger).
+      safety_report_actions: {
+        Row: SafetyReportActionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -394,6 +425,23 @@ export interface Database {
       report_message: {
         Args: { p_message: string; p_reason: string; p_details?: string | null };
         Returns: string;
+      };
+      // L3F-C2A — transition transactionnelle d'un signalement (service_role
+      // uniquement, jamais authenticated). p_expected_status porte l'état vu par
+      // l'admin (garde de concurrence optimiste). L'email de l'acteur est relu
+      // côté serveur depuis auth.users, jamais transmis par le client. Erreurs
+      // métier stables : REPORT_NOT_FOUND, REPORT_STATUS_CONFLICT,
+      // INVALID_REPORT_TRANSITION, REPORT_ALREADY_FINAL, NOTE_REQUIRED,
+      // NOTE_LENGTH_INVALID, ACTOR_NOT_FOUND.
+      admin_transition_safety_report: {
+        Args: {
+          p_report_id: string;
+          p_expected_status: string;
+          p_new_status: string;
+          p_note: string | null;
+          p_actor_id: string;
+        };
+        Returns: SafetyReportRow;
       };
     };
     Enums: {
