@@ -6,17 +6,29 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
-import type { SafetyReportRow, SafetyReportStatus } from "@/lib/types/database";
+import type {
+  SafetyReportActionRow,
+  SafetyReportRow,
+  SafetyReportStatus,
+} from "@/lib/types/database";
 import { reasonLabel, SAFETY_STATUS_LABELS } from "@/lib/admin/safety-reports";
+import { SafetyReportHistory } from "@/components/admin/safety-report-history";
+import { SafetyReportActions } from "@/components/admin/safety-report-actions";
 
 /**
- * Liste back-office des signalements — PRÉSENTATION SEULE (L3F-C1).
+ * Liste back-office des signalements (L3F-C1 lecture seule + L3F-C2B traitement).
  *
- * Rendu 100 % serveur : aucun état, aucune interactivité, aucune action de
- * traitement (pas de bouton résoudre/classer/bloquer/suspendre). Le contenu du
- * message provient EXCLUSIVEMENT du snapshot (`message_content_snapshot`),
- * jamais d'une lecture live de `messages`. Ne reçoit que l'identité minimale
- * (prénom) des profils concernés — aucune autre donnée personnelle.
+ * Rendu serveur. Le contenu du message provient EXCLUSIVEMENT du snapshot
+ * (`message_content_snapshot`), jamais d'une lecture live de `messages`. Ne
+ * reçoit que l'identité minimale (prénom) des profils concernés.
+ *
+ * L3F-C2B ajoute, par carte :
+ *  - l'HISTORIQUE append-only (composant serveur), rendu à partir des actions
+ *    déjà lues côté serveur ;
+ *  - les ACTIONS de traitement (composant client) UNIQUEMENT pour les statuts
+ *    non terminaux (`open` / `reviewing`). Le composant client ne reçoit que
+ *    `reportId` + `currentStatus` — aucune donnée sensible.
+ * La note de décision n'est pas dupliquée : elle est portée par l'historique.
  */
 
 const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
@@ -86,9 +98,11 @@ function Identity({
 export function SafetyReportsList({
   rows,
   nameById,
+  historyByReport,
 }: {
   rows: SafetyReportRow[];
   nameById: Map<string, string | null>;
+  historyByReport: Map<string, SafetyReportActionRow[]>;
 }) {
   if (rows.length === 0) {
     return (
@@ -170,6 +184,22 @@ export function SafetyReportsList({
               Relation associée supprimée.
             </p>
           ) : null}
+
+          {/* Historique append-only des décisions (présentation serveur) */}
+          <SafetyReportHistory actions={historyByReport.get(row.id) ?? []} />
+
+          {/* Traitement : actions pour open/reviewing ; sinon décision finale */}
+          {row.status === "open" || row.status === "reviewing" ? (
+            <SafetyReportActions reportId={row.id} currentStatus={row.status} />
+          ) : (
+            <p className="mt-3 border-t border-champagne-500/20 pt-3 text-xs text-ink-700/55">
+              Décision finale enregistrée :{" "}
+              <span className="font-medium text-choco-700">
+                {SAFETY_STATUS_LABELS[row.status]}
+              </span>
+              . Ce signalement ne peut plus être modifié.
+            </p>
+          )}
         </li>
       ))}
     </ul>
