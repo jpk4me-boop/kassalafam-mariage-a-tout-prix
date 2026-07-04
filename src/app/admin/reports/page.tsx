@@ -5,7 +5,10 @@ import { TriangleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUserId } from "@/lib/auth/admin";
-import type { SafetyReportRow } from "@/lib/types/database";
+import type {
+  SafetyReportRow,
+  SafetyReportActionRow,
+} from "@/lib/types/database";
 import {
   SAFETY_REPORT_FILTERS,
   type SafetyReportFilterKey,
@@ -108,6 +111,40 @@ export default async function AdminReportsPage({
       ? rows
       : rows.filter((r) => r.status === activeFilter);
 
+  // 3. Historique append-only (L3F-C2B) — lu côté SERVEUR (service_role) pour
+  //    les seuls signalements affichés. La lecture est COMPLÉMENTAIRE : un échec
+  //    n'empêche pas la consultation de la liste (dégradation propre). Jamais lu
+  //    depuis le navigateur.
+  const historyByReport = new Map<string, SafetyReportActionRow[]>();
+  if (!loadError && visibleRows.length > 0) {
+    try {
+      const admin = createAdminClient();
+      const ids = visibleRows.map((r) => r.id);
+
+      const { data, error } = await admin
+        .from("safety_report_actions")
+        .select(
+          "id, report_id, actor_id, actor_email_snapshot, previous_status, new_status, note, created_at",
+        )
+        .in("report_id", ids)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      for (const action of (data ?? []) as SafetyReportActionRow[]) {
+        const list = historyByReport.get(action.report_id) ?? [];
+        list.push(action);
+        historyByReport.set(action.report_id, list);
+      }
+    } catch (err) {
+      // Non bloquant : la liste read-only reste consultable sans l'historique.
+      console.error(
+        "[admin/reports] lecture historique échouée:",
+        err instanceof Error ? err.message : "erreur inconnue",
+      );
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -174,7 +211,11 @@ export default async function AdminReportsPage({
             })}
           </nav>
 
-          <SafetyReportsList rows={visibleRows} nameById={nameById} />
+          <SafetyReportsList
+            rows={visibleRows}
+            nameById={nameById}
+            historyByReport={historyByReport}
+          />
         </>
       )}
     </div>
