@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { Share2 } from "lucide-react";
+
 import { Logo } from "./logo";
 
 const FOOTER_COLUMNS = [
@@ -52,6 +55,13 @@ export function Footer() {
               foyer pour les Africains. Des rencontres sincères, dans un cadre
               respectueux.
             </p>
+            <Link
+              href="/partager"
+              className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full border border-champagne-400/30 bg-cream-100/5 px-5 py-2.5 text-sm font-semibold text-champagne-300 transition-colors hover:bg-champagne-400/15 hover:text-champagne-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-400/50"
+            >
+              <Share2 size={16} />
+              Partager KASSALAFAM
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
