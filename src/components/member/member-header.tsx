@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Share2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -52,6 +52,15 @@ export function MemberHeader() {
               </Link>
             ))}
           </nav>
+
+          <Link
+            href="/partager"
+            aria-label="Partager KASSALAFAM"
+            className="flex items-center gap-2 rounded-full border border-champagne-500/30 bg-cream-100/60 px-4 py-2 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-500/60"
+          >
+            <Share2 size={16} />
+            <span className="hidden sm:inline">Partager</span>
+          </Link>
 
           <button
             type="button"
