@@ -4,7 +4,7 @@
  *
  * Ordre de priorité :
  *   1. `NEXT_PUBLIC_SITE_URL` — variable PUBLIQUE (jamais un secret), à définir
- *      sur Vercel Production : https://kassalafam-mariage-a-tout-prix.vercel.app
+ *      sur Vercel Production : https://kassalafam.com
  *      En build de production, cette valeur est figée : les liens pointeront
  *      toujours vers la prod, même si l'inscription part d'un autre contexte.
  *   2. `window.location.origin` — repli raisonnable côté navigateur en dev.
