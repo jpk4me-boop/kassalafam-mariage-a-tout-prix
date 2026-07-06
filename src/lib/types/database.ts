@@ -33,6 +33,33 @@ export type ProfileVerificationStatus =
  */
 export type AccountStatus = "active" | "suspended";
 
+/**
+ * Onboarding « Comment nous as-tu découverts ? » — canal d'acquisition déclaré
+ * par le membre, à valeurs CONTRÔLÉES (doivent correspondre exactement au CHECK
+ * `profiles_acquisition_source_check` en base). Enregistré UNE SEULE FOIS
+ * (write-once) via la RPC [[record_acquisition_source]] : la première réponse est
+ * immuable, pour la fiabilité des futures statistiques d'acquisition.
+ */
+export type AcquisitionSource =
+  | "tiktok"
+  | "instagram"
+  | "facebook"
+  | "youtube"
+  | "whatsapp_recommendation"
+  | "google"
+  | "other";
+
+/**
+ * Résultat de la RPC `public.record_acquisition_source` :
+ *   - `recorded`         : première réponse enregistrée à l'instant ;
+ *   - `already_recorded` : une réponse DIFFÉRENTE existait déjà (conservée) ;
+ *   - `unchanged`        : réponse identique déjà enregistrée (idempotent).
+ */
+export type RecordAcquisitionSourceResult =
+  | "recorded"
+  | "already_recorded"
+  | "unchanged";
+
 export type ProfileRow = {
   id: string;
   first_name: string | null;
@@ -49,6 +76,17 @@ export type ProfileRow = {
   // Préférence volontaire d'espace de découverte (L3C-C). NULL = aucun choix.
   // Privée : jamais exposée aux autres membres dans cette phase.
   discovery_universe: DiscoveryUniverse | null;
+  // Onboarding « Comment nous as-tu découverts ? » — LECTURE SEULE côté membre.
+  // Write-once : posés une seule fois par la RPC record_acquisition_source, puis
+  // IMMUABLES. Protégés en base par le trigger trg_profiles_guard_acquisition_fields
+  // (toute écriture directe est rejetée). NULL tant qu'aucune réponse ; `*_other`
+  // n'est renseigné QUE si acquisition_source === "other" ; `*_recorded_at` sert
+  // de témoin « déjà répondu » (renseigné ⇔ acquisition_source non NULL).
+  // Volontairement ABSENTS de ProfileInsert / ProfileUpdate : le front ne peut
+  // (ni ne doit) les écrire via un upsert — la base rejetterait l'opération.
+  acquisition_source: AcquisitionSource | null;
+  acquisition_source_other: string | null;
+  acquisition_source_recorded_at: string | null;
   // Vérification admin — LECTURE SEULE côté membre.
   // Protégée en base par le trigger trg_profiles_guard_verification :
   // un membre ne peut jamais écrire ces champs. Ne jamais les inclure
@@ -82,6 +120,10 @@ export type ProfileInsert = {
   blur_photos?: boolean;
   is_premium?: boolean;
   discovery_universe?: DiscoveryUniverse | null;
+  // NB : acquisition_source / _other / _recorded_at sont VOLONTAIREMENT absents
+  // de Insert (et donc de Update). Ils sont write-once via la RPC
+  // record_acquisition_source et rejetés en écriture directe par un trigger de
+  // garde en base. Les inclure ici laisserait croire qu'un upsert peut les poser.
   // Réservés au back-office (service_role serveur). Le front membre ne doit
   // JAMAIS renseigner ces champs : ils sont rejetés par le trigger de garde
   // (verification_* ET account_* — L3F-C3A, INSERT + UPDATE).
@@ -538,6 +580,14 @@ export interface Database {
       list_my_relationships: {
         Args: Record<string, never>;
         Returns: RelationshipItem[];
+      };
+      // Onboarding — enregistrement WRITE-ONCE de la source d'acquisition du
+      // membre authentifié. p_other requis ⇔ p_source === "other". N'écrase
+      // jamais une première réponse. auth.uid() côté serveur ; aucun user_id
+      // accepté du client. Retourne recorded | already_recorded | unchanged.
+      record_acquisition_source: {
+        Args: { p_source: string; p_other?: string | null };
+        Returns: RecordAcquisitionSourceResult;
       };
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
       send_message: {
