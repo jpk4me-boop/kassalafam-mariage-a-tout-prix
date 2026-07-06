@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminUserId } from "@/lib/auth/admin";
+import { resolveAdminActor } from "@/lib/auth/admin-guard";
 import {
   type ActionResult,
   REJECTION_REASON_MIN,
@@ -54,26 +53,16 @@ async function createVerificationNotification(
  * trg_profiles_guard_verification qui bloque les membres. Aucune clé
  * service_role n'est jamais exposée au client (ces fonctions ne tournent
  * que côté serveur ; le Client Component n'en reçoit qu'une référence RPC).
+ *
+ * Le contrôle d'accès est délégué à `resolveAdminActor` (garde centralisée),
+ * qui inclut les super administrateurs.
  */
-
-async function requireAdmin(): Promise<
-  { adminId: string } | { error: string }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Session expirée. Reconnectez-vous." };
-  if (!isAdminUserId(user.id)) return { error: "Accès non autorisé." };
-  return { adminId: user.id };
-}
 
 export async function approveProfileAction(
   profileId: string,
 ): Promise<ActionResult> {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { ok: false, error: auth.error };
+  const auth = await resolveAdminActor();
+  if (!auth.ok) return { ok: false, error: auth.error };
   if (!profileId) return { ok: false, error: "Profil introuvable." };
 
   const admin = createAdminClient();
@@ -82,7 +71,7 @@ export async function approveProfileAction(
     .update({
       verification_status: "approved",
       verification_reviewed_at: new Date().toISOString(),
-      verification_reviewed_by: auth.adminId,
+      verification_reviewed_by: auth.actor.userId,
       verification_rejection_reason: null,
     })
     .eq("id", profileId);
@@ -100,8 +89,8 @@ export async function pauseProfileAction(
   profileId: string,
   reasonRaw: string,
 ): Promise<ActionResult> {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { ok: false, error: auth.error };
+  const auth = await resolveAdminActor();
+  if (!auth.ok) return { ok: false, error: auth.error };
   if (!profileId) return { ok: false, error: "Profil introuvable." };
 
   // Le motif de pause réutilise la colonne verification_rejection_reason
@@ -126,7 +115,7 @@ export async function pauseProfileAction(
     .update({
       verification_status: "paused",
       verification_reviewed_at: new Date().toISOString(),
-      verification_reviewed_by: auth.adminId,
+      verification_reviewed_by: auth.actor.userId,
       verification_rejection_reason: reason,
     })
     .eq("id", profileId);
@@ -144,8 +133,8 @@ export async function rejectProfileAction(
   profileId: string,
   reasonRaw: string,
 ): Promise<ActionResult> {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { ok: false, error: auth.error };
+  const auth = await resolveAdminActor();
+  if (!auth.ok) return { ok: false, error: auth.error };
   if (!profileId) return { ok: false, error: "Profil introuvable." };
 
   const reason = (reasonRaw ?? "").trim();
@@ -168,7 +157,7 @@ export async function rejectProfileAction(
     .update({
       verification_status: "rejected",
       verification_reviewed_at: new Date().toISOString(),
-      verification_reviewed_by: auth.adminId,
+      verification_reviewed_by: auth.actor.userId,
       verification_rejection_reason: reason,
     })
     .eq("id", profileId);

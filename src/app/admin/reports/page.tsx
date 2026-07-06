@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import { TriangleAlert } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminUserId } from "@/lib/auth/admin";
+import { requireAdmin } from "@/lib/auth/admin-guard";
 import type {
   SafetyReportRow,
   SafetyReportActionRow,
@@ -29,20 +27,8 @@ export default async function AdminReportsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  // 1. Authentification + contrôle admin — 100 % côté serveur (session anon).
-  //    Modèle identique à /admin/verification.
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?redirect=/admin/reports");
-  }
-  if (!isAdminUserId(user.id)) {
-    // 404 plutôt que 403 : ne révèle pas l'existence du back-office.
-    notFound();
-  }
+  // 1. Authentification + contrôle admin — 100 % côté serveur (garde centralisée).
+  await requireAdmin("/admin/reports");
 
   // Filtre issu de searchParams (NON fiable) : validé avant toute utilisation.
   const { status } = await searchParams;

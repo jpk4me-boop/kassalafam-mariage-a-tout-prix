@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminUserId } from "@/lib/auth/admin";
+import { resolveAdminActor } from "@/lib/auth/admin-guard";
 import {
   SAFETY_NOTE_MIN,
   SAFETY_NOTE_MAX,
@@ -33,20 +32,10 @@ import {
  * concurrence optimiste, tranchée en base). La base reste l'autorité finale ;
  * cette validation serveur ne fait que rejeter tôt les entrées invalides et
  * n'expose jamais l'erreur PostgreSQL brute.
+ *
+ * Le contrôle d'accès est délégué à `resolveAdminActor` (garde centralisée),
+ * qui inclut les super administrateurs.
  */
-
-async function requireAdmin(): Promise<
-  { adminId: string } | { error: string }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Session expirée. Reconnectez-vous." };
-  if (!isAdminUserId(user.id)) return { error: "Accès non autorisé." };
-  return { adminId: user.id };
-}
 
 export async function transitionSafetyReportAction(input: {
   reportId: string;
@@ -55,8 +44,8 @@ export async function transitionSafetyReportAction(input: {
   note: string;
 }): Promise<SafetyReportActionState> {
   // 1. Admin d'abord — avant toute création du client privilégié.
-  const auth = await requireAdmin();
-  if ("error" in auth) return { ok: false, error: auth.error };
+  const auth = await resolveAdminActor();
+  if (!auth.ok) return { ok: false, error: auth.error };
 
   const reportId = input.reportId;
   const expectedStatus = input.expectedStatus;
@@ -110,7 +99,7 @@ export async function transitionSafetyReportAction(input: {
     p_expected_status: expectedStatus,
     p_new_status: newStatus,
     p_note: note.length > 0 ? note : null,
-    p_actor_id: auth.adminId,
+    p_actor_id: auth.actor.userId,
   });
 
   if (error) {
