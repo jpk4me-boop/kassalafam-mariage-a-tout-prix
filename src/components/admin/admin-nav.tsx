@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart3, BadgeCheck, Flag } from "lucide-react";
+import {
+  LayoutDashboard,
+  BarChart3,
+  BadgeCheck,
+  Flag,
+  Users,
+  ScrollText,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -23,8 +30,10 @@ type AdminNavLink = {
 const ADMIN_LINKS: AdminNavLink[] = [
   { label: "Vue d’ensemble", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Statistiques", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Membres", href: "/admin/members", icon: Users },
   { label: "Vérification", href: "/admin/verification", icon: BadgeCheck },
   { label: "Signalements", href: "/admin/reports", icon: Flag },
+  { label: "Journal", href: "/admin/audit", icon: ScrollText },
 ];
 
 export function AdminNav() {

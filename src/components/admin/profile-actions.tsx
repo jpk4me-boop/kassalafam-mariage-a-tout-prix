@@ -10,7 +10,6 @@ import {
   pauseProfileAction,
 } from "@/app/admin/verification/actions";
 import {
-  REJECTION_REASON_MIN,
   REJECTION_REASON_MAX,
   REJECTION_REASONS,
   PAUSE_REASONS,
@@ -206,7 +205,7 @@ export function ProfileActions({
       return;
     }
     startTransition(async () => {
-      const res = await approveProfileAction(profileId);
+      const res = await approveProfileAction(profileId, status);
       if (!res.ok) setError(res.error);
     });
   }
@@ -224,7 +223,7 @@ export function ProfileActions({
       return;
     }
     startTransition(async () => {
-      const res = await rejectProfileAction(profileId, rejectFinal);
+      const res = await rejectProfileAction(profileId, rejectFinal, status);
       if (!res.ok) {
         setError(res.error);
       } else {
@@ -248,7 +247,7 @@ export function ProfileActions({
       return;
     }
     startTransition(async () => {
-      const res = await pauseProfileAction(profileId, pauseFinal);
+      const res = await pauseProfileAction(profileId, pauseFinal, status);
       if (!res.ok) {
         setError(res.error);
       } else {

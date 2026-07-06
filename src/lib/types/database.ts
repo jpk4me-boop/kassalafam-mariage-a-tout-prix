@@ -314,6 +314,88 @@ export type AccountModerationActionRow = {
   created_at: string;
 };
 
+/**
+ * L3G — Type d'action journalisée dans `public.admin_audit_log`. Pour l'instant
+ * une seule valeur : les décisions de VÉRIFICATION de profil (approve / reject /
+ * pause), seul historique administratif qui manquait. Les suspensions et le
+ * traitement des signalements possèdent leurs propres journaux immuables
+ * ([[account_moderation_actions]] / [[safety_report_actions]]) et ne sont PAS
+ * redupliqués ici.
+ */
+export type AdminAuditActionType = "verification_set";
+
+/**
+ * L3G — Ligne du journal APPEND-ONLY `public.admin_audit_log`, écrite
+ * EXCLUSIVEMENT par la RPC `admin_set_verification_status` (service_role).
+ * Immuable (trigger). LECTURE SEULE côté back-office.
+ *
+ * `new_status` est un `ProfileVerificationStatus` pour l'action
+ * `verification_set` (jamais `pending`). `target_profile_id` (FK) peut devenir
+ * NULL si le profil est supprimé ; `target_profile_id_snapshot` conserve la
+ * trace. `actor_id` peut devenir NULL si l'admin est supprimé ;
+ * `actor_email_snapshot` conserve alors l'identité de l'acteur.
+ */
+export type AdminAuditLogRow = {
+  id: string;
+  action_type: AdminAuditActionType;
+  actor_id: string | null;
+  actor_email_snapshot: string | null;
+  target_profile_id: string | null;
+  target_profile_id_snapshot: string;
+  previous_status: string | null;
+  new_status: string | null;
+  reason: string | null;
+  created_at: string;
+};
+
+/**
+ * L3G — Une ligne renvoyée par la RPC `public.admin_list_members` (service_role,
+ * SERVEUR uniquement). Projection de MODÉRATION : champs strictement utiles +
+ * agrégats calculés en base. Ne contient JAMAIS d'email (auth.users), de
+ * storage_path, de bio ni de contenu privé. `total_count` est identique sur
+ * toutes les lignes de la page (nombre total AVANT pagination).
+ */
+export type AdminMemberListItem = {
+  id: string;
+  first_name: string | null;
+  /** Email `auth.users` du membre, joint STRICTEMENT côté serveur par la RPC
+   *  `admin_list_members` (service_role). Rendu uniquement en contexte admin. */
+  email: string | null;
+  gender: Gender | null;
+  birth_date: string | null;
+  country: string | null;
+  city: string | null;
+  account_status: AccountStatus;
+  verification_status: ProfileVerificationStatus;
+  is_complete: boolean;
+  has_photo: boolean;
+  photos_count: number;
+  interests_count: number;
+  matches_count: number;
+  reports_count: number;
+  created_at: string;
+  updated_at: string;
+  total_count: number;
+};
+
+/**
+ * L3G — Une ligne renvoyée par la RPC `public.admin_list_audit_events` : un
+ * événement d'administration NORMALISÉ, issu de l'UNION des trois journaux
+ * immuables (vérification / compte / signalement), paginé et filtré EN BASE.
+ * `total_count` est identique sur toutes les lignes de la page.
+ */
+export type AdminAuditEventRow = {
+  source: "verification" | "account" | "report";
+  event_id: string;
+  actor_email: string | null;
+  target_profile_id: string | null;
+  previous_status: string | null;
+  new_status: string | null;
+  note: string | null;
+  created_at: string;
+  total_count: number;
+};
+
 export type MessageRow = {
   id: string;
   match_id: string;
@@ -423,6 +505,17 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // L3G — journal append-only des décisions administratives non journalisées
+      // ailleurs (vérification de profil). LECTURE SEULE côté back-office
+      // (service_role). Écriture uniquement via la RPC
+      // admin_set_verification_status ; jamais d'écriture directe via ce client
+      // typé (d'où Insert/Update = never). Immuable en base (trigger).
+      admin_audit_log: {
+        Row: AdminAuditLogRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -518,6 +611,61 @@ export interface Database {
           p_report_id?: string | null;
         };
         Returns: ProfileRow;
+      };
+      // L3G — décision de vérification transactionnelle (service_role
+      // uniquement). p_new_status ∈ approved|rejected|paused ; p_expected_status
+      // porte l'état vu par l'admin (concurrence optimiste). Motif obligatoire
+      // (5..500) pour rejected|paused, ignoré pour approved. Met à jour
+      // verification_* ET écrit une ligne admin_audit_log dans la MÊME
+      // transaction. L'email de l'acteur est relu depuis auth.users. Erreurs
+      // métier stables : PROFILE_NOT_FOUND, VERIFICATION_STATUS_CONFLICT,
+      // INVALID_VERIFICATION_STATUS, INVALID_VERIFICATION_TRANSITION,
+      // REASON_REQUIRED, REASON_LENGTH_INVALID, ACTOR_NOT_FOUND.
+      admin_set_verification_status: {
+        Args: {
+          p_profile_id: string;
+          p_expected_status: string;
+          p_new_status: string;
+          p_reason: string | null;
+          p_actor_id: string;
+        };
+        Returns: ProfileRow;
+      };
+      // L3G — lecture paginée des membres (service_role uniquement). Filtres,
+      // tri et agrégats par membre calculés en base ; total_count via fenêtre.
+      // Ne renvoie jamais d'email ni de contenu privé.
+      admin_list_members: {
+        Args: {
+          p_search?: string | null;
+          p_account_status?: string | null;
+          p_verification_status?: string | null;
+          p_completeness?: string | null;
+          p_has_photo?: string | null;
+          p_country?: string | null;
+          p_city?: string | null;
+          p_sort?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: AdminMemberListItem[];
+      };
+      // L3G — journal d'administration unifié, paginé EN BASE (UNION ALL des 3
+      // journaux immuables). service_role uniquement. Aucune duplication.
+      admin_list_audit_events: {
+        Args: {
+          p_source?: string | null;
+          p_actor?: string | null;
+          p_target?: string | null;
+          p_since?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: AdminAuditEventRow[];
+      };
+      // L3G — emails distincts des acteurs (filtre « administrateur » du journal).
+      admin_audit_actors: {
+        Args: Record<string, never>;
+        Returns: { actor_email: string }[];
       };
     };
     Enums: {
