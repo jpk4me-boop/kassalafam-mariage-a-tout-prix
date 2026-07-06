@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import { TriangleAlert } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminUserId } from "@/lib/auth/admin";
+import { requireAdmin } from "@/lib/auth/admin-guard";
 import type { ProfileVerificationStatus } from "@/lib/types/database";
 import {
   ProfileVerificationList,
@@ -43,19 +41,8 @@ export default async function AdminVerificationPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  // 1. Authentification + contrôle admin — 100% côté serveur (session anon).
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?redirect=/admin/verification");
-  }
-  if (!isAdminUserId(user.id)) {
-    // 404 plutôt que 403 : ne révèle pas l'existence du back-office.
-    notFound();
-  }
+  // 1. Authentification + contrôle admin — 100% côté serveur (garde centralisée).
+  await requireAdmin("/admin/verification");
 
   const { status } = await searchParams;
   const activeFilter: FilterKey = isFilterKey(status) ? status : "all";

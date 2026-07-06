@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Share2 } from "lucide-react";
+import { LogOut, Share2, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -15,7 +15,11 @@ const MEMBER_LINKS = [
   { label: "Mon profil", href: "/profile" },
 ];
 
-export function MemberHeader() {
+/**
+ * `isAdmin` est calculé CÔTÉ SERVEUR (member layout) puis passé en prop : ce
+ * composant client ne voit qu'un booléen, jamais un UUID d'administrateur.
+ */
+export function MemberHeader({ isAdmin = false }: { isAdmin?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
@@ -52,6 +56,17 @@ export function MemberHeader() {
               </Link>
             ))}
           </nav>
+
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              aria-label="Administration KASSALAFAM"
+              className="flex items-center gap-2 rounded-full border border-choco-600/30 bg-choco-600/10 px-4 py-2 text-sm font-semibold text-choco-700 transition-colors hover:bg-choco-600/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-500/60"
+            >
+              <ShieldCheck size={16} />
+              <span className="hidden sm:inline">Administration</span>
+            </Link>
+          ) : null}
 
           <Link
             href="/partager"
