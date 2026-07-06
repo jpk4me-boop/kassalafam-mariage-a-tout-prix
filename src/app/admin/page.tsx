@@ -59,30 +59,31 @@ const CARDS: AdminCard[] = [
   {
     title: "Membres et profils",
     description:
-      "Recherche et fiche détaillée des membres. Prochaine étape du back-office.",
+      "Recherche paginée, filtres, tri et fiche détaillée. Suspension et vérification depuis la fiche.",
+    href: "/admin/members",
     icon: Users,
-    available: false,
+    available: true,
+  },
+  {
+    title: "Journal d’administration",
+    description:
+      "Flux unifié et horodaté des actions de modération (vérification, suspension, signalements).",
+    href: "/admin/audit",
+    icon: ScrollText,
+    available: true,
   },
   {
     title: "Modération des comptes",
     description:
-      "Suspension et réactivation des comptes. Back-end prêt ; interface à venir.",
+      "Suspension et réactivation des comptes désormais accessibles depuis la fiche d’un membre.",
+    href: "/admin/members",
     icon: UserCog,
-    available: false,
-    superAdminOnly: true,
+    available: true,
   },
   {
     title: "Paramètres de la plateforme",
     description: "Réglages généraux et administration système. À venir.",
     icon: Settings,
-    available: false,
-    superAdminOnly: true,
-  },
-  {
-    title: "Journal d’administration",
-    description:
-      "Historique horodaté des actions de modération. À venir (données déjà journalisées).",
-    icon: ScrollText,
     available: false,
     superAdminOnly: true,
   },

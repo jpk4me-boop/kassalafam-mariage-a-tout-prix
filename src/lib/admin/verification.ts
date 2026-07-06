@@ -4,7 +4,9 @@
  * peut exporter que des fonctions async.
  */
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; error: string; code?: string };
 
 /** Bornes du motif de rejet — cohérentes avec la contrainte DB
  *  profiles_rejection_reason_len (<= 500). */
@@ -49,3 +51,62 @@ export const PAUSE_REASONS = [
   "Cohérence du profil à vérifier",
   "Attente d’un complément fourni par le membre",
 ] as const;
+
+/* -------------------------------------------------------------------------- */
+/* L3G — Transition de vérification transactionnelle (RPC                      */
+/* admin_set_verification_status). Helpers PURS (client + serveur) reflétant   */
+/* EXACTEMENT les règles de la fonction backend. La base reste l'autorité.     */
+/* -------------------------------------------------------------------------- */
+
+/** Statuts cibles qu'un admin peut poser (jamais `pending` : état membre). */
+export type VerificationTargetStatus = "approved" | "rejected" | "paused";
+
+/** Garde de type sur une cible de vérification (searchParams / formulaire). */
+export function isVerificationTargetStatus(
+  value: string | null | undefined,
+): value is VerificationTargetStatus {
+  return value === "approved" || value === "rejected" || value === "paused";
+}
+
+/** Une décision de vérification exige-t-elle un motif (rejected / paused) ? */
+export function verificationReasonRequired(
+  target: VerificationTargetStatus,
+): boolean {
+  return target === "rejected" || target === "paused";
+}
+
+/** Message FR générique (aucune erreur PostgreSQL brute exposée). */
+export const VERIFICATION_ERROR_FALLBACK =
+  "Une erreur est survenue pendant la mise à jour de la vérification.";
+
+/**
+ * Mapping des erreurs MÉTIER STABLES de `admin_set_verification_status` vers des
+ * messages FR. Toute autre erreur retombe sur VERIFICATION_ERROR_FALLBACK — la
+ * chaîne PostgreSQL brute n'est jamais renvoyée au navigateur.
+ */
+export const VERIFICATION_ERROR_MESSAGES: Record<string, string> = {
+  PROFILE_NOT_FOUND: "Ce profil n’existe plus.",
+  VERIFICATION_STATUS_CONFLICT:
+    "Ce profil a été modifié par un autre administrateur. La page va être actualisée.",
+  INVALID_VERIFICATION_STATUS: "Ce statut de vérification n’est pas valide.",
+  INVALID_VERIFICATION_TRANSITION:
+    "Cette transition de statut n’est pas autorisée.",
+  REASON_REQUIRED: "Un motif est obligatoire pour cette décision.",
+  REASON_LENGTH_INVALID: "Le motif doit contenir entre 5 et 500 caractères.",
+  ACTOR_NOT_FOUND: "Le compte administrateur n’a pas pu être identifié.",
+};
+
+/**
+ * Traduit un message d'exception plpgsql en message FR + code stable éventuel.
+ * Le `code` n'est renvoyé QUE pour les erreurs métier connues (jamais un SQLSTATE
+ * ni un détail interne).
+ */
+export function mapVerificationError(raw: string | null | undefined): {
+  message: string;
+  code?: string;
+} {
+  if (raw && raw in VERIFICATION_ERROR_MESSAGES) {
+    return { message: VERIFICATION_ERROR_MESSAGES[raw], code: raw };
+  }
+  return { message: VERIFICATION_ERROR_FALLBACK };
+}
