@@ -370,3 +370,19 @@ drop trigger if exists trg_profiles_guard_acquisition_fields on public.profiles;
 create trigger trg_profiles_guard_acquisition_fields
   before insert or update on public.profiles
   for each row execute function public.guard_profile_acquisition_fields();
+
+-- ---------------------------------------------------------------------------
+-- 8. Privilèges de table minimaux pour le rôle `authenticated`.
+--    Les policies RLS de public.profiles (profiles_insert_own /
+--    profiles_update_own / lecture du profil) ne s'appliquent QU'À un rôle
+--    disposant déjà des privilèges de table correspondants : RLS restreint,
+--    mais n'accorde jamais l'accès. Sans ce GRANT, un environnement local
+--    reconstruit à partir des migrations seules ne pourrait ni lire ni écrire
+--    le profil → migrations non reproductibles hors Production.
+--    Périmètre volontairement minimal : SELECT/INSERT/UPDATE au seul rôle
+--    `authenticated`. Aucun droit à `anon`. Pas de DELETE/TRUNCATE/REFERENCES/
+--    TRIGGER.
+-- ---------------------------------------------------------------------------
+grant select, insert, update
+on table public.profiles
+to authenticated;

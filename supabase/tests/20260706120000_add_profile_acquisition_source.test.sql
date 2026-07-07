@@ -368,8 +368,8 @@ select set_config('request.jwt.claims', json_build_object('role','anon')::text, 
 select public._acq_cap_rpc('instagram', null);
 reset role;
 select is(current_setting('test.state', true), '42501', 'anon : appel RPC refusé (SQLSTATE 42501)');
-select matches(current_setting('test.err', true), 'permission denied',
-  'anon : message « permission denied » sur la RPC');
+select matches(current_setting('test.err', true), 'not authenticated',
+  'anon : message « not authenticated » sur la RPC');
 
 -- Erreurs de validation sous l'utilisateur V (authentifié). Aucune ne crée de ligne.
 -- T38 : source inconnue
