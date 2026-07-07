@@ -60,6 +60,50 @@ export type RecordAcquisitionSourceResult =
   | "already_recorded"
   | "unchanged";
 
+/**
+ * Champs matrimoniaux étendus du wizard d'onboarding (migration
+ * 20260707090000_add_profile_extended_matrimonial_fields). Colonnes `text`
+ * contraintes par CHECK côté base (PAS des enums PostgreSQL) : ces unions
+ * TypeScript DOIVENT rester alignées sur les valeurs autorisées par la
+ * migration. Toutes librement éditables par le membre (upsert direct de sa
+ * propre ligne), contrairement aux champs write-once / admin.
+ */
+export type EducationLevel =
+  | "secondary"
+  | "high_school"
+  | "bachelor"
+  | "master"
+  | "doctorate"
+  | "vocational"
+  | "other";
+
+/** marriage_goals : 2 à 3 valeurs UNIQUES de cette liste (contrainte base). */
+export type MarriageGoal =
+  | "build_family"
+  | "stable_home"
+  | "life_partner"
+  | "grow_together"
+  | "mutual_support"
+  | "serenity";
+
+/** desired_partner_traits : 2 à 3 valeurs UNIQUES de cette liste (contrainte base). */
+export type PartnerTrait =
+  | "kindness"
+  | "sincerity"
+  | "ambition"
+  | "family_oriented"
+  | "cultured"
+  | "sense_of_humor"
+  | "calm_mature";
+
+export type PolygamyPreference = "yes" | "no" | "discuss";
+
+export type ChildrenIntent =
+  | "wants_children"
+  | "does_not_want_children"
+  | "has_children"
+  | "discuss";
+
 export type ProfileRow = {
   id: string;
   first_name: string | null;
@@ -71,6 +115,18 @@ export type ProfileRow = {
   intention: string;
   bio: string | null;
   partner_expectations: string | null;
+  // Champs matrimoniaux étendus (wizard d'onboarding) — LIBREMENT éditables par
+  // le membre via upsert. NULL pour les profils historiques. Valeurs contrôlées
+  // par CHECK en base (voir 20260707090000_add_profile_extended_matrimonial_fields).
+  profession: string | null;
+  education_level: EducationLevel | null;
+  height_cm: number | null;
+  origin_country: string | null;
+  region: string | null;
+  marriage_goals: MarriageGoal[] | null;
+  desired_partner_traits: PartnerTrait[] | null;
+  polygamy_preference: PolygamyPreference | null;
+  children_intent: ChildrenIntent | null;
   blur_photos: boolean;
   is_premium: boolean;
   // Préférence volontaire d'espace de découverte (L3C-C). NULL = aucun choix.
@@ -117,6 +173,16 @@ export type ProfileInsert = {
   intention?: string;
   bio?: string | null;
   partner_expectations?: string | null;
+  // Champs matrimoniaux étendus (wizard d'onboarding) — écrivables par le membre.
+  profession?: string | null;
+  education_level?: EducationLevel | null;
+  height_cm?: number | null;
+  origin_country?: string | null;
+  region?: string | null;
+  marriage_goals?: MarriageGoal[] | null;
+  desired_partner_traits?: PartnerTrait[] | null;
+  polygamy_preference?: PolygamyPreference | null;
+  children_intent?: ChildrenIntent | null;
   blur_photos?: boolean;
   is_premium?: boolean;
   discovery_universe?: DiscoveryUniverse | null;
