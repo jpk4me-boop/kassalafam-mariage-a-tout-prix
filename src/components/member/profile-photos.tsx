@@ -54,13 +54,19 @@ export type ProfilePhotosState = { count: number; hasPrimary: boolean };
  *                    d'upload / storage reste STRICTEMENT identique (aucune
  *                    duplication).
  * @param onStateChange notifié après chaque (re)chargement des photos.
+ * @param onBusyChange notifié quand une opération photo (upload / changement de
+ *                    principale / suppression) démarre ou se termine. Permet au
+ *                    wizard de masquer « Continuer plus tard » pendant une
+ *                    écriture en cours. N'altère aucune logique de stockage.
  */
 export function ProfilePhotos({
   bare = false,
   onStateChange,
+  onBusyChange,
 }: {
   bare?: boolean;
   onStateChange?: (state: ProfilePhotosState) => void;
+  onBusyChange?: (busy: boolean) => void;
 } = {}) {
   const [status, setStatus] = useState<Status>("loading");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -137,6 +143,12 @@ export function ProfilePhotos({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void reload();
   }, []);
+
+  // Reporte l'état d'occupation au parent (lecture seule d'un état déjà géré
+  // ici) : aucune écriture, aucune modification de la logique de stockage.
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   function triggerFilePicker() {
     if (busy) return;

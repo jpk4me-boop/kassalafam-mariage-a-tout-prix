@@ -119,6 +119,15 @@ export function OnboardingWizard({
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(initialStep);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Une opération photo (upload / principale / suppression) est en cours à
+  // l'étape 8. Sert uniquement à masquer « Continuer plus tard » pour ne pas
+  // interrompre une écriture Storage/DB en cours.
+  const [photoBusy, setPhotoBusy] = useState(false);
+  // Source d'acquisition déjà enregistrée : vraie dès le montage pour un profil
+  // repris au-delà de l'étape 1, sinon posée à true quand l'étape 1 aboutit.
+  const [acquisitionRecorded, setAcquisitionRecorded] = useState(
+    () => initialProfile.acquisition_source_recorded_at != null,
+  );
 
   function update<K extends keyof WizardForm>(key: K, value: WizardForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -309,6 +318,19 @@ export function OnboardingWizard({
   const showBack = currentStep >= 2;
   const isLastStep = currentStep === ONBOARDING_TOTAL_STEPS;
 
+  // Échappatoire « Continuer plus tard » : uniquement en parcours complet, sur
+  // les étapes de profil (après l'acquisition déjà enregistrée), jamais pendant
+  // une sauvegarde ni une opération photo. Le clic ne fait que rediriger vers la
+  // destination sûre déjà résolue — aucune écriture, aucune RPC.
+  const photoOpInProgress = currentStep === 8 && photoBusy;
+  const canContinueLater =
+    mode === "full" &&
+    phase === "steps" &&
+    currentStep > 1 &&
+    acquisitionRecorded &&
+    !busy &&
+    !photoOpInProgress;
+
   return (
     <OnboardingShell>
       <OnboardingProgress step={currentStep} />
@@ -324,7 +346,10 @@ export function OnboardingWizard({
           // L'étape acquisition porte son propre bouton (appel RPC) ; pas de
           // pied de page générique, et pas de bouton retour (première étape).
           <AcquisitionStep
-            onRecorded={() => setCurrentStep(2)}
+            onRecorded={() => {
+              setAcquisitionRecorded(true);
+              setCurrentStep(2);
+            }}
             disabled={busy}
           />
         ) : (
@@ -393,45 +418,64 @@ export function OnboardingWizard({
               <PhotosStep
                 hasPrimary={photoState.hasPrimary}
                 onStateChange={setPhotoState}
+                onBusyChange={setPhotoBusy}
               />
             ) : null}
 
-            <div className="mt-7 flex items-center gap-3">
-              {showBack ? (
+            <div className="mt-7 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                {showBack ? (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-champagne-500/40 bg-cream-50/60 px-5 py-3 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <ArrowLeft size={16} />
+                    Retour
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
-                  onClick={handleBack}
-                  disabled={busy}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-champagne-500/40 bg-cream-50/60 px-5 py-3 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={handleNext}
+                  disabled={busy || !isStepValid(currentStep)}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-6 py-3 text-sm font-semibold text-cream-50 shadow-[0_14px_34px_-14px_rgba(43,26,18,0.85)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
-                  <ArrowLeft size={16} />
-                  Retour
+                  {busy ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Enregistrement…
+                    </>
+                  ) : isLastStep ? (
+                    <>
+                      <Send size={16} />
+                      Envoyer mon profil
+                    </>
+                  ) : (
+                    <>
+                      Continuer
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
-              ) : null}
+              </div>
 
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={busy || !isStepValid(currentStep)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-6 py-3 text-sm font-semibold text-cream-50 shadow-[0_14px_34px_-14px_rgba(43,26,18,0.85)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-              >
-                {busy ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Enregistrement…
-                  </>
-                ) : isLastStep ? (
-                  <>
-                    <Send size={16} />
-                    Envoyer mon profil
-                  </>
-                ) : (
-                  <>
-                    Continuer
-                    <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
+              {canContinueLater ? (
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <button
+                    type="button"
+                    onClick={goToDestination}
+                    disabled={busy || photoOpInProgress}
+                    className="rounded-full px-4 py-2 text-sm font-medium text-choco-700/75 underline-offset-4 transition-colors hover:text-choco-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-400/50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Continuer plus tard
+                  </button>
+                  <p className="text-xs text-ink-700/55">
+                    Les étapes déjà validées sont enregistrées.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </>
         )}

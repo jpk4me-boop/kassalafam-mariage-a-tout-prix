@@ -16,9 +16,11 @@ import { StepShell } from "@/components/onboarding/step-shell";
 export function PhotosStep({
   hasPrimary,
   onStateChange,
+  onBusyChange,
 }: {
   hasPrimary: boolean;
   onStateChange: (state: ProfilePhotosState) => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   return (
     <StepShell
@@ -40,7 +42,11 @@ export function PhotosStep({
         </div>
       ) : null}
 
-      <ProfilePhotos bare onStateChange={onStateChange} />
+      <ProfilePhotos
+        bare
+        onStateChange={onStateChange}
+        onBusyChange={onBusyChange}
+      />
     </StepShell>
   );
 }
