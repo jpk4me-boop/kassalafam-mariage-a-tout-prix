@@ -129,6 +129,13 @@ export function firstIncompleteStep(
   return null;
 }
 
+/** Colonnes « cœur » seules : sous-ensemble minimal suffisant pour
+ *  `isCoreComplete`, permettant au middleware un SELECT allégé. */
+export type CoreProfileData = Pick<
+  OnboardingProfileData,
+  "gender" | "birth_date" | "marital_status" | "country" | "city"
+>;
+
 /**
  * Complétude « CŒUR historique » : les informations d'identité matrimoniale qui
  * existaient AVANT les champs étendus (genre, naissance, situation, résidence)
@@ -138,7 +145,7 @@ export function firstIncompleteStep(
  * déjà présent et n'ayant qu'à répondre à la question d'acquisition.
  */
 export function isCoreComplete(
-  profile: OnboardingProfileData,
+  profile: CoreProfileData,
   hasPrimaryPhoto: boolean,
 ): boolean {
   return (

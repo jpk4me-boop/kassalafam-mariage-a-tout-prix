@@ -1,6 +1,8 @@
 ﻿import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { isCoreComplete } from "@/lib/onboarding/completion";
+import { CONTINUE_LATER_COOKIE } from "@/lib/onboarding/continue-later";
 import type { Database } from "@/lib/types/database";
 
 /** Routes réservées aux utilisateurs connectés (membres + back-office admin).
@@ -18,17 +20,19 @@ const PROTECTED_PREFIXES = [
 const AUTH_PREFIXES = ["/login", "/register"];
 
 /**
- * Routes du parcours membre soumises à la garde d'onboarding « Comment nous
- * as-tu découverts ? ». Un membre authentifié n'ayant pas encore enregistré sa
- * source d'acquisition (colonne write-once NULL, y compris les comptes
- * historiques) y est redirigé UNE fois vers /onboarding, avec la destination
- * initialement demandée. Volontairement hors périmètre :
+ * Routes du parcours membre soumises à la garde d'onboarding. Un membre
+ * authentifié y est redirigé vers /onboarding (avec la destination initialement
+ * demandée) tant que :
+ *   - sa source d'acquisition (colonne write-once) est NULL — sans échappatoire,
+ *     y compris pour les comptes historiques ; OU
+ *   - son profil « cœur » est incomplet (mode `full` du wizard, reprise à la
+ *     première étape incomplète) — SAUF si le cookie de session
+ *     « Continuer plus tard » posé par le wizard est présent.
+ * Volontairement hors périmètre :
  *   - /onboarding lui-même (anti-boucle) ;
  *   - /admin (accès back-office, hors parcours membre) ;
- *   - /profile : un nouvel inscrit y est envoyé juste après l'inscription pour
- *     configurer son profil ; on ne l'interrompt pas. La question précède
- *     l'accès normal (tableau de bord / découverte / mises en relation), ce qui
- *     couvre aussi les comptes historiques à leur prochaine navigation.
+ *   - /profile : page de MODIFICATION ultérieure du profil, jamais le parcours
+ *     initial d'inscription (celui-ci passe par /onboarding).
  */
 const ONBOARDING_GATE_PREFIXES = ["/dashboard", "/discover", "/matches"];
 
@@ -98,31 +102,59 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Garde d'onboarding : un membre authentifié atteignant une route du parcours
-  // membre doit d'abord avoir répondu à « Comment nous as-tu découverts ? ». On
-  // ne lit le profil (un SELECT indexé sur la PK) que sur ces routes, pour ne
-  // pas alourdir les autres requêtes. La source étant write-once, dès qu'elle
-  // est enregistrée cette redirection ne se déclenche plus.
+  // membre doit avoir répondu à « Comment nous as-tu découverts ? » ET terminé
+  // son profil cœur (sauf échappatoire « Continuer plus tard »). On ne lit le
+  // profil (un SELECT indexé sur la PK) que sur ces routes, pour ne pas alourdir
+  // les autres requêtes ; le SELECT photos n'est payé que si les colonnes cœur
+  // sont déjà toutes remplies.
   if (user && ONBOARDING_GATE_PREFIXES.some((p) => matchesRoute(pathname, p))) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("acquisition_source_recorded_at")
+      .select(
+        "acquisition_source_recorded_at, gender, birth_date, marital_status, country, city",
+      )
       .eq("id", user.id)
       .maybeSingle();
 
     // Fail-open : sur erreur Supabase (réseau, indisponibilité…), on NE bloque
     // PAS le membre — on le laisse poursuivre plutôt que de le piéger dans une
     // redirection. La garde se réappliquera à la prochaine navigation.
-    if (!profileError && !profile?.acquisition_source_recorded_at) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/onboarding";
-      redirectUrl.search = "";
-      // Destination initialement demandée (chemin + éventuels paramètres),
-      // restituée après enregistrement de la source.
-      redirectUrl.searchParams.set(
-        "redirect",
-        `${pathname}${request.nextUrl.search}`,
-      );
-      return NextResponse.redirect(redirectUrl);
+    if (!profileError) {
+      // Acquisition write-once : bloquante tant que NULL, sans échappatoire.
+      let needsOnboarding = !profile?.acquisition_source_recorded_at;
+
+      // Complétude profil : bloquante en mode `full`, SAUF si le wizard a posé
+      // le cookie de session « Continuer plus tard ».
+      const continueLater =
+        request.cookies.get(CONTINUE_LATER_COOKIE)?.value === "1";
+      if (!needsOnboarding && !continueLater && profile) {
+        if (!isCoreComplete(profile, true)) {
+          needsOnboarding = true;
+        } else {
+          const { data: primaryPhoto, error: photoError } = await supabase
+            .from("photos")
+            .select("id")
+            .eq("profile_id", user.id)
+            .eq("is_primary", true)
+            .limit(1)
+            .maybeSingle();
+          // Même fail-open que pour le profil : sur erreur, on laisse passer.
+          needsOnboarding = !photoError && primaryPhoto == null;
+        }
+      }
+
+      if (needsOnboarding) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/onboarding";
+        redirectUrl.search = "";
+        // Destination initialement demandée (chemin + éventuels paramètres),
+        // restituée après l'onboarding (ou « Continuer plus tard »).
+        redirectUrl.searchParams.set(
+          "redirect",
+          `${pathname}${request.nextUrl.search}`,
+        );
+        return NextResponse.redirect(redirectUrl);
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import {
   type OnboardingProfileData,
   type OnboardingStep,
 } from "@/lib/onboarding/completion";
+import { setContinueLaterCookie } from "@/lib/onboarding/continue-later";
 import { formFromProfile, type WizardForm } from "@/lib/onboarding/form";
 import {
   CHOICE_SET_MAX,
@@ -320,8 +321,10 @@ export function OnboardingWizard({
 
   // Échappatoire « Continuer plus tard » : uniquement en parcours complet, sur
   // les étapes de profil (après l'acquisition déjà enregistrée), jamais pendant
-  // une sauvegarde ni une opération photo. Le clic ne fait que rediriger vers la
-  // destination sûre déjà résolue — aucune écriture, aucune RPC.
+  // une sauvegarde ni une opération photo. Le clic pose le cookie de session lu
+  // par la garde middleware (sinon celle-ci renverrait aussitôt vers le wizard)
+  // puis redirige vers la destination sûre déjà résolue — aucune écriture base,
+  // aucune RPC.
   const photoOpInProgress = currentStep === 8 && photoBusy;
   const canContinueLater =
     mode === "full" &&
@@ -465,7 +468,10 @@ export function OnboardingWizard({
                 <div className="flex flex-col items-center gap-1 text-center">
                   <button
                     type="button"
-                    onClick={goToDestination}
+                    onClick={() => {
+                      setContinueLaterCookie();
+                      goToDestination();
+                    }}
                     disabled={busy || photoOpInProgress}
                     className="rounded-full px-4 py-2 text-sm font-medium text-choco-700/75 underline-offset-4 transition-colors hover:text-choco-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-400/50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
