@@ -11,7 +11,7 @@
  * simulées — elles sont documentées comme indisponibles (voir UNAVAILABLE_METRICS).
  */
 
-import { isProfileComplete } from "@/lib/profile";
+import { hasEssentialProfileInfo } from "@/lib/profile";
 import type {
   ProfileRow,
   MatchStatus,
@@ -266,7 +266,7 @@ export function computeAnalytics(
   // === A. Membres (instantané, sauf fenêtres fixes 7j/30j) ====================
   let complete = 0;
   for (const p of profiles) {
-    if (isProfileComplete(p as unknown as ProfileRow)) complete += 1;
+    if (hasEssentialProfileInfo(p as unknown as ProfileRow)) complete += 1;
   }
   const countVerif = (s: ProfileVerificationStatus) =>
     profiles.filter((p) => p.verification_status === s).length;
@@ -368,7 +368,7 @@ export function computeAnalytics(
     {
       key: "complete",
       label: "Profil complété",
-      count: cohort.filter((p) => isProfileComplete(p as unknown as ProfileRow))
+      count: cohort.filter((p) => hasEssentialProfileInfo(p as unknown as ProfileRow))
         .length,
     },
     {

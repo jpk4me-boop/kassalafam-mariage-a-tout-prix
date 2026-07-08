@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import { isProfileComplete } from "@/lib/profile";
+import { isProfileDataComplete } from "@/lib/onboarding/completion";
 import type { ProfileRow, ProfileVerificationStatus } from "@/lib/types/database";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { MemberNotificationsPanel } from "@/components/member/member-notifications-panel";
@@ -42,16 +42,27 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser();
       if (!user) return; // Le middleware redirige normalement déjà.
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Complétude DYNAMIQUE canonique (mêmes règles que le wizard) : profil
+      // + existence d'une photo principale. Indépendante du marqueur
+      // d'onboarding : un membre peut redevenir incomplet via /profile sans
+      // que son parcours initial rouvre.
+      const [{ data }, { data: primaryPhoto }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("photos")
+          .select("id")
+          .eq("profile_id", user.id)
+          .eq("is_primary", true)
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
       if (!active) return;
       const profile = (data as ProfileRow | null) ?? null;
       setFirstName(profile?.first_name ?? null);
-      setComplete(isProfileComplete(profile));
+      setComplete(
+        profile != null && isProfileDataComplete(profile, primaryPhoto != null),
+      );
       setBlurPhotos(profile?.blur_photos ?? true);
       setVerificationStatus(profile?.verification_status ?? "pending");
       setAcquisitionRecorded(profile?.acquisition_source_recorded_at != null);
