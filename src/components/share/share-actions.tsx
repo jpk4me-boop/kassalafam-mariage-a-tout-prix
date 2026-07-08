@@ -333,7 +333,7 @@ export function ShareActions({
           </button>
         </div>
 
-        {/* Un accès aux autres options reste toujours visible, même quand le
+        {/* Un accès au partage sur les réseaux reste toujours visible, même quand le
             partage natif est disponible. */}
         {canNativeShare ? (
           <button
@@ -344,7 +344,7 @@ export function ShareActions({
             aria-controls={panelId}
             className={cn(BTN_BASE, BTN_SECONDARY, "w-full")}
           >
-            Autres options
+            Partager sur les réseaux
             <ChevronDown
               size={16}
               className={cn("transition-transform", open && "rotate-180")}
@@ -356,12 +356,12 @@ export function ShareActions({
           <div
             id={panelId}
             role="region"
-            aria-label="Autres options de partage"
+            aria-label="Partager sur les réseaux sociaux"
             className="rounded-2xl border border-champagne-500/30 bg-cream-50/70 p-3"
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-choco-700">
-                Partager le lien d&apos;inscription
+                Partager sur les réseaux
               </span>
               <button
                 ref={closeBtnRef}
