@@ -37,6 +37,7 @@ import {
   ORIGIN_COUNTRY_MAX,
   PROFESSION_MAX,
   PROFESSION_MIN,
+  PROFILE_TEXT_MAX,
   REGION_MAX,
 } from "@/lib/onboarding/options";
 import { Logo } from "@/components/landing/logo";
@@ -94,6 +95,7 @@ export function OnboardingWizard({
   mode,
   userId,
   initialProfile,
+  firstNameSuggestion,
   hasPrimaryPhoto,
   redirectTo,
 }: {
@@ -102,13 +104,16 @@ export function OnboardingWizard({
    *  « Continuer plus tard » au compte courant (jamais affiché). */
   userId: string;
   initialProfile: OnboardingProfileData;
+  /** Suggestion de prénom (métadonnées Auth) : préremplit le champ de
+   *  l'étape 2 quand la base n'a rien ; jamais utilisée pour la complétude. */
+  firstNameSuggestion?: string | null;
   hasPrimaryPhoto: boolean;
   redirectTo: string;
 }) {
   const router = useRouter();
 
   const [form, setForm] = useState<WizardForm>(() =>
-    formFromProfile(initialProfile),
+    formFromProfile(initialProfile, firstNameSuggestion),
   );
   const [photoState, setPhotoState] = useState<ProfilePhotosState>(() => ({
     count: hasPrimaryPhoto ? 1 : 0,
@@ -116,10 +121,12 @@ export function OnboardingWizard({
   }));
 
   // Étape de reprise + affichage de l'intro, calculés une seule fois au montage
-  // depuis la complétude serveur (source de vérité unique).
+  // depuis la complétude serveur (source de vérité unique). Toutes les données
+  // présentes mais marqueur absent (sinon le Server Component aurait redirigé)
+  // → reprise à l'étape 8 pour le clic final explicite « Envoyer mon profil ».
   const [{ initialStep, showIntro }] = useState(() => {
     const completion = computeStepCompletion(initialProfile, hasPrimaryPhoto);
-    const first = firstIncompleteStep(completion) ?? 1;
+    const first = firstIncompleteStep(completion) ?? ONBOARDING_TOTAL_STEPS;
     return { initialStep: first, showIntro: first === 1 };
   });
 
@@ -159,10 +166,24 @@ export function OnboardingWizard({
     });
   }
 
-  /** Sortie « wizard terminé » : le cookie n'a plus de raison d'être. */
-  function finishAndGoToDestination() {
+  /**
+   * FIN EXPLICITE du parcours : la RPC serveur revérifie toutes les exigences
+   * (acquisition, champs requis, photo principale) et pose le marqueur
+   * write-once `onboarding_completed_at`. Succès → cookie « Continuer plus
+   * tard » supprimé puis écran de confirmation. Échec → erreur récupérable
+   * (le membre reste sur place et peut réessayer).
+   */
+  async function finalizeOnboarding(): Promise<boolean> {
+    const supabase = createClient();
+    const { error: rpcError } = await supabase.rpc("complete_member_onboarding");
+    if (rpcError) {
+      setError(
+        "L’envoi de votre profil n’a pas abouti. Vérifiez votre connexion puis réessayez.",
+      );
+      return false;
+    }
     clearContinueLaterCookie();
-    goToDestination();
+    return true;
   }
 
   // ---- Validation par étape (miroir des contraintes base) -------------------
@@ -171,7 +192,7 @@ export function OnboardingWizard({
       case 1:
         return true; // gérée par AcquisitionStep (RPC).
       case 2:
-        return form.gender !== "";
+        return form.first_name.trim().length > 0 && form.gender !== "";
       case 3:
         return isAdultBirthDate(form.birth_date);
       case 4:
@@ -205,7 +226,11 @@ export function OnboardingWizard({
           form.desired_partner_traits.length >= CHOICE_SET_MIN &&
           form.desired_partner_traits.length <= CHOICE_SET_MAX &&
           form.polygamy_preference !== "" &&
-          form.children_intent !== ""
+          form.children_intent !== "" &&
+          form.bio.trim().length > 0 &&
+          form.bio.length <= PROFILE_TEXT_MAX &&
+          form.partner_expectations.trim().length > 0 &&
+          form.partner_expectations.length <= PROFILE_TEXT_MAX
         );
       case 8:
         return photoState.hasPrimary;
@@ -231,7 +256,11 @@ export function OnboardingWizard({
     let patch: ProfileInsert;
     switch (step) {
       case 2:
-        patch = { id: user.id, gender: form.gender as Gender };
+        patch = {
+          id: user.id,
+          first_name: form.first_name.trim(),
+          gender: form.gender as Gender,
+        };
         break;
       case 3:
         patch = { id: user.id, birth_date: form.birth_date };
@@ -263,6 +292,8 @@ export function OnboardingWizard({
           desired_partner_traits: form.desired_partner_traits as PartnerTrait[],
           polygamy_preference: form.polygamy_preference as PolygamyPreference,
           children_intent: form.children_intent as ChildrenIntent,
+          bio: form.bio.trim(),
+          partner_expectations: form.partner_expectations.trim(),
         };
         break;
       default:
@@ -285,13 +316,23 @@ export function OnboardingWizard({
     setBusy(true);
     setError(null);
     const ok = await saveStep(currentStep);
-    setBusy(false);
-    if (!ok) return;
+    if (!ok) {
+      setBusy(false);
+      return;
+    }
 
+    // Dernière étape : FIN EXPLICITE — la RPC pose le marqueur write-once,
+    // puis seulement l'écran de confirmation. Un simple rechargement avant ce
+    // clic laisse donc le parcours ouvert (reprise à l'étape 8).
     if (currentStep === ONBOARDING_TOTAL_STEPS) {
+      const finalized = await finalizeOnboarding();
+      setBusy(false);
+      if (!finalized) return;
       setPhase("confirm");
       return;
     }
+
+    setBusy(false);
     setCurrentStep((prev) =>
       Math.min(prev + 1, ONBOARDING_TOTAL_STEPS) as OnboardingStep,
     );
@@ -303,12 +344,40 @@ export function OnboardingWizard({
     setCurrentStep((prev) => Math.max(prev - 1, 1) as OnboardingStep);
   }
 
-  // ---- Mode B : uniquement l'étape acquisition, puis redirection ------------
+  // ---- Mode B : étape acquisition, puis FINALISATION, puis redirection ------
+  // L'acquisition (RPC write-once) et la finalisation (RPC marqueur) doivent
+  // TOUTES DEUX réussir. Si la finalisation échoue après l'acquisition, une
+  // erreur récupérable est affichée : l'acquisition étant déjà enregistrée, le
+  // bouton « Réessayer » ne rejoue QUE la finalisation.
+  async function finalizeAcquisitionOnly() {
+    setBusy(true);
+    setError(null);
+    const finalized = await finalizeOnboarding();
+    setBusy(false);
+    if (finalized) goToDestination();
+  }
+
   if (mode === "acquisition_only") {
     return (
       <OnboardingShell>
         <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-          <AcquisitionStep onRecorded={goToDestination} />
+          {error ? (
+            <div className="mb-5 flex flex-col gap-3">
+              <FormError message={error} />
+              <button
+                type="button"
+                onClick={() => void finalizeAcquisitionOnly()}
+                disabled={busy}
+                className="self-start rounded-full border border-champagne-500/40 px-5 py-2 text-sm font-semibold text-choco-700 transition-colors hover:bg-cream-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Réessayer l’envoi
+              </button>
+            </div>
+          ) : null}
+          <AcquisitionStep
+            onRecorded={() => void finalizeAcquisitionOnly()}
+            disabled={busy}
+          />
         </div>
       </OnboardingShell>
     );
@@ -320,7 +389,7 @@ export function OnboardingWizard({
       <OnboardingShell>
         <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
           <OnboardingIntro
-            firstName={initialProfile.first_name}
+            firstName={initialProfile.first_name ?? firstNameSuggestion ?? null}
             onStart={() => setPhase("steps")}
           />
         </div>
@@ -333,10 +402,7 @@ export function OnboardingWizard({
     return (
       <OnboardingShell>
         <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-          <OnboardingConfirmation
-            onContinue={finishAndGoToDestination}
-            busy={busy}
-          />
+          <OnboardingConfirmation onContinue={goToDestination} busy={busy} />
         </div>
       </OnboardingShell>
     );
@@ -386,7 +452,9 @@ export function OnboardingWizard({
           <>
             {currentStep === 2 ? (
               <GenderStep
+                firstName={form.first_name}
                 value={form.gender}
+                onFirstNameChange={(v) => update("first_name", v)}
                 onChange={(v) => update("gender", v)}
                 disabled={busy}
               />
@@ -435,12 +503,18 @@ export function OnboardingWizard({
                 partnerTraits={form.desired_partner_traits}
                 polygamyPreference={form.polygamy_preference}
                 childrenIntent={form.children_intent}
+                bio={form.bio}
+                partnerExpectations={form.partner_expectations}
                 onMarriageGoalsChange={(v) => update("marriage_goals", v)}
                 onPartnerTraitsChange={(v) =>
                   update("desired_partner_traits", v)
                 }
                 onPolygamyChange={(v) => update("polygamy_preference", v)}
                 onChildrenChange={(v) => update("children_intent", v)}
+                onBioChange={(v) => update("bio", v)}
+                onPartnerExpectationsChange={(v) =>
+                  update("partner_expectations", v)
+                }
                 disabled={busy}
               />
             ) : null}

@@ -48,22 +48,21 @@ const EMPTY_PROFILE: OnboardingProfileData = {
   desired_partner_traits: null,
   polygamy_preference: null,
   children_intent: null,
+  bio: null,
+  partner_expectations: null,
   acquisition_source_recorded_at: null,
+  onboarding_completed_at: null,
 };
 
 /**
- * Prénom d'accueil de l'introduction. Priorité à `profiles.first_name` déjà lu ;
- * repli best-effort sur les métadonnées Auth DÉJÀ chargées (aucun SELECT
- * supplémentaire). Renvoie toujours une valeur propre ou null — jamais un
- * placeholder — et ne bloque jamais le parcours si le prénom est absent.
+ * SUGGESTION de prénom issue des métadonnées Auth DÉJÀ chargées (aucun SELECT
+ * supplémentaire). Sert uniquement à préremplir le champ « Prénom » de
+ * l'étape 2 (valeur modifiable) et l'accueil de l'introduction — JAMAIS au
+ * calcul de complétude ni au mode : seule la valeur en base compte.
  */
-function resolveDisplayFirstName(
-  profileFirstName: string | null,
+function firstNameSuggestionFromMetadata(
   metadata: Record<string, unknown> | undefined,
 ): string | null {
-  const fromProfile = profileFirstName?.trim();
-  if (fromProfile) return fromProfile;
-
   const candidate =
     (typeof metadata?.first_name === "string" && metadata.first_name) ||
     (typeof metadata?.name === "string" && metadata.name) ||
@@ -110,16 +109,12 @@ export default async function OnboardingPage({
   const profile = (profileRow as OnboardingProfileData | null) ?? EMPTY_PROFILE;
   const hasPrimaryPhoto = primaryPhoto != null;
 
-  // Prénom d'accueil résolu ici (repli métadonnées Auth déjà chargées, aucun
-  // SELECT supplémentaire). N'influence PAS la complétude ni le mode.
-  const initialProfile: OnboardingProfileData = {
-    ...profile,
-    first_name: resolveDisplayFirstName(profile.first_name, user.user_metadata),
-  };
+  // Complétude et mode calculés sur la SEULE ligne base : la suggestion de
+  // prénom (métadonnées Auth) est transmise à part et n'influence ni l'un ni
+  // l'autre — sinon un prénom jamais enregistré marquerait l'étape 2 complète.
+  const mode = resolveOnboardingMode(profile, hasPrimaryPhoto);
 
-  const mode = resolveOnboardingMode(initialProfile, hasPrimaryPhoto);
-
-  // Mode C : rien à saisir, on renvoie directement vers la destination.
+  // Mode C : parcours déjà finalisé (marqueur posé) → destination directe.
   if (mode === "complete") {
     redirect(redirectTo);
   }
@@ -128,7 +123,8 @@ export default async function OnboardingPage({
     <OnboardingWizard
       mode={mode}
       userId={user.id}
-      initialProfile={initialProfile}
+      initialProfile={profile}
+      firstNameSuggestion={firstNameSuggestionFromMetadata(user.user_metadata)}
       hasPrimaryPhoto={hasPrimaryPhoto}
       redirectTo={redirectTo}
     />

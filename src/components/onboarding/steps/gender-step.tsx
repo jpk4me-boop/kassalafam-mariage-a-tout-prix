@@ -2,15 +2,20 @@
 
 import type { Gender } from "@/lib/types/database";
 import { GENDER_OPTIONS } from "@/lib/onboarding/options";
+import { Input, Label } from "@/components/ui/field";
 import { ChoiceTile } from "@/components/onboarding/choice-tile";
 import { StepShell } from "@/components/onboarding/step-shell";
 
 export function GenderStep({
+  firstName,
   value,
+  onFirstNameChange,
   onChange,
   disabled,
 }: {
+  firstName: string;
   value: "" | Gender;
+  onFirstNameChange: (value: string) => void;
   onChange: (value: Gender) => void;
   disabled?: boolean;
 }) {
@@ -19,6 +24,20 @@ export function GenderStep({
       title="Vous êtes…"
       description="Cette information oriente vos futures mises en relation."
     >
+      <div>
+        <Label htmlFor="onboarding_first_name">Prénom</Label>
+        <Input
+          id="onboarding_first_name"
+          name="first_name"
+          type="text"
+          autoComplete="given-name"
+          placeholder="Votre prénom"
+          value={firstName}
+          onChange={(e) => onFirstNameChange(e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+
       <div
         role="radiogroup"
         aria-label="Genre"

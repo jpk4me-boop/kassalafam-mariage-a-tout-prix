@@ -1,20 +1,35 @@
 /**
  * Helper CENTRAL de complétude du parcours d'onboarding KASSALAFAM.
  *
+ * DEUX CONCEPTS DISTINCTS (arbitrage produit) :
+ *   - `onboarding_completed_at` (marqueur, posé par la RPC
+ *     complete_member_onboarding) = le membre a explicitement TERMINÉ et
+ *     envoyé son parcours initial. C'est LUI que le routage utilise
+ *     (middleware + résolution de mode).
+ *   - `isProfileDataComplete` = complétude DYNAMIQUE : les données actuelles
+ *     satisfont les exigences du produit. C'est ELLE que le dashboard et le
+ *     bandeau « Profil incomplet » utilisent : un membre peut redevenir
+ *     incomplet via /profile sans que son onboarding initial rouvre.
+ *
  * Une SEULE source de vérité, partagée par :
  *   - le Server Component (choix du mode A / B / C, sans SELECT redondant) ;
- *   - le wizard client (reprise à la première étape incomplète, cf. exigence 3).
+ *   - le wizard client (reprise à la première étape incomplète) ;
+ *   - le dashboard (bandeau de complétude dynamique).
+ * Miroir serveur : public.profile_meets_onboarding_requirements (migration
+ * 20260708130000) — toute évolution doit être faite DES DEUX CÔTÉS.
  *
  * Les 8 étapes du parcours (voir le wizard) :
  *   1. Acquisition          → acquisition_source_recorded_at
- *   2. Genre                → gender
+ *   2. Identité             → first_name + gender
  *   3. Date de naissance    → birth_date (≥ 18 ans, cf. `isAdultBirthDate`)
  *   4. Situation            → marital_status
  *   5. Profession / études  → profession + education_level + height_cm
  *   6. Localisation         → country + city + origin_country + region
  *   7. Projet matrimonial   → marriage_goals + desired_partner_traits +
- *                             polygamy_preference + children_intent
- *   8. Photos               → au moins une photo principale
+ *                             polygamy_preference + children_intent +
+ *                             bio + partner_expectations
+ *   8. Photos               → au moins une photo principale, puis FIN
+ *                             EXPLICITE (« Envoyer mon profil » → RPC)
  */
 import type { ProfileRow } from "@/lib/types/database";
 import { CHOICE_SET_MAX, CHOICE_SET_MIN } from "@/lib/onboarding/options";
@@ -28,8 +43,6 @@ export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
  *  trimballer (et d'exposer côté client) la ligne profil entière. */
 export type OnboardingProfileData = Pick<
   ProfileRow,
-  // `first_name` ne sert qu'à l'accueil de l'introduction (« Bienvenue, … »),
-  // jamais à la complétude ; il est inclus pour éviter un SELECT dédié.
   | "first_name"
   | "gender"
   | "birth_date"
@@ -45,12 +58,15 @@ export type OnboardingProfileData = Pick<
   | "desired_partner_traits"
   | "polygamy_preference"
   | "children_intent"
+  | "bio"
+  | "partner_expectations"
   | "acquisition_source_recorded_at"
+  | "onboarding_completed_at"
 >;
 
 /** Colonnes à sélectionner côté serveur pour alimenter le wizard en UN seul SELECT. */
 export const ONBOARDING_PROFILE_COLUMNS =
-  "first_name, gender, birth_date, marital_status, country, city, profession, education_level, height_cm, origin_country, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, acquisition_source_recorded_at";
+  "first_name, gender, birth_date, marital_status, country, city, profession, education_level, height_cm, origin_country, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at";
 
 function isFilled(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
@@ -98,7 +114,7 @@ export function computeStepCompletion(
 ): StepCompletion {
   return {
     1: profile.acquisition_source_recorded_at != null,
-    2: profile.gender != null,
+    2: isFilled(profile.first_name) && profile.gender != null,
     3: isAdultBirthDate(profile.birth_date),
     4: profile.marital_status != null,
     5:
@@ -114,7 +130,9 @@ export function computeStepCompletion(
       isValidChoiceSet(profile.marriage_goals) &&
       isValidChoiceSet(profile.desired_partner_traits) &&
       profile.polygamy_preference != null &&
-      profile.children_intent != null,
+      profile.children_intent != null &&
+      isFilled(profile.bio) &&
+      isFilled(profile.partner_expectations),
     8: hasPrimaryPhoto,
   };
 }
@@ -129,72 +147,52 @@ export function firstIncompleteStep(
   return null;
 }
 
-/** Colonnes « cœur » seules : sous-ensemble minimal suffisant pour
- *  `isCoreComplete`, permettant au middleware un SELECT allégé. */
-export type CoreProfileData = Pick<
-  OnboardingProfileData,
-  "gender" | "birth_date" | "marital_status" | "country" | "city"
->;
-
 /**
- * Complétude « CŒUR historique » : les informations d'identité matrimoniale qui
- * existaient AVANT les champs étendus (genre, naissance, situation, résidence)
- * plus une photo principale. Volontairement satisfaisable par un profil
- * historique (dont les champs étendus, tous facultatifs, sont NULL) : c'est le
- * critère du Mode B, qui évite de re-soumettre le wizard complet à un membre
- * déjà présent et n'ayant qu'à répondre à la question d'acquisition.
+ * Complétude DYNAMIQUE canonique du profil (étapes 2 à 8 du parcours) :
+ * les données actuellement enregistrées satisfont les exigences du produit.
+ * L'acquisition (étape 1) est volontairement traitée À PART dans la résolution
+ * de mode — elle reste obligatoire avant la finalisation (contrôle serveur).
+ *
+ * Utilisée par : le dashboard (bandeau « Profil incomplet »), la résolution de
+ * mode ci-dessous et la reprise du wizard. Miroir serveur :
+ * public.profile_meets_onboarding_requirements (qui inclut aussi l'acquisition).
  */
-export function isCoreComplete(
-  profile: CoreProfileData,
+export function isProfileDataComplete(
+  profile: OnboardingProfileData,
   hasPrimaryPhoto: boolean,
 ): boolean {
-  return (
-    profile.gender != null &&
-    profile.birth_date != null &&
-    profile.marital_status != null &&
-    typeof profile.country === "string" &&
-    profile.country.trim().length > 0 &&
-    typeof profile.city === "string" &&
-    profile.city.trim().length > 0 &&
-    hasPrimaryPhoto
-  );
+  const completion = computeStepCompletion(profile, hasPrimaryPhoto);
+  for (let step = 2; step <= ONBOARDING_TOTAL_STEPS; step++) {
+    if (!completion[step as OnboardingStep]) return false;
+  }
+  return true;
 }
 
 export type OnboardingMode = "full" | "acquisition_only" | "complete";
 
 /**
- * Décision de mode, UNIQUE point de branchement (exclusif) — reposant sur la
- * SEULE complétude « cœur historique », de sorte qu'un membre déjà présent ne
- * soit JAMAIS forcé de renseigner rétroactivement les champs étendus (facultatifs) :
- *   - `complete`         : acquisition enregistrée ET profil cœur complet
- *                          (Mode C → redirection immédiate, aucun wizard rendu) —
- *                          y compris un profil historique dont les champs étendus
- *                          restent NULL ;
- *   - `acquisition_only` : acquisition NON enregistrée ET profil cœur complet
- *                          (Mode B → seule l'étape acquisition, puis redirection) ;
- *   - `full`             : profil cœur incomplet (Mode A → wizard complet, reprise
- *                          à la première étape incomplète). Couvre le nouvel
- *                          inscrit comme le membre ayant répondu à l'acquisition
- *                          mais dont le profil de base reste inachevé.
- *
- * Note : dans le wizard, `hasPrimaryPhoto` correspond à l'étape 8 (dernière),
- * atteignable uniquement après les étapes 5 et 7 ; pour un membre passé par le
- * wizard, cœur-complet équivaut donc à intégralement complet. Les deux ne
- * divergent que pour les profils historiques — pour lesquels la redirection est
- * précisément le comportement voulu.
+ * Décision de mode, UNIQUE point de branchement (exclusif) :
+ *   - `complete`         : `onboarding_completed_at` posé — le membre a
+ *                          explicitement terminé son parcours initial
+ *                          (Mode C → redirection immédiate, aucun wizard rendu) ;
+ *   - `acquisition_only` : marqueur NULL, acquisition NULL, mais toutes les
+ *                          étapes 2 à 8 déjà complètes (profil historique
+ *                          intégralement rempli) — Mode B : seule l'étape
+ *                          acquisition, puis finalisation RPC et redirection ;
+ *   - `full`             : tous les autres cas — Mode A : wizard complet,
+ *                          reprise à la première étape incomplète ; si tout est
+ *                          complet mais que le marqueur manque, reprise à
+ *                          l'étape 8 pour le clic final explicite.
  */
 export function resolveOnboardingMode(
   profile: OnboardingProfileData,
   hasPrimaryPhoto: boolean,
 ): OnboardingMode {
-  const acquisitionRecorded = profile.acquisition_source_recorded_at != null;
-  const coreComplete = isCoreComplete(profile, hasPrimaryPhoto);
+  if (profile.onboarding_completed_at != null) return "complete";
 
-  if (acquisitionRecorded) {
-    // Cœur complet → plus rien à demander (Mode C) ; sinon parcours complet.
-    return coreComplete ? "complete" : "full";
-  }
-  // Acquisition non enregistrée : un profil historique déjà cœur-complet n'a que
-  // la question d'acquisition à traiter (Mode B) ; sinon parcours complet.
-  return coreComplete ? "acquisition_only" : "full";
+  const acquisitionRecorded = profile.acquisition_source_recorded_at != null;
+  const dataComplete = isProfileDataComplete(profile, hasPrimaryPhoto);
+
+  if (!acquisitionRecorded && dataComplete) return "acquisition_only";
+  return "full";
 }

@@ -1,7 +1,18 @@
 import type { ProfileRow } from "@/lib/types/database";
 
-/** Champs requis pour considérer un profil matrimonial comme complet. */
-export const REQUIRED_PROFILE_FIELDS = [
+/**
+ * MÉTRIQUE HISTORIQUE « informations essentielles » — délibérément DIFFÉRENTE
+ * de la complétude canonique du parcours (`isProfileDataComplete`,
+ * src/lib/onboarding/completion.ts).
+ *
+ * Sémantique : les champs texte d'identité + présentation existaient AVANT le
+ * wizard 8 étapes ; cette mesure n'inclut NI la photo principale NI les champs
+ * matrimoniaux étendus (profession, objectifs, etc.). Elle est conservée telle
+ * quelle UNIQUEMENT pour la continuité des métriques admin (analytics « profils
+ * complets » historiques, fiche membre back-office). Ne PAS l'utiliser pour le
+ * dashboard membre, le bandeau « Profil incomplet » ou le routage d'onboarding.
+ */
+export const ESSENTIAL_PROFILE_FIELDS = [
   "first_name",
   "gender",
   "birth_date",
@@ -12,10 +23,10 @@ export const REQUIRED_PROFILE_FIELDS = [
   "partner_expectations",
 ] as const satisfies readonly (keyof ProfileRow)[];
 
-/** Un profil est complet quand tous les champs requis sont renseignés. */
-export function isProfileComplete(profile: ProfileRow | null): boolean {
+/** Mesure historique : tous les champs essentiels (texte) sont renseignés. */
+export function hasEssentialProfileInfo(profile: ProfileRow | null): boolean {
   if (!profile) return false;
-  return REQUIRED_PROFILE_FIELDS.every((field) => {
+  return ESSENTIAL_PROFILE_FIELDS.every((field) => {
     const value = profile[field];
     return value !== null && value !== undefined && String(value).trim() !== "";
   });

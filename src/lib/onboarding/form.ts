@@ -16,6 +16,7 @@ import type {
 import type { OnboardingProfileData } from "@/lib/onboarding/completion";
 
 export type WizardForm = {
+  first_name: string;
   gender: "" | Gender;
   birth_date: string;
   marital_status: "" | MaritalStatus;
@@ -30,10 +31,21 @@ export type WizardForm = {
   desired_partner_traits: PartnerTrait[];
   polygamy_preference: "" | PolygamyPreference;
   children_intent: "" | ChildrenIntent;
+  bio: string;
+  partner_expectations: string;
 };
 
-export function formFromProfile(p: OnboardingProfileData): WizardForm {
+/**
+ * `firstNameSuggestion` (métadonnées Auth) ne sert que de SUGGESTION initiale
+ * quand la base n'a pas encore de prénom : la valeur reste modifiable et n'est
+ * considérée enregistrée qu'après la sauvegarde de l'étape 2.
+ */
+export function formFromProfile(
+  p: OnboardingProfileData,
+  firstNameSuggestion?: string | null,
+): WizardForm {
   return {
+    first_name: p.first_name ?? firstNameSuggestion ?? "",
     gender: p.gender ?? "",
     birth_date: p.birth_date ?? "",
     marital_status: p.marital_status ?? "",
@@ -48,5 +60,7 @@ export function formFromProfile(p: OnboardingProfileData): WizardForm {
     desired_partner_traits: p.desired_partner_traits ?? [],
     polygamy_preference: p.polygamy_preference ?? "",
     children_intent: p.children_intent ?? "",
+    bio: p.bio ?? "",
+    partner_expectations: p.partner_expectations ?? "",
   };
 }

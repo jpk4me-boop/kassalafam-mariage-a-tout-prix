@@ -89,3 +89,7 @@ export const PROFESSION_MIN = 2;
 export const PROFESSION_MAX = 100;
 export const ORIGIN_COUNTRY_MAX = 100;
 export const REGION_MAX = 120;
+
+/** bio / partner_expectations — MIROIR des CHECK `profiles_bio_len` et
+ *  `profiles_partner_expectations_len` (≤ 2000), même règle que /profile. */
+export const PROFILE_TEXT_MAX = 2000;

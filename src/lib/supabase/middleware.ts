@@ -1,7 +1,6 @@
 ﻿import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-import { isCoreComplete } from "@/lib/onboarding/completion";
 import {
   CONTINUE_LATER_COOKIE,
   continueLaterCookieValue,
@@ -23,14 +22,14 @@ const PROTECTED_PREFIXES = [
 const AUTH_PREFIXES = ["/login", "/register"];
 
 /**
- * Routes du parcours membre soumises à la garde d'onboarding. Un membre
- * authentifié y est redirigé vers /onboarding (avec la destination initialement
- * demandée) tant que :
- *   - sa source d'acquisition (colonne write-once) est NULL — sans échappatoire,
- *     y compris pour les comptes historiques ; OU
- *   - son profil « cœur » est incomplet (mode `full` du wizard, reprise à la
- *     première étape incomplète) — SAUF si le cookie de session
- *     « Continuer plus tard » posé par le wizard correspond au compte courant.
+ * Routes du parcours membre soumises à la garde d'onboarding, fondée sur le
+ * MARQUEUR de fin explicite (`onboarding_completed_at`, posé par la RPC
+ * complete_member_onboarding) — la garde ne recalcule JAMAIS la complétude
+ * dynamique à chaque requête :
+ *   - marqueur posé → accès ;
+ *   - marqueur NULL + acquisition NULL → redirection, sans échappatoire ;
+ *   - marqueur NULL + acquisition posée → redirection, SAUF cookie de session
+ *     « Continuer plus tard » correspondant au compte courant.
  * /profile est inclus : c'est une page de MODIFICATION ultérieure, pas le
  * parcours initial — un membre en cours d'onboarding ne doit pas pouvoir
  * contourner le wizard en ouvrant directement l'ancien formulaire (après
@@ -111,18 +110,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Garde d'onboarding : un membre authentifié atteignant une route du parcours
-  // membre doit avoir répondu à « Comment nous as-tu découverts ? » ET terminé
-  // son profil cœur (sauf échappatoire « Continuer plus tard »). On ne lit le
-  // profil (un SELECT indexé sur la PK) que sur ces routes, pour ne pas alourdir
-  // les autres requêtes ; le SELECT photos n'est payé que si les colonnes cœur
-  // sont déjà toutes remplies.
+  // Garde d'onboarding : fondée sur le MARQUEUR de fin explicite — un seul
+  // SELECT indexé sur la PK, payé uniquement sur les routes gardées ; aucune
+  // complétude recalculée ici.
   if (user && ONBOARDING_GATE_PREFIXES.some((p) => matchesRoute(pathname, p))) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select(
-        "acquisition_source_recorded_at, gender, birth_date, marital_status, country, city",
-      )
+      .select("acquisition_source_recorded_at, onboarding_completed_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -130,33 +124,22 @@ export async function updateSession(request: NextRequest) {
     // PAS le membre — on le laisse poursuivre plutôt que de le piéger dans une
     // redirection. La garde se réappliquera à la prochaine navigation.
     if (!profileError) {
-      // Acquisition write-once : bloquante tant que NULL, sans échappatoire.
-      let needsOnboarding = !profile?.acquisition_source_recorded_at;
+      let needsOnboarding = !profile?.onboarding_completed_at;
 
-      // Complétude profil : bloquante en mode `full`, SAUF si le cookie de
-      // session « Continuer plus tard » posé par le wizard correspond au compte
-      // courant (empreinte comparée — un cookie hérité d'un autre compte du
-      // même navigateur est ignoré). L'empreinte n'est calculée que si un
-      // cookie est présent.
-      const rawContinueLater = request.cookies.get(
-        CONTINUE_LATER_COOKIE,
-      )?.value;
-      const continueLater =
-        rawContinueLater != null &&
-        rawContinueLater === (await continueLaterCookieValue(user.id));
-      if (!needsOnboarding && !continueLater && profile) {
-        if (!isCoreComplete(profile, true)) {
-          needsOnboarding = true;
-        } else {
-          const { data: primaryPhoto, error: photoError } = await supabase
-            .from("photos")
-            .select("id")
-            .eq("profile_id", user.id)
-            .eq("is_primary", true)
-            .limit(1)
-            .maybeSingle();
-          // Même fail-open que pour le profil : sur erreur, on laisse passer.
-          needsOnboarding = !photoError && primaryPhoto == null;
+      // Acquisition posée mais parcours non finalisé : l'échappatoire
+      // « Continuer plus tard » (cookie de session lié au compte — l'empreinte
+      // n'est calculée que si un cookie est présent ; un cookie hérité d'un
+      // autre compte du même navigateur est ignoré) donne un accès temporaire.
+      // Acquisition NULL : bloquant sans échappatoire.
+      if (needsOnboarding && profile?.acquisition_source_recorded_at) {
+        const rawContinueLater = request.cookies.get(
+          CONTINUE_LATER_COOKIE,
+        )?.value;
+        if (
+          rawContinueLater != null &&
+          rawContinueLater === (await continueLaterCookieValue(user.id))
+        ) {
+          needsOnboarding = false;
         }
       }
 

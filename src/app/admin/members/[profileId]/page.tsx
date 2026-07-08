@@ -26,7 +26,7 @@ import type {
 } from "@/lib/types/database";
 import { isUuid } from "@/lib/admin/safety-reports";
 import { ageFromBirthDate } from "@/lib/admin/analytics";
-import { isProfileComplete } from "@/lib/profile";
+import { hasEssentialProfileInfo } from "@/lib/profile";
 import {
   SAFETY_REASON_LABELS,
   SAFETY_STATUS_LABELS,
@@ -276,7 +276,7 @@ export default async function AdminMemberDetailPage({
 
   const now = new Date();
   const age = ageFromBirthDate(profile.birth_date, now);
-  const complete = isProfileComplete(profile);
+  const complete = hasEssentialProfileInfo(profile);
   const accountBadge = ACCOUNT_STATUS_BADGE[profile.account_status];
   const primary = photos.find((p) => p.isPrimary) ?? photos[0] ?? null;
 
