@@ -16,6 +16,7 @@ import type { ProfileRow, ProfileVerificationStatus } from "@/lib/types/database
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { MemberNotificationsPanel } from "@/components/member/member-notifications-panel";
 import { DashboardNextSteps } from "@/components/member/dashboard-next-steps";
+import { AcquisitionSourceCard } from "@/components/member/acquisition-source-card";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,12 @@ export default function DashboardPage() {
   const [blurPhotos, setBlurPhotos] = useState(true);
   const [verificationStatus, setVerificationStatus] =
     useState<ProfileVerificationStatus>("pending");
+  // Onboarding acquisition (« Comment nous as-tu découverts ? ») : témoin
+  // write-once. `acquisitionRecorded` = la source est déjà enregistrée (au
+  // chargement ou à l'instant). `justRecorded` sert uniquement à afficher une
+  // confirmation non intrusive après un enregistrement fait dans cette session.
+  const [acquisitionRecorded, setAcquisitionRecorded] = useState(true);
+  const [justRecorded, setJustRecorded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -47,6 +54,7 @@ export default function DashboardPage() {
       setComplete(isProfileComplete(profile));
       setBlurPhotos(profile?.blur_photos ?? true);
       setVerificationStatus(profile?.verification_status ?? "pending");
+      setAcquisitionRecorded(profile?.acquisition_source_recorded_at != null);
       setLoading(false);
     }
 
@@ -79,6 +87,25 @@ export default function DashboardPage() {
           relation.
         </p>
       </section>
+
+      {/* Onboarding — « Comment nous as-tu découverts ? » (source d'acquisition).
+          Affichée uniquement tant que la réponse n'est pas enregistrée. Après un
+          enregistrement réussi, la carte disparaît immédiatement (sans reload) et
+          une confirmation sobre s'affiche. Jamais de réponse enregistrée montrée
+          ni de modification possible. */}
+      {!acquisitionRecorded ? (
+        <AcquisitionSourceCard
+          onRecorded={() => {
+            setAcquisitionRecorded(true);
+            setJustRecorded(true);
+          }}
+        />
+      ) : justRecorded ? (
+        <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+          <BadgeCheck size={16} />
+          Merci, ta réponse a bien été enregistrée.
+        </p>
+      ) : null}
 
       {/* Statut du profil */}
       <section
