@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import type { PhotoRow } from "@/lib/types/database";
 
 /**
@@ -43,7 +44,24 @@ type PhotoItem = { row: PhotoRow; signedUrl: string | null };
 
 type Status = "loading" | "ready" | "error";
 
-export function ProfilePhotos() {
+/** État agrégé remonté au parent (utilisé par le wizard d'onboarding pour gater
+ *  la soumission finale sur l'existence d'une photo principale). */
+export type ProfilePhotosState = { count: number; hasPrimary: boolean };
+
+/**
+ * @param bare        masque le cadre « carte » externe et l'en-tête, pour une
+ *                    intégration dans un conteneur existant (wizard). La logique
+ *                    d'upload / storage reste STRICTEMENT identique (aucune
+ *                    duplication).
+ * @param onStateChange notifié après chaque (re)chargement des photos.
+ */
+export function ProfilePhotos({
+  bare = false,
+  onStateChange,
+}: {
+  bare?: boolean;
+  onStateChange?: (state: ProfilePhotosState) => void;
+} = {}) {
   const [status, setStatus] = useState<Status>("loading");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [blurPhotos, setBlurPhotos] = useState<boolean | null>(null);
@@ -107,6 +125,10 @@ export function ProfilePhotos() {
       })),
     );
     setStatus("ready");
+    onStateChange?.({
+      count: list.length,
+      hasPrimary: list.some((row) => row.is_primary),
+    });
   }
 
   useEffect(() => {
@@ -287,21 +309,28 @@ export function ProfilePhotos() {
   }
 
   return (
-    <section className="glass flex flex-col gap-5 rounded-3xl p-6 shadow-card sm:p-8">
-      <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-champagne-400/20 text-choco-600">
-          <Camera size={20} />
-        </span>
-        <div className="flex-1">
-          <h2 className="font-serif text-xl font-semibold text-choco-700">
-            Photos de profil
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-ink-700/75">
-            Vos photos restent privées dans cette étape. Elles serviront plus
-            tard à préparer l’affichage progressif de votre profil matrimonial.
-          </p>
+    <section
+      className={cn(
+        "flex flex-col gap-5",
+        !bare && "glass rounded-3xl p-6 shadow-card sm:p-8",
+      )}
+    >
+      {!bare ? (
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-champagne-400/20 text-choco-600">
+            <Camera size={20} />
+          </span>
+          <div className="flex-1">
+            <h2 className="font-serif text-xl font-semibold text-choco-700">
+              Photos de profil
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-ink-700/75">
+              Vos photos restent privées dans cette étape. Elles serviront plus
+              tard à préparer l’affichage progressif de votre profil matrimonial.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Réglage de confidentialité (informatif) */}
       <div className="flex items-start gap-2.5 rounded-2xl border border-champagne-500/30 bg-cream-100/40 p-4">

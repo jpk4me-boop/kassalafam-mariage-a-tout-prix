@@ -79,7 +79,9 @@ export default function RegisterPage() {
       return;
     }
 
-    router.replace("/profile");
+    // Nouvel inscrit : on démarre le parcours d'onboarding (wizard de création
+    // de profil). /profile reste la page de MODIFICATION une fois onboardé.
+    router.replace("/onboarding");
     router.refresh();
   }
 
