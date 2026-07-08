@@ -143,6 +143,12 @@ export type ProfileRow = {
   acquisition_source: AcquisitionSource | null;
   acquisition_source_other: string | null;
   acquisition_source_recorded_at: string | null;
+  // Fin EXPLICITE du parcours d'onboarding — LECTURE SEULE côté membre.
+  // Write-once : posé une seule fois par la RPC complete_member_onboarding(),
+  // puis IMMUABLE (garde trg_profiles_guard_onboarding_completion : toute
+  // écriture directe est rejetée). NULL = parcours initial non finalisé.
+  // Volontairement ABSENT de ProfileInsert / ProfileUpdate.
+  onboarding_completed_at: string | null;
   // Vérification admin — LECTURE SEULE côté membre.
   // Protégée en base par le trigger trg_profiles_guard_verification :
   // un membre ne peut jamais écrire ces champs. Ne jamais les inclure
@@ -654,6 +660,14 @@ export interface Database {
       record_acquisition_source: {
         Args: { p_source: string; p_other?: string | null };
         Returns: RecordAcquisitionSourceResult;
+      };
+      // Onboarding — FIN EXPLICITE du parcours. Revérifie côté serveur toutes
+      // les exigences (acquisition, champs requis, photo principale) puis pose
+      // onboarding_completed_at (write-once). Idempotente : un second appel
+      // renvoie le premier horodatage. auth.uid() côté serveur uniquement.
+      complete_member_onboarding: {
+        Args: Record<string, never>;
+        Returns: string;
       };
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
       send_message: {
