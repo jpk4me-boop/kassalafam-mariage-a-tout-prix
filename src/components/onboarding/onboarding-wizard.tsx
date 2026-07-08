@@ -24,7 +24,10 @@ import {
   type OnboardingProfileData,
   type OnboardingStep,
 } from "@/lib/onboarding/completion";
-import { setContinueLaterCookie } from "@/lib/onboarding/continue-later";
+import {
+  clearContinueLaterCookie,
+  setContinueLaterCookie,
+} from "@/lib/onboarding/continue-later";
 import { formFromProfile, type WizardForm } from "@/lib/onboarding/form";
 import {
   CHOICE_SET_MAX,
@@ -89,11 +92,15 @@ function OnboardingShell({ children }: { children: React.ReactNode }) {
 
 export function OnboardingWizard({
   mode,
+  userId,
   initialProfile,
   hasPrimaryPhoto,
   redirectTo,
 }: {
   mode: "full" | "acquisition_only";
+  /** Id du compte connecté — sert uniquement à lier le cookie
+   *  « Continuer plus tard » au compte courant (jamais affiché). */
+  userId: string;
   initialProfile: OnboardingProfileData;
   hasPrimaryPhoto: boolean;
   redirectTo: string;
@@ -139,6 +146,23 @@ export function OnboardingWizard({
     setBusy(true);
     router.replace(redirectTo);
     router.refresh();
+  }
+
+  /** Sortie « Continuer plus tard » : pose le cookie de session lié au compte
+   *  courant (lu par la garde middleware, sinon celle-ci renverrait aussitôt
+   *  vers le wizard) puis redirige. Aucune écriture base, aucune RPC. */
+  function continueLater() {
+    setBusy(true);
+    void setContinueLaterCookie(userId).finally(() => {
+      router.replace(redirectTo);
+      router.refresh();
+    });
+  }
+
+  /** Sortie « wizard terminé » : le cookie n'a plus de raison d'être. */
+  function finishAndGoToDestination() {
+    clearContinueLaterCookie();
+    goToDestination();
   }
 
   // ---- Validation par étape (miroir des contraintes base) -------------------
@@ -309,7 +333,10 @@ export function OnboardingWizard({
     return (
       <OnboardingShell>
         <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-          <OnboardingConfirmation onContinue={goToDestination} busy={busy} />
+          <OnboardingConfirmation
+            onContinue={finishAndGoToDestination}
+            busy={busy}
+          />
         </div>
       </OnboardingShell>
     );
@@ -468,10 +495,7 @@ export function OnboardingWizard({
                 <div className="flex flex-col items-center gap-1 text-center">
                   <button
                     type="button"
-                    onClick={() => {
-                      setContinueLaterCookie();
-                      goToDestination();
-                    }}
+                    onClick={continueLater}
                     disabled={busy || photoOpInProgress}
                     className="rounded-full px-4 py-2 text-sm font-medium text-choco-700/75 underline-offset-4 transition-colors hover:text-choco-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-400/50 disabled:cursor-not-allowed disabled:opacity-60"
                   >

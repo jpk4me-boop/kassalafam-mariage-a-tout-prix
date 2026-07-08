@@ -2,7 +2,10 @@
 import { createServerClient } from "@supabase/ssr";
 
 import { isCoreComplete } from "@/lib/onboarding/completion";
-import { CONTINUE_LATER_COOKIE } from "@/lib/onboarding/continue-later";
+import {
+  CONTINUE_LATER_COOKIE,
+  continueLaterCookieValue,
+} from "@/lib/onboarding/continue-later";
 import type { Database } from "@/lib/types/database";
 
 /** Routes réservées aux utilisateurs connectés (membres + back-office admin).
@@ -27,14 +30,21 @@ const AUTH_PREFIXES = ["/login", "/register"];
  *     y compris pour les comptes historiques ; OU
  *   - son profil « cœur » est incomplet (mode `full` du wizard, reprise à la
  *     première étape incomplète) — SAUF si le cookie de session
- *     « Continuer plus tard » posé par le wizard est présent.
+ *     « Continuer plus tard » posé par le wizard correspond au compte courant.
+ * /profile est inclus : c'est une page de MODIFICATION ultérieure, pas le
+ * parcours initial — un membre en cours d'onboarding ne doit pas pouvoir
+ * contourner le wizard en ouvrant directement l'ancien formulaire (après
+ * « Continuer plus tard », il redevient accessible).
  * Volontairement hors périmètre :
  *   - /onboarding lui-même (anti-boucle) ;
- *   - /admin (accès back-office, hors parcours membre) ;
- *   - /profile : page de MODIFICATION ultérieure du profil, jamais le parcours
- *     initial d'inscription (celui-ci passe par /onboarding).
+ *   - /admin (accès back-office, hors parcours membre).
  */
-const ONBOARDING_GATE_PREFIXES = ["/dashboard", "/discover", "/matches"];
+const ONBOARDING_GATE_PREFIXES = [
+  "/dashboard",
+  "/discover",
+  "/matches",
+  "/profile",
+];
 
 /**
  * Correspondance de route à FRONTIÈRE exacte : le chemin est soit exactement le
@@ -123,10 +133,17 @@ export async function updateSession(request: NextRequest) {
       // Acquisition write-once : bloquante tant que NULL, sans échappatoire.
       let needsOnboarding = !profile?.acquisition_source_recorded_at;
 
-      // Complétude profil : bloquante en mode `full`, SAUF si le wizard a posé
-      // le cookie de session « Continuer plus tard ».
+      // Complétude profil : bloquante en mode `full`, SAUF si le cookie de
+      // session « Continuer plus tard » posé par le wizard correspond au compte
+      // courant (empreinte comparée — un cookie hérité d'un autre compte du
+      // même navigateur est ignoré). L'empreinte n'est calculée que si un
+      // cookie est présent.
+      const rawContinueLater = request.cookies.get(
+        CONTINUE_LATER_COOKIE,
+      )?.value;
       const continueLater =
-        request.cookies.get(CONTINUE_LATER_COOKIE)?.value === "1";
+        rawContinueLater != null &&
+        rawContinueLater === (await continueLaterCookieValue(user.id));
       if (!needsOnboarding && !continueLater && profile) {
         if (!isCoreComplete(profile, true)) {
           needsOnboarding = true;

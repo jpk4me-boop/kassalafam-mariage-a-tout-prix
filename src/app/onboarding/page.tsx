@@ -127,6 +127,7 @@ export default async function OnboardingPage({
   return (
     <OnboardingWizard
       mode={mode}
+      userId={user.id}
       initialProfile={initialProfile}
       hasPrimaryPhoto={hasPrimaryPhoto}
       redirectTo={redirectTo}

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Share2, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { clearContinueLaterCookie } from "@/lib/onboarding/continue-later";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/landing/logo";
 
@@ -28,6 +29,9 @@ export function MemberHeader({ isAdmin = false }: { isAdmin?: boolean }) {
     setSigningOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
+    // Le report « Continuer plus tard » est personnel : il ne doit pas survivre
+    // à la déconnexion ni bénéficier à un autre compte du même navigateur.
+    clearContinueLaterCookie();
     router.replace("/login");
     router.refresh();
   }
