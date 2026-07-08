@@ -3,12 +3,18 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { REMEMBER_EMAIL_KEY } from "@/lib/auth/remember";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { FormError, Input, Label, PrimaryButton } from "@/components/ui/field";
+import {
+  FormError,
+  FormSuccess,
+  Input,
+  Label,
+  PrimaryButton,
+} from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/password-input";
 
 function LoginForm() {
@@ -21,6 +27,8 @@ function LoginForm() {
     rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
       ? rawRedirect
       : "/dashboard";
+  // Confirmation affichée au retour de /reset-password après un changement réussi.
+  const justReset = searchParams.get("reset") === "1";
 
   // Préremplit l'email si l'utilisateur avait coché « Se souvenir de moi ».
   // Lazy initializers : on lit localStorage au premier rendu client (ce
@@ -73,6 +81,9 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      {justReset ? (
+        <FormSuccess message="Mot de passe réinitialisé. Connectez-vous avec votre nouveau mot de passe." />
+      ) : null}
       {error ? <FormError message={error} /> : null}
 
       <div>
@@ -127,6 +138,17 @@ function LoginForm() {
           "Se connecter"
         )}
       </PrimaryButton>
+
+      <p className="mt-1 flex flex-wrap items-center justify-center gap-1 text-center text-sm text-ink-700/70">
+        <Lock size={14} className="mr-0.5 text-choco-600/70" aria-hidden />
+        Mot de passe oublié ?{" "}
+        <Link
+          href="/forgot-password"
+          className="rounded font-semibold text-choco-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-400/50"
+        >
+          Réinitialisez mot de passe.
+        </Link>
+      </p>
     </form>
   );
 }
