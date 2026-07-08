@@ -24,6 +24,15 @@ import {
  * après envoi est NEUTRE et identique que l'adresse existe ou non : on ne
  * confirme jamais publiquement l'existence d'un compte (anti-énumération).
  */
+
+/** Format email « raisonnable » : partie locale, @, domaine avec un point,
+ *  aucun espace. Rejette "", les espaces seuls, "abc", "abc@" ; accepte
+ *  "a@b.co". Sert à la fois à activer le bouton et de garde dans handleSubmit. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(value: string): boolean {
+  return EMAIL_PATTERN.test(value);
+}
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,8 +44,11 @@ export default function ForgotPasswordPage() {
     // Empêche toute double soumission (envoi en cours ou déjà envoyé).
     if (loading || sent) return;
 
+    // Seconde protection : la touche Entrée avec une adresse vide/invalide ne
+    // doit JAMAIS appeler resetPasswordForEmail (le bouton désactivé étant la
+    // première protection).
     const trimmed = email.trim();
-    if (!trimmed) {
+    if (!isValidEmail(trimmed)) {
       setError("Veuillez saisir votre adresse email.");
       return;
     }
@@ -128,7 +140,11 @@ export default function ForgotPasswordPage() {
           />
         </div>
 
-        <PrimaryButton type="submit" disabled={loading} className="mt-2">
+        <PrimaryButton
+          type="submit"
+          disabled={loading || !isValidEmail(email.trim())}
+          className="mt-2"
+        >
           {loading ? (
             <>
               <Loader2 size={18} className="animate-spin" />
