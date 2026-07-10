@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import {
+  CONTACT_PHONE,
+  CONTACT_PHONE_HREF,
   ContactEmailLink,
+  EDITOR_EMAIL,
+  LEGAL_LINK_CLASS,
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
@@ -13,20 +18,26 @@ export const metadata: Metadata = {
 };
 
 /**
- * Informations éditeur à fournir par le propriétaire de la plateforme.
- * Les valeurs « [À COMPLÉTER] » sont volontairement visibles pour être
- * remplacées dès que les informations officielles seront disponibles.
+ * Informations officielles d’identification de l’éditeur (TITANEX SARL),
+ * fournies par le propriétaire de la plateforme. Le RCCM et le NIU sont
+ * affichés exactement tels que communiqués.
  */
 const EDITOR_FIELDS = [
-  { label: "Nom de l’entité", value: "[À COMPLÉTER]" },
-  { label: "Forme juridique", value: "[À COMPLÉTER]" },
-  { label: "Adresse", value: "[À COMPLÉTER]" },
-  { label: "Pays d’immatriculation", value: "[À COMPLÉTER]" },
-  { label: "Responsable de publication", value: "[À COMPLÉTER]" },
+  { label: "Raison sociale", value: "TITANEX SARL" },
   {
-    label: "Numéro d’immatriculation",
-    value: "[À COMPLÉTER — si applicable]",
+    label: "Forme juridique",
+    value:
+      "Société à responsabilité limitée unipersonnelle (SARL unipersonnelle)",
   },
+  { label: "Capital social", value: "1 000 000 FCFA" },
+  {
+    label: "Siège social",
+    value: "Douala, New-Bell, face Total New-Bell, Cameroun",
+  },
+  { label: "Pays d’immatriculation", value: "Cameroun" },
+  { label: "Responsable de publication", value: "KENNE Jean Pierre" },
+  { label: "RCCM", value: "CM-DLA-02-2026-B13-00145" },
+  { label: "NIU / numéro de contribuable", value: "M022618389246M" },
 ];
 
 export default function MentionsLegalesPage() {
@@ -37,10 +48,6 @@ export default function MentionsLegalesPage() {
       intro="Informations légales relatives à l’édition et à l’hébergement de la plateforme KASSALAFAM — Mariage à Tout Prix."
     >
       <LegalSection title="Éditeur de la plateforme">
-        <p className="rounded-2xl border border-champagne-500/40 bg-champagne-400/10 px-4 py-3 text-choco-700">
-          Les informations d’identification de l’éditeur sont en cours de
-          finalisation et seront publiées ici prochainement.
-        </p>
         <dl className="flex flex-col gap-2">
           {EDITOR_FIELDS.map((field) => (
             <div key={field.label} className="flex flex-col sm:flex-row sm:gap-2">
@@ -50,6 +57,26 @@ export default function MentionsLegalesPage() {
               <dd className="text-ink-700/70">{field.value}</dd>
             </div>
           ))}
+          <div className="flex flex-col sm:flex-row sm:gap-2">
+            <dt className="shrink-0 font-medium text-choco-700 sm:w-56">
+              Téléphone
+            </dt>
+            <dd className="text-ink-700/70">
+              <a href={CONTACT_PHONE_HREF} className={LEGAL_LINK_CLASS}>
+                {CONTACT_PHONE}
+              </a>
+            </dd>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:gap-2">
+            <dt className="shrink-0 font-medium text-choco-700 sm:w-56">
+              Courriel de l’éditeur
+            </dt>
+            <dd className="text-ink-700/70">
+              <a href={`mailto:${EDITOR_EMAIL}`} className={LEGAL_LINK_CLASS}>
+                {EDITOR_EMAIL}
+              </a>
+            </dd>
+          </div>
         </dl>
       </LegalSection>
 
@@ -72,10 +99,29 @@ export default function MentionsLegalesPage() {
         </p>
       </LegalSection>
 
+      <LegalSection title="Documents associés">
+        <ul className="flex list-disc flex-col gap-2 pl-5">
+          <li>
+            <Link href="/confidentialite" className={LEGAL_LINK_CLASS}>
+              Politique de confidentialité
+            </Link>
+          </li>
+          <li>
+            <Link href="/conditions-utilisation" className={LEGAL_LINK_CLASS}>
+              Conditions d’utilisation
+            </Link>
+          </li>
+        </ul>
+      </LegalSection>
+
       <LegalSection title="Contact">
         <p>
           Pour toute question ou demande relative à ces mentions :{" "}
-          <ContactEmailLink />.
+          <ContactEmailLink /> ou par téléphone au{" "}
+          <a href={CONTACT_PHONE_HREF} className={LEGAL_LINK_CLASS}>
+            {CONTACT_PHONE}
+          </a>
+          .
         </p>
       </LegalSection>
     </LegalPageShell>
