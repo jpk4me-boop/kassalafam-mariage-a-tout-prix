@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 
+import type { RealtimeChannel } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/client";
 import type {
   MessageRow,
@@ -471,6 +473,16 @@ export function ConversationView({
   const [toast, setToast] = useState<Toast | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  // Miroir de `messages` pour comparer/fusionner hors setState (pas d'effet de
+  // bord dans un updater React) + canal Realtime courant pour le signal d'envoi.
+  const messagesRef = useRef<MessageRow[]>(initialMessages);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const realtimeReadyRef = useRef(false);
+  const refreshingRef = useRef(false);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     if (!toast) return;
@@ -491,10 +503,110 @@ export function ConversationView({
     );
   }, [matchId]);
 
-  // Autoscroll vers le dernier message.
+  // Autoscroll UNIQUEMENT quand le dernier message change (mount inclus) : un
+  // rafraîchissement sans nouveauté ne vole jamais le scroll d'un membre qui
+  // relit l'historique plus haut.
+  const lastMessageId =
+    messages.length > 0 ? messages[messages.length - 1].id : null;
   useEffect(() => {
+    if (!lastMessageId) return;
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
+  }, [lastMessageId]);
+
+  // --- Rafraîchissement quasi temps réel du fil -------------------------------
+  //
+  // La relecture passe TOUJOURS par la RPC sécurisée `get_conversation_messages`
+  // (garde `can_message`) : Realtime n'est qu'un signal de réveil, jamais une
+  // source de données. `refreshingRef` évite les relectures concurrentes.
+  const refreshThread = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+      const supabase = createClient();
+      const { data, error: rpcError } = await supabase.rpc(
+        "get_conversation_messages",
+        { p_match: matchId },
+      );
+      if (rpcError || !data) return;
+
+      const fresh = data as MessageRow[];
+      const prev = messagesRef.current;
+
+      // Un message que je viens d'envoyer peut manquer d'une lecture lancée
+      // juste avant l'insertion : on le conserve en fin de fil (dédup par id)
+      // plutôt que de le faire disparaître le temps du prochain rafraîchissement.
+      const freshIds = new Set(fresh.map((m) => m.id));
+      const pendingMine = prev.filter(
+        (m) => !freshIds.has(m.id) && m.sender_id === currentUserId,
+      );
+      const next = pendingMine.length > 0 ? [...fresh, ...pendingMine] : fresh;
+
+      const prevLast = prev[prev.length - 1];
+      const nextLast = next[next.length - 1];
+      // Fil inchangé : on garde la référence actuelle (aucun re-render).
+      if (prev.length === next.length && prevLast?.id === nextLast?.id) return;
+
+      setMessages(next);
+
+      // Nouveau message REÇU alors que la conversation est ouverte : on le
+      // marque lu immédiatement (même RPC fire-and-forget qu'à l'ouverture).
+      const freshLast = fresh[fresh.length - 1];
+      if (
+        freshLast &&
+        freshLast.sender_id !== currentUserId &&
+        freshLast.id !== prevLast?.id
+      ) {
+        supabase.rpc("mark_conversation_read", { p_match: matchId }).then(
+          () => {},
+          () => {},
+        );
+      }
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, [matchId, currentUserId]);
+
+  // Canal Realtime broadcast (signal pur, sans contenu ni table répliquée) +
+  // fallback polling léger : uniquement quand l'onglet est visible, ~15 s sans
+  // Realtime, ralenti à ~60 s en simple filet de sécurité quand le canal est
+  // souscrit. Rafraîchissement immédiat au retour de focus/visibilité.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`conversation:${matchId}`, {
+        config: { broadcast: { self: false } },
+      })
+      .on("broadcast", { event: "new-message" }, () => {
+        void refreshThread();
+      })
+      .subscribe((status) => {
+        realtimeReadyRef.current = status === "SUBSCRIBED";
+      });
+    channelRef.current = channel;
+
+    let tick = 0;
+    const interval = setInterval(() => {
+      if (document.hidden) return;
+      tick += 1;
+      if (realtimeReadyRef.current && tick % 4 !== 0) return;
+      void refreshThread();
+    }, 15_000);
+
+    const onVisible = () => {
+      if (!document.hidden) void refreshThread();
+    };
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+      channelRef.current = null;
+      realtimeReadyRef.current = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [matchId, refreshThread]);
 
   // Re-synchronise blocked_by_me / messaging_available depuis le backend (autorité).
   const refreshRelation = useCallback(async (): Promise<Relation | null> => {
@@ -546,6 +658,16 @@ export function ConversationView({
       setSending(false);
       setMessages((prev) => [...prev, data as MessageRow]);
       setDraft("");
+
+      // Signal Realtime (sans contenu) : réveille l'autre participant, qui
+      // relira le fil via la RPC sécurisée. Échec silencieux (le polling ou le
+      // retour de focus prendra le relais côté destinataire).
+      channelRef.current
+        ?.send({ type: "broadcast", event: "new-message", payload: {} })
+        .then(
+          () => {},
+          () => {},
+        );
     },
     [draft, sending, relation.messaging_available, matchId, refreshRelation],
   );

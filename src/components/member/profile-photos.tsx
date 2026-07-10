@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Camera,
   Check,
@@ -76,7 +76,16 @@ export function ProfilePhotos({
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function reload() {
+  // `onStateChange` passe par une ref synchronisée : `reload` reste ainsi
+  // STABLE (useCallback sans dépendance) et peut être déclaré en dépendance du
+  // useEffect de montage sans re-déclencher de rechargement quand le parent
+  // re-rend avec un callback inline.
+  const onStateChangeRef = useRef(onStateChange);
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange;
+  });
+
+  const reload = useCallback(async () => {
     const supabase = createClient();
     const {
       data: { user },
@@ -131,18 +140,19 @@ export function ProfilePhotos({
       })),
     );
     setStatus("ready");
-    onStateChange?.({
+    onStateChangeRef.current?.({
       count: list.length,
       hasPrimary: list.some((row) => row.is_primary),
     });
-  }
+  }, []);
 
   useEffect(() => {
     // reload() est asynchrone : ses setState ont lieu après des await (jamais de
-    // façon synchrone). Chargement initial des photos au montage.
+    // façon synchrone). Chargement initial des photos au montage (`reload` est
+    // stable : ce useEffect ne s'exécute qu'une fois).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void reload();
-  }, []);
+  }, [reload]);
 
   // Reporte l'état d'occupation au parent (lecture seule d'un état déjà géré
   // ici) : aucune écriture, aucune modification de la logique de stockage.
