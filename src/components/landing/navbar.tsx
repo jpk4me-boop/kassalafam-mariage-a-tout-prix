@@ -73,9 +73,9 @@ export function Navbar() {
                 : "border border-transparent",
             )}
           >
-            <a href="#" aria-label="Accueil KASSALAFAM">
+            <Link href="/" aria-label="Accueil KASSALAFAM">
               <Logo />
-            </a>
+            </Link>
 
             <ul className="hidden items-center gap-7 lg:flex">
               {NAV_LINKS.map((link) => (

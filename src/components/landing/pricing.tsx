@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Check, Crown, Sparkles } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
@@ -139,8 +140,8 @@ export function Pricing() {
                   ))}
                 </ul>
 
-                <a
-                  href="#"
+                <Link
+                  href="/register"
                   className={cn(
                     "mt-8 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5",
                     plan.highlighted
@@ -149,7 +150,7 @@ export function Pricing() {
                   )}
                 >
                   {plan.cta}
-                </a>
+                </Link>
               </article>
             </Reveal>
           ))}

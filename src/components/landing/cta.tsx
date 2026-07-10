@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, BadgeCheck, Heart, ShieldCheck } from "lucide-react";
 import { Reveal } from "./reveal";
 
@@ -36,8 +37,8 @@ export function Cta() {
               </p>
 
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <a
-                  href="#"
+                <Link
+                  href="/register"
                   className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-champagne-500 to-champagne-300 px-8 py-3.5 text-sm font-semibold text-choco-800 shadow-[0_18px_40px_-16px_rgba(214,168,90,0.9)] transition-transform hover:-translate-y-0.5"
                 >
                   Créer mon profil
@@ -45,7 +46,7 @@ export function Cta() {
                     size={17}
                     className="transition-transform group-hover:translate-x-0.5"
                   />
-                </a>
+                </Link>
                 <a
                   href="#concept"
                   className="inline-flex items-center justify-center rounded-full border border-cream-200/25 px-8 py-3.5 text-sm font-semibold text-cream-100 transition-colors hover:border-champagne-400/50"
