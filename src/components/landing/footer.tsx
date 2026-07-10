@@ -19,25 +19,25 @@ const FOOTER_COLUMNS = [
       { label: "Profils vérifiés", href: "#concept" },
       { label: "Confidentialité", href: "#concept" },
       { label: "Modération", href: "#concept" },
-      { label: "Signaler un profil", href: "#" },
+      { label: "Signaler un profil", href: "/aide#signaler" },
     ],
   },
   {
     title: "Aide",
     links: [
       { label: "FAQ", href: "#faq" },
-      { label: "Nous contacter", href: "#" },
-      { label: "Conseils de sécurité", href: "#" },
-      { label: "Centre d'aide", href: "#" },
+      { label: "Nous contacter", href: "/aide#contact" },
+      { label: "Conseils de sécurité", href: "/aide#securite" },
+      { label: "Centre d'aide", href: "/aide" },
     ],
   },
   {
     title: "Légal",
     links: [
-      { label: "Conditions d'utilisation", href: "#" },
-      { label: "Politique de confidentialité", href: "#" },
-      { label: "Mentions légales", href: "#" },
-      { label: "Cookies", href: "#" },
+      { label: "Conditions d'utilisation", href: "/conditions-utilisation" },
+      { label: "Politique de confidentialité", href: "/confidentialite" },
+      { label: "Mentions légales", href: "/mentions-legales" },
+      { label: "Cookies", href: "/cookies" },
     ],
   },
 ];
@@ -73,12 +73,12 @@ export function Footer() {
                 <ul className="mt-4 flex flex-col gap-3">
                   {col.links.map((link) => (
                     <li key={link.label}>
-                      <a
+                      <Link
                         href={link.href}
                         className="text-sm text-cream-200/70 transition-colors hover:text-champagne-300"
                       >
                         {link.label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
