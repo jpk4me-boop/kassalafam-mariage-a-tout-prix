@@ -19,6 +19,19 @@ import { Logo } from "@/components/landing/logo";
  */
 export const CONTACT_EMAIL = "contact@kassalafam.com";
 
+/** Téléphone professionnel de l’éditeur, tel qu’affiché sur les pages légales. */
+export const CONTACT_PHONE = "+237 691 849 494";
+
+/** Valeur du lien `tel:` correspondant à {@link CONTACT_PHONE}. */
+export const CONTACT_PHONE_HREF = "tel:+237691849494";
+
+/** Courriel officiel de l’éditeur (TITANEX SARL). */
+export const EDITOR_EMAIL = "titanex.cm@gmail.com";
+
+/** Classe des liens texte des pages légales (celle de {@link ContactEmailLink}). */
+export const LEGAL_LINK_CLASS =
+  "font-medium text-choco-600 underline decoration-champagne-500/50 underline-offset-2 transition-colors hover:text-choco-800";
+
 export function LegalPageShell({
   title,
   intro,
@@ -112,10 +125,7 @@ export function ContactEmailLink() {
     );
   }
   return (
-    <a
-      href={`mailto:${CONTACT_EMAIL}`}
-      className="font-medium text-choco-600 underline decoration-champagne-500/50 underline-offset-2 transition-colors hover:text-choco-800"
-    >
+    <a href={`mailto:${CONTACT_EMAIL}`} className={LEGAL_LINK_CLASS}>
       {CONTACT_EMAIL}
     </a>
   );

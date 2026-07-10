@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import {
   ContactEmailLink,
+  LEGAL_LINK_CLASS,
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
@@ -101,9 +103,12 @@ export default function ConditionsUtilisationPage() {
           Pour toute question relative à ces conditions : <ContactEmailLink />.
         </p>
         <p className="text-ink-700/60">
-          Certaines informations juridiques complémentaires (entité éditrice,
-          droit applicable) seront précisées dans les mentions légales, en
-          cours de finalisation.
+          Les informations d’identification de l’entité éditrice figurent dans
+          les{" "}
+          <Link href="/mentions-legales" className={LEGAL_LINK_CLASS}>
+            mentions légales
+          </Link>
+          .
         </p>
       </LegalSection>
     </LegalPageShell>

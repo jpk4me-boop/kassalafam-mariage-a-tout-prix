@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import {
   ContactEmailLink,
+  LEGAL_LINK_CLASS,
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
@@ -105,9 +107,15 @@ export default function ConfidentialitePage() {
           Pour toute question relative à vos données personnelles :{" "}
           <ContactEmailLink />.
         </p>
-        <p className="text-ink-700/60">
-          L’identité complète de l’entité responsable du traitement sera
-          précisée dans les mentions légales, en cours de finalisation.
+        <p>
+          Le responsable du traitement des données personnelles est TITANEX
+          SARL, société à responsabilité limitée unipersonnelle, dont le siège
+          social est situé à Douala, New-Bell, face Total New-Bell, Cameroun.
+          Ses coordonnées complètes figurent dans les{" "}
+          <Link href="/mentions-legales" className={LEGAL_LINK_CLASS}>
+            mentions légales
+          </Link>
+          .
         </p>
       </LegalSection>
     </LegalPageShell>
