@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowRight, BadgeCheck, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { Reveal } from "./reveal";
 import heroCouple from "./kassalafam-hero-couple.png";
@@ -106,8 +107,8 @@ export function Hero() {
 
           <Reveal delay={0.24}>
             <div className="mt-8 flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-              <a
-                href="#"
+              <Link
+                href="/register"
                 className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-7 py-4 text-sm font-semibold text-cream-50 shadow-[0_18px_40px_-16px_rgba(43,26,18,0.9)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5 md:w-auto md:py-3.5"
               >
                 Créer mon profil
@@ -115,7 +116,7 @@ export function Hero() {
                   size={17}
                   className="transition-transform group-hover:translate-x-0.5"
                 />
-              </a>
+              </Link>
               <a
                 href="#concept"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-choco-600/20 bg-cream-100/70 px-7 py-4 text-sm font-semibold text-choco-700 transition-colors hover:border-champagne-500/50 hover:bg-cream-100 md:w-auto md:py-3.5"
