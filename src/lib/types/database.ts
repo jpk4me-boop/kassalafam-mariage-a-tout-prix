@@ -463,6 +463,38 @@ export type AdminAuditLogRow = {
 };
 
 /**
+ * Partage PR1 — Ligne de `public.profile_share_consents` : consentement du
+ * membre au partage public limité de son profil. HISTORIQUE conservé : le
+ * retrait renseigne `withdrawn_at`/`withdrawn_by` sans supprimer la ligne ;
+ * au plus une ligne ACTIVE (`withdrawn_at IS NULL`) par profil. Écritures
+ * EXCLUSIVEMENT via les RPC `grant_my_profile_share_consent` /
+ * `withdraw_my_profile_share_consent` (texte et version définis côté serveur).
+ * Le membre ne LIT que ses propres lignes (RLS select_own).
+ */
+export type ProfileShareConsentRow = {
+  id: string;
+  profile_id: string;
+  policy_version: string;
+  consent_text: string;
+  consented_at: string;
+  withdrawn_at: string | null;
+  withdrawn_by: string | null;
+  created_at: string;
+};
+
+/**
+ * Partage PR1 — Résultat de la RPC `public.grant_my_profile_share_consent()` :
+ * le consentement actif (créé à l'instant, ou réutilisé si déjà actif —
+ * `was_already_active` distingue les deux cas, aucun doublon possible).
+ */
+export type GrantProfileShareConsentResult = {
+  consent_id: string;
+  policy_version: string;
+  consented_at: string;
+  was_already_active: boolean;
+};
+
+/**
  * L3G — Une ligne renvoyée par la RPC `public.admin_list_members` (service_role,
  * SERVEUR uniquement). Projection de MODÉRATION : champs strictement utiles +
  * agrégats calculés en base. Ne contient JAMAIS d'email (auth.users), de
@@ -630,6 +662,15 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // Partage PR1 — consentement au partage public limité. LECTURE SEULE via
+      // ce client (RLS select_own) ; écritures uniquement via les RPC
+      // grant/withdraw_my_profile_share_consent (d'où Insert/Update = never).
+      profile_share_consents: {
+        Row: ProfileShareConsentRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -668,6 +709,19 @@ export interface Database {
       complete_member_onboarding: {
         Args: Record<string, never>;
         Returns: string;
+      };
+      // Partage PR1 — consentement au partage public limité du profil.
+      // Idempotente : réutilise le consentement actif s'il existe. Texte et
+      // version définis côté serveur ; auth.uid() uniquement, aucun paramètre.
+      grant_my_profile_share_consent: {
+        Args: Record<string, never>;
+        Returns: GrantProfileShareConsentResult[];
+      };
+      // Partage PR1 — retrait du consentement actif (historique conservé).
+      // Idempotente : retourne false si aucun consentement actif.
+      withdraw_my_profile_share_consent: {
+        Args: Record<string, never>;
+        Returns: boolean;
       };
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
       send_message: {
