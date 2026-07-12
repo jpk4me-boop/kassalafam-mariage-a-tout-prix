@@ -13,6 +13,7 @@ import type {
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
 import { ProfilePhotos } from "@/components/member/profile-photos";
+import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
 import {
   FormError,
   FormSuccess,
@@ -389,6 +390,9 @@ export default function ProfilePage() {
 
       {/* Photos de profil — gestion privée du membre connecté (L3D-A) */}
       <ProfilePhotos />
+
+      {/* Consentement au partage public limité (PR1 partage de profils) */}
+      <ProfileShareConsentCard />
     </div>
   );
 }
