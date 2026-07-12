@@ -495,6 +495,70 @@ export type GrantProfileShareConsentResult = {
 };
 
 /**
+ * Partage PR2 — Ligne de `public.profile_share_links` : lien de partage public
+ * limité d'un profil. Le jeton public n'est JAMAIS stocké : seul son hash
+ * SHA-256 (`token_hash`, renvoyé en hex par PostgREST) et un préfixe non
+ * secret de 8 caractères sont conservés. HISTORIQUE durable : la révocation
+ * renseigne `revoked_at`/`revoked_by` sans supprimer la ligne ; au plus un
+ * lien NON RÉVOQUÉ par profil. Table SANS accès client (RLS sans policy) :
+ * toutes les opérations passent par les RPC service_role (SERVEUR uniquement).
+ */
+export type ProfileShareLinkRow = {
+  id: string;
+  profile_id: string;
+  token_hash: string;
+  token_prefix: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  revocation_reason: string | null;
+};
+
+/**
+ * Partage PR2 — Résultat de la RPC `public.create_profile_share_link` :
+ * `token` est le jeton public EN CLAIR, retourné UNE SEULE fois à la création
+ * (jamais relisible ensuite — seul son hash existe en base).
+ */
+export type CreateProfileShareLinkResult = {
+  link_id: string;
+  token: string;
+  token_prefix: string;
+  expires_at: string;
+};
+
+/**
+ * Partage PR2 — Résultat de la RPC `public.resolve_profile_share_link` :
+ * contexte SERVEUR minimal d'un jeton valide (page publique PR3). Zéro ligne
+ * pour tout jeton invalide, sans distinction de cause. Aucune donnée de
+ * présentation (prénom, ville, photo…) n'est renvoyée par cette RPC.
+ */
+export type ResolveProfileShareLinkResult = {
+  link_id: string;
+  profile_id: string;
+  expires_at: string;
+};
+
+/**
+ * Partage PR2 — Ligne renvoyée par `public.admin_list_profile_share_links` :
+ * métadonnées d'administration (préfixe, dates, acteurs, statut calculé
+ * active/expired/revoked). Ne contient JAMAIS le jeton ni le hash.
+ */
+export type AdminProfileShareLinkItem = {
+  link_id: string;
+  profile_id: string;
+  token_prefix: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  revocation_reason: string | null;
+  status: "active" | "expired" | "revoked";
+};
+
+/**
  * L3G — Une ligne renvoyée par la RPC `public.admin_list_members` (service_role,
  * SERVEUR uniquement). Projection de MODÉRATION : champs strictement utiles +
  * agrégats calculés en base. Ne contient JAMAIS d'email (auth.users), de
@@ -671,6 +735,16 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // Partage PR2 — liens de partage publics. AUCUN accès client (RLS sans
+      // policy, privilèges révoqués) ; opérations uniquement via les RPC
+      // create/revoke/resolve_profile_share_link + admin_list (service_role,
+      // SERVEUR uniquement) — d'où Insert/Update = never.
+      profile_share_links: {
+        Row: ProfileShareLinkRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -722,6 +796,45 @@ export interface Database {
       withdraw_my_profile_share_consent: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      // Partage PR2 — création d'un lien (service_role uniquement, jamais
+      // authenticated). p_actor_id vient d'une session admin validée serveur.
+      // Jeton en clair retourné UNE seule fois. Expiration : défaut 7 jours,
+      // bornée 1 heure..30 jours. Erreurs métier stables : ACTOR_NOT_FOUND,
+      // EXPIRY_TOO_SHORT, EXPIRY_TOO_LONG, PROFILE_NOT_FOUND, CONSENT_REQUIRED,
+      // PROFILE_NOT_PUBLISHABLE, LINK_ALREADY_ACTIVE.
+      create_profile_share_link: {
+        Args: {
+          p_profile_id: string;
+          p_actor_id: string;
+          p_expires_at?: string | null;
+        };
+        Returns: CreateProfileShareLinkResult[];
+      };
+      // Partage PR2 — révocation d'un lien (service_role uniquement).
+      // Idempotente : true si révoqué à l'instant, false si déjà révoqué
+      // (historique d'origine conservé). Erreurs : ACTOR_NOT_FOUND,
+      // LINK_NOT_FOUND, REASON_LENGTH_INVALID.
+      revoke_profile_share_link: {
+        Args: {
+          p_link_id: string;
+          p_actor_id: string;
+          p_reason?: string | null;
+        };
+        Returns: boolean;
+      };
+      // Partage PR2 — résolution SERVEUR d'un jeton public (page publique PR3).
+      // Zéro ligne pour TOUT jeton invalide (inconnu, altéré, expiré, révoqué,
+      // consentement retiré, profil non publiable), sans distinction de cause.
+      resolve_profile_share_link: {
+        Args: { p_token: string };
+        Returns: ResolveProfileShareLinkResult[];
+      };
+      // Partage PR2 — métadonnées des liens pour la fiche admin (PR4).
+      // Jamais le jeton ni le hash. p_profile_id null = tous les liens.
+      admin_list_profile_share_links: {
+        Args: { p_profile_id?: string | null };
+        Returns: AdminProfileShareLinkItem[];
       };
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
       send_message: {
