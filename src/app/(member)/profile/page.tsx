@@ -12,6 +12,7 @@ import type {
 } from "@/lib/types/database";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
+import { CountryCityFields } from "@/components/profile/country-city-fields";
 import { ProfilePhotos } from "@/components/member/profile-photos";
 import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
 import {
@@ -60,6 +61,10 @@ export default function ProfilePage() {
   const [verificationStatus, setVerificationStatus] =
     useState<ProfileVerificationStatus>("pending");
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  // Onboarding terminé (marqueur write-once) : pays et ville de résidence
+  // deviennent OBLIGATOIRES à l'enregistrement — un profil complet ne peut
+  // plus redevenir silencieusement incomplet depuis cette page.
+  const [onboardingDone, setOnboardingDone] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -93,6 +98,7 @@ export default function ProfilePage() {
         });
         setVerificationStatus(profile.verification_status ?? "pending");
         setRejectionReason(profile.verification_rejection_reason ?? null);
+        setOnboardingDone(profile.onboarding_completed_at != null);
       }
       setLoading(false);
     }
@@ -120,6 +126,17 @@ export default function ProfilePage() {
       setError("Merci d’indiquer votre situation matrimoniale.");
       return;
     }
+    // Intégrité du lieu de résidence (PR A géo) : un membre dont l'onboarding
+    // est terminé ne peut plus enregistrer un pays ou une ville vides —
+    // contrôle AVANT tout appel Supabase, l'ancienne valeur reste intacte.
+    if (onboardingDone && !form.country.trim()) {
+      setError("Merci d’indiquer votre pays de résidence.");
+      return;
+    }
+    if (onboardingDone && !form.city.trim()) {
+      setError("Merci d’indiquer votre ville de résidence.");
+      return;
+    }
 
     setSaving(true);
     const supabase = createClient();
@@ -139,6 +156,8 @@ export default function ProfilePage() {
         first_name: form.first_name.trim() || null,
         gender: form.gender,
         birth_date: form.birth_date || null,
+        // Onboarding terminé : jamais null (bloqué par la validation
+        // ci-dessus). Parcours non finalisé : comportement historique.
         country: form.country.trim() || null,
         city: form.city.trim() || null,
         marital_status: form.marital_status || null,
@@ -251,35 +270,17 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="country">Pays</Label>
-            <Input
-              id="country"
-              name="country"
-              type="text"
-              autoComplete="country-name"
-              placeholder="Votre pays"
-              value={form.country}
-              onChange={(e) => update("country", e.target.value)}
-              disabled={saving}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="city">Ville</Label>
-            <Input
-              id="city"
-              name="city"
-              type="text"
-              autoComplete="address-level2"
-              placeholder="Votre ville"
-              value={form.city}
-              onChange={(e) => update("city", e.target.value)}
-              disabled={saving}
-            />
-          </div>
-        </div>
+        {/* Pays → ville de résidence : sélecteurs dépendants (PR A géo), le
+            même composant que l'étape 6 de l'onboarding. Les anciennes
+            valeurs sont rapprochées par normalisation, jamais effacées. */}
+        <CountryCityFields
+          country={form.country}
+          city={form.city}
+          onCountryChange={(v) => update("country", v)}
+          onCityChange={(v) => update("city", v)}
+          disabled={saving}
+          idPrefix="profile-geo"
+        />
 
         <div>
           <Label htmlFor="marital_status">Situation matrimoniale</Label>
