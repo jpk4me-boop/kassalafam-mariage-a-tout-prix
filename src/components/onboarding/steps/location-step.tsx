@@ -5,6 +5,7 @@ import {
   REGION_MAX,
 } from "@/lib/onboarding/options";
 import { Input, Label } from "@/components/ui/field";
+import { CountryCityFields } from "@/components/profile/country-city-fields";
 import { StepShell } from "@/components/onboarding/step-shell";
 
 export function LocationStep({
@@ -33,35 +34,21 @@ export function LocationStep({
       title="Où vivez-vous ?"
       description="Votre lieu de résidence et vos origines aident à proposer des rencontres pertinentes."
     >
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div>
-          <Label htmlFor="country">Pays de résidence</Label>
-          <Input
-            id="country"
-            name="country"
-            type="text"
-            autoComplete="country-name"
-            placeholder="Votre pays"
-            value={country}
-            onChange={(e) => onCountryChange(e.target.value)}
-            disabled={disabled}
-          />
-        </div>
-        <div>
-          <Label htmlFor="city">Ville de résidence</Label>
-          <Input
-            id="city"
-            name="city"
-            type="text"
-            autoComplete="address-level2"
-            placeholder="Votre ville"
-            value={city}
-            onChange={(e) => onCityChange(e.target.value)}
-            disabled={disabled}
-          />
-        </div>
-      </div>
+      {/* Pays → ville de RÉSIDENCE : sélecteurs dépendants (PR A géo).
+          Les valeurs restent des libellés français stockés tels quels dans
+          profiles.country / profiles.city ; le changement de pays efface la
+          ville (géré par le composant). */}
+      <CountryCityFields
+        country={country}
+        city={city}
+        onCountryChange={onCountryChange}
+        onCityChange={onCityChange}
+        disabled={disabled}
+        idPrefix="onboarding-geo"
+      />
 
+      {/* Origines : champs libres INCHANGÉS — à ne pas confondre avec le pays
+          et la ville de résidence ci-dessus. */}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <Label htmlFor="origin_country">Pays d’origine</Label>
