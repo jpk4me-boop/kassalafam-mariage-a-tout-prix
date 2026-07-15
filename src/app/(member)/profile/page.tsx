@@ -9,7 +9,9 @@ import type {
   MaritalStatus,
   ProfileRow,
   ProfileVerificationStatus,
+  Religion,
 } from "@/lib/types/database";
+import { RELIGION_OPTIONS } from "@/lib/onboarding/options";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
 import { CountryCityFields } from "@/components/profile/country-city-fields";
@@ -34,6 +36,7 @@ type FormState = {
   country: string;
   city: string;
   marital_status: "" | MaritalStatus;
+  religion: "" | Religion;
   bio: string;
   partner_expectations: string;
   blur_photos: boolean;
@@ -46,6 +49,7 @@ const EMPTY_FORM: FormState = {
   country: "",
   city: "",
   marital_status: "",
+  religion: "",
   bio: "",
   partner_expectations: "",
   blur_photos: true,
@@ -92,6 +96,7 @@ export default function ProfilePage() {
           country: profile.country ?? "",
           city: profile.city ?? "",
           marital_status: profile.marital_status ?? "",
+          religion: profile.religion ?? "",
           bio: profile.bio ?? "",
           partner_expectations: profile.partner_expectations ?? "",
           blur_photos: profile.blur_photos ?? true,
@@ -161,6 +166,10 @@ export default function ProfilePage() {
         country: form.country.trim() || null,
         city: form.city.trim() || null,
         marital_status: form.marital_status || null,
+        // Compatibilité douce (PR B religion) : jamais de chaîne vide — NULL
+        // tant qu'un profil historique ne l'a pas renseignée. Une fois choisie,
+        // la valeur appartient forcément aux quatre autorisées (CHECK en base).
+        religion: form.religion || null,
         intention: INTENTION_VALUE,
         bio: form.bio.trim() || null,
         partner_expectations: form.partner_expectations.trim() || null,
@@ -305,6 +314,30 @@ export default function ProfilePage() {
           <p className="mt-1.5 text-xs text-ink-700/55">
             Une présentation honnête favorise des mises en relation sincères et
             respectueuses.
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="religion">Religion</Label>
+          <Select
+            id="religion"
+            name="religion"
+            value={form.religion}
+            onChange={(e) => update("religion", e.target.value as Religion)}
+            disabled={saving}
+          >
+            <option value="" disabled>
+              Sélectionner…
+            </option>
+            {RELIGION_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            Cette information reste distincte de votre univers de découverte et
+            n’est pas affichée publiquement.
           </p>
         </div>
 

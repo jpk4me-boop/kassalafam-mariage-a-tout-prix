@@ -12,6 +12,7 @@ import type {
   MarriageGoal,
   PartnerTrait,
   PolygamyPreference,
+  Religion,
 } from "@/lib/types/database";
 import type { OnboardingProfileData } from "@/lib/onboarding/completion";
 
@@ -20,6 +21,7 @@ export type WizardForm = {
   gender: "" | Gender;
   birth_date: string;
   marital_status: "" | MaritalStatus;
+  religion: "" | Religion;
   profession: string;
   education_level: "" | EducationLevel;
   height_cm: string;
@@ -49,6 +51,7 @@ export function formFromProfile(
     gender: p.gender ?? "",
     birth_date: p.birth_date ?? "",
     marital_status: p.marital_status ?? "",
+    religion: p.religion ?? "",
     profession: p.profession ?? "",
     education_level: p.education_level ?? "",
     height_cm: p.height_cm != null ? String(p.height_cm) : "",

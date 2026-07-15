@@ -37,6 +37,7 @@ const EMPTY_PROFILE: OnboardingProfileData = {
   gender: null,
   birth_date: null,
   marital_status: null,
+  religion: null,
   country: null,
   city: null,
   profession: null,
