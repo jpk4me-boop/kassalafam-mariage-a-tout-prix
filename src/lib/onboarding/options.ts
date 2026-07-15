@@ -16,6 +16,7 @@ import type {
   MarriageGoal,
   PartnerTrait,
   PolygamyPreference,
+  Religion,
 } from "@/lib/types/database";
 
 export type Option<T extends string> = { value: T; label: string };
@@ -30,6 +31,14 @@ export const MARITAL_STATUS_OPTIONS: Option<MaritalStatus>[] = [
   { value: "divorce", label: "Divorcé(e)" },
   { value: "veuf", label: "Veuf / Veuve" },
   { value: "separe", label: "Séparé(e)" },
+];
+
+/** religion : MIROIR du CHECK `profiles_religion_chk` (migration 20260715090000). */
+export const RELIGION_OPTIONS: Option<Religion>[] = [
+  { value: "christianisme", label: "Christianisme" },
+  { value: "islam", label: "Islam" },
+  { value: "autre", label: "Autre religion" },
+  { value: "sans_religion", label: "Sans religion" },
 ];
 
 export const EDUCATION_LEVEL_OPTIONS: Option<EducationLevel>[] = [

@@ -9,6 +9,14 @@
 export type Gender = "homme" | "femme";
 export type MaritalStatus = "celibataire" | "divorce" | "veuf" | "separe";
 /**
+ * Religion DÉCLARÉE par le membre (PR B religion) — colonne `text` contrainte
+ * par le CHECK `profiles_religion_chk` (migration 20260715090000). DISTINCTE de
+ * [[DiscoveryUniverse]] : jamais déduite de l'univers de découverte. NULL pour
+ * les profils historiques ; requise pour FINALISER l'onboarding. Librement
+ * éditable par le membre (comme marital_status).
+ */
+export type Religion = "christianisme" | "islam" | "autre" | "sans_religion";
+/**
  * Préférence VOLONTAIRE d'espace de découverte choisie par le membre (L3C-C).
  * Ce n'est PAS une religion déclarée publiquement : valeur privée, modifiable,
  * jamais déduite automatiquement ni exposée aux autres membres.
@@ -112,6 +120,9 @@ export type ProfileRow = {
   country: string | null;
   city: string | null;
   marital_status: MaritalStatus | null;
+  // Religion déclarée (PR B). NULL pour les profils historiques — aucune
+  // déduction depuis discovery_universe. Non exposée aux autres membres.
+  religion: Religion | null;
   intention: string;
   bio: string | null;
   partner_expectations: string | null;
@@ -176,6 +187,7 @@ export type ProfileInsert = {
   country?: string | null;
   city?: string | null;
   marital_status?: MaritalStatus | null;
+  religion?: Religion | null;
   intention?: string;
   bio?: string | null;
   partner_expectations?: string | null;

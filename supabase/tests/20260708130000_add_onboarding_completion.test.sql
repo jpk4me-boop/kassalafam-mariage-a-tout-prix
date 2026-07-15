@@ -99,14 +99,14 @@ create function public._onb_seed_complete(p_id uuid)
 returns void language plpgsql as $$
 begin
   insert into public.profiles (
-    id, first_name, gender, birth_date, marital_status,
+    id, first_name, gender, birth_date, marital_status, religion,
     profession, education_level, height_cm,
     country, city, origin_country, region,
     marriage_goals, desired_partner_traits, polygamy_preference, children_intent,
     bio, partner_expectations,
     acquisition_source, acquisition_source_recorded_at
   ) values (
-    p_id, 'Testeur', 'homme', date '1990-01-01', 'celibataire',
+    p_id, 'Testeur', 'homme', date '1990-01-01', 'celibataire', 'christianisme',
     'Ingénieur', 'master', 180,
     'Cameroun', 'Douala', 'Cameroun', 'Littoral',
     array['build_family','stable_home'], array['kindness','sincerity'], 'no', 'wants_children',

@@ -15,6 +15,7 @@ import type {
   PartnerTrait,
   PolygamyPreference,
   ProfileInsert,
+  Religion,
 } from "@/lib/types/database";
 import {
   computeStepCompletion,
@@ -196,7 +197,7 @@ export function OnboardingWizard({
       case 3:
         return isAdultBirthDate(form.birth_date);
       case 4:
-        return form.marital_status !== "";
+        return form.marital_status !== "" && form.religion !== "";
       case 5: {
         const profession = form.profession.trim();
         const height = Number(form.height_cm);
@@ -266,7 +267,11 @@ export function OnboardingWizard({
         patch = { id: user.id, birth_date: form.birth_date };
         break;
       case 4:
-        patch = { id: user.id, marital_status: form.marital_status as MaritalStatus };
+        patch = {
+          id: user.id,
+          marital_status: form.marital_status as MaritalStatus,
+          religion: form.religion as Religion,
+        };
         break;
       case 5:
         patch = {
@@ -469,7 +474,9 @@ export function OnboardingWizard({
             {currentStep === 4 ? (
               <MaritalStatusStep
                 value={form.marital_status}
+                religion={form.religion}
                 onChange={(v) => update("marital_status", v)}
+                onReligionChange={(v) => update("religion", v)}
                 disabled={busy}
               />
             ) : null}
