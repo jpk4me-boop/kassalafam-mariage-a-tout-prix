@@ -399,6 +399,25 @@ export default async function AdminMemberDetailPage({
                 : "—"
             }
           />
+          {/* Origine vs résidence (PR Origine/Résidence) : lecture seule,
+              données déjà couvertes par le select("*") service_role. */}
+          <Field
+            label="Pays d’origine"
+            value={profile.origin_country?.trim() || "—"}
+          />
+          <Field
+            label="Ville d’origine"
+            value={profile.origin_city?.trim() || "—"}
+          />
+          <Field
+            label="Pays de résidence"
+            value={profile.country?.trim() || "—"}
+          />
+          <Field
+            label="Ville de résidence"
+            value={profile.city?.trim() || "—"}
+          />
+          <Field label="Région" value={profile.region?.trim() || "—"} />
           <Field label="Intention" value={profile.intention || "—"} />
           <Field
             label="Univers de découverte"

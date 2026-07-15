@@ -28,6 +28,7 @@ export type WizardForm = {
   country: string;
   city: string;
   origin_country: string;
+  origin_city: string;
   region: string;
   marriage_goals: MarriageGoal[];
   desired_partner_traits: PartnerTrait[];
@@ -58,6 +59,7 @@ export function formFromProfile(
     country: p.country ?? "",
     city: p.city ?? "",
     origin_country: p.origin_country ?? "",
+    origin_city: p.origin_city ?? "",
     region: p.region ?? "",
     marriage_goals: p.marriage_goals ?? [],
     desired_partner_traits: p.desired_partner_traits ?? [],

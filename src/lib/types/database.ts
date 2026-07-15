@@ -132,7 +132,12 @@ export type ProfileRow = {
   profession: string | null;
   education_level: EducationLevel | null;
   height_cm: number | null;
+  // Origine vs résidence (PR Origine/Résidence) : origin_country/origin_city =
+  // lieu d'ORIGINE ; country/city = lieu de RÉSIDENCE ; region = zone de
+  // résidence. Jamais déduits l'un de l'autre. origin_city NULL pour les
+  // profils historiques (CHECK profiles_origin_city_chk : non vide, ≤ 100).
   origin_country: string | null;
+  origin_city: string | null;
   region: string | null;
   marriage_goals: MarriageGoal[] | null;
   desired_partner_traits: PartnerTrait[] | null;
@@ -200,6 +205,7 @@ export type ProfileInsert = {
   education_level?: EducationLevel | null;
   height_cm?: number | null;
   origin_country?: string | null;
+  origin_city?: string | null;
   region?: string | null;
   marriage_goals?: MarriageGoal[] | null;
   desired_partner_traits?: PartnerTrait[] | null;

@@ -184,3 +184,115 @@ test("normalisation : accents, casse, apostrophes, tirets, espaces", () => {
   assert.equal(normalizeGeo("Garoua-Boulaï"), normalizeGeo("garoua boulai"));
   assert.equal(normalizeGeo("N’Gourma"), normalizeGeo("n gourma"));
 });
+
+// ---------------------------------------------------------------------------
+// PR Origine/Résidence — deux couples Pays → Ville INDÉPENDANTS.
+// Modèle minimal du contrat de CountryCityFields (le composant est réutilisé
+// tel quel) : chaque couple possède son propre état ; la sélection d'un pays
+// efface UNIQUEMENT la ville du MÊME couple ; le catalogue est UNIQUE.
+// ---------------------------------------------------------------------------
+function makePair(country = "", city = "") {
+  return { country, city };
+}
+// Miroir de handleCountrySelect : changer de pays efface la ville du couple.
+function selectCountry(pair, name) {
+  if (name === pair.country) return;
+  pair.country = name;
+  pair.city = "";
+}
+// Miroir de la résolution des villes du composant : catalogue unique partagé.
+function citiesOf(pair) {
+  const known = findCountryByName(pair.country);
+  return known ? getCitiesForCountry(known.code) : [];
+}
+
+test("deux couples indépendants : changer le pays d'ORIGINE ne touche pas la résidence", () => {
+  const origin = makePair("Cameroun", "Yaoundé");
+  const residence = makePair("Cameroun", "Douala");
+  selectCountry(origin, "Sénégal");
+  assert.equal(origin.country, "Sénégal");
+  assert.equal(origin.city, ""); // seule la ville d'origine est réinitialisée
+  assert.equal(residence.country, "Cameroun"); // résidence INTACTE
+  assert.equal(residence.city, "Douala");
+  // Le nouveau pays d'origine propose bien SES villes (catalogue unique).
+  assert.ok(citiesOf(origin).includes("Dakar"));
+});
+
+test("deux couples indépendants : changer le pays de RÉSIDENCE ne touche pas l'origine", () => {
+  const origin = makePair("Cameroun", "Yaoundé");
+  const residence = makePair("Cameroun", "Douala");
+  selectCountry(residence, "France");
+  assert.equal(residence.country, "France");
+  assert.equal(residence.city, ""); // seule la ville de résidence est réinitialisée
+  assert.equal(origin.country, "Cameroun"); // origine INTACTE
+  assert.equal(origin.city, "Yaoundé");
+  assert.ok(citiesOf(residence).includes("Paris"));
+});
+
+test("valeurs identiques ou différentes acceptées : aucune règle d'égalité/différence", () => {
+  const identical = [makePair("Cameroun", "Douala"), makePair("Cameroun", "Douala")];
+  const different = [makePair("Sénégal", "Dakar"), makePair("France", "Paris")];
+  for (const [origin, residence] of [identical, different]) {
+    assert.ok(origin.country.length > 0 && residence.country.length > 0);
+    // Chaque couple se résout sans dépendre de l'autre.
+    assert.notEqual(citiesOf(origin), null);
+    assert.notEqual(citiesOf(residence), null);
+  }
+});
+
+test("« Autre ville » pour l'ORIGINE : valeur libre hors liste conservée (non rapprochée)", () => {
+  const origin = makePair("Cameroun", "Bafia"); // hors liste CM → mode manuel
+  assert.equal(matchCityInList(origin.city, citiesOf(origin)), null);
+  assert.equal(origin.city, "Bafia"); // la saisie libre reste la valeur stockée
+});
+
+test("« Autre ville » pour la RÉSIDENCE : valeur libre hors liste conservée (non rapprochée)", () => {
+  const residence = makePair("France", "Le Petit-Quevilly"); // hors liste FR
+  assert.equal(matchCityInList(residence.city, citiesOf(residence)), null);
+  assert.equal(residence.city, "Le Petit-Quevilly");
+});
+
+test("Cameroun → Douala fonctionne pour l'ORIGINE et la RÉSIDENCE (catalogue unique)", () => {
+  const origin = makePair("Cameroun");
+  const residence = makePair("Cameroun");
+  assert.ok(citiesOf(origin).includes("Douala"));
+  assert.ok(citiesOf(residence).includes("Douala"));
+  // Aucune duplication : les deux couples résolvent la MÊME liste (référence).
+  assert.equal(citiesOf(origin), citiesOf(residence));
+});
+
+test("pays sans localités référencées : liste vide → « Autre ville » (saisie libre) pour chaque couple", () => {
+  const code = [...UNINHABITED_TERRITORIES][0];
+  const name = COUNTRIES_FR.find((c) => c.code === code)?.name;
+  assert.ok(name, "au moins un territoire inhabité doit exister");
+  assert.deepEqual(citiesOf(makePair(name)), []); // → mode manuel dans le composant
+});
+
+test("aucune valeur vide ou composée d'espaces n'est une localisation valide", () => {
+  for (const raw of ["", "   "]) {
+    assert.equal(findCountryByName(raw), null);
+    assert.equal(matchCityInList(raw, CITIES_FR.CM), null);
+    // Normalisation d'enregistrement (formulaire) : trim → NULL, jamais "".
+    assert.equal(raw.trim() || null, null);
+  }
+});
+
+test("compatibilité null : un profil historique (origin_* = null) se charge sans erreur", () => {
+  // Miroir de formFromProfile : p.origin_country ?? "" / p.origin_city ?? "".
+  const legacy = { origin_country: null, origin_city: null };
+  const origin = makePair(legacy.origin_country ?? "", legacy.origin_city ?? "");
+  assert.equal(origin.country, "");
+  assert.equal(origin.city, "");
+  assert.deepEqual(citiesOf(origin), []); // ville désactivée tant que pays vide
+});
+
+test("valeurs historiques préservées : origin_country texte libre reconnu ou conservé", () => {
+  // Valeur héritée reconnue (saisie libre historique) → rapprochée au chargement.
+  assert.equal(findCountryByName("cameroun")?.code, "CM");
+  // Valeur héritée inconnue → PAS de rapprochement : conservée telle quelle,
+  // la ville associée bascule en « Autre ville » (liste vide).
+  const legacy = makePair("Kamerun (ancienne saisie)", "Douala");
+  assert.equal(findCountryByName(legacy.country), null);
+  assert.deepEqual(citiesOf(legacy), []);
+  assert.equal(legacy.city, "Douala"); // rien n'est effacé au chargement
+});

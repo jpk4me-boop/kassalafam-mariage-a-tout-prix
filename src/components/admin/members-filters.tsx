@@ -74,27 +74,27 @@ export function MembersFilters({ filters }: { filters: MembersFilters }) {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Prénom, email, ville ou pays…"
+              placeholder="Prénom, email, ville ou pays de résidence…"
               className="w-full rounded-full border border-champagne-500/30 bg-cream-50/80 py-2 pl-9 pr-3 text-sm text-ink-800 outline-none focus:border-champagne-500/50 focus:ring-2 focus:ring-champagne-500/20"
             />
           </label>
           <label className="flex flex-col">
-            <span className="sr-only">Pays</span>
+            <span className="sr-only">Pays de résidence</span>
             <input
               type="text"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              placeholder="Pays (exact)"
+              placeholder="Pays de résidence (exact)"
               className="w-full rounded-full border border-champagne-500/30 bg-cream-50/80 px-4 py-2 text-sm text-ink-800 outline-none focus:border-champagne-500/50 focus:ring-2 focus:ring-champagne-500/20"
             />
           </label>
           <label className="flex flex-col">
-            <span className="sr-only">Ville</span>
+            <span className="sr-only">Ville de résidence</span>
             <input
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="Ville (exact)"
+              placeholder="Ville de résidence (exact)"
               className="w-full rounded-full border border-champagne-500/30 bg-cream-50/80 px-4 py-2 text-sm text-ink-800 outline-none focus:border-champagne-500/50 focus:ring-2 focus:ring-champagne-500/20"
             />
           </label>

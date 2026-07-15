@@ -97,6 +97,8 @@ export const CHOICE_SET_MAX = 3;
 export const PROFESSION_MIN = 2;
 export const PROFESSION_MAX = 100;
 export const ORIGIN_COUNTRY_MAX = 100;
+/** origin_city — MIROIR du CHECK `profiles_origin_city_chk` (≤ 100 après trim). */
+export const ORIGIN_CITY_MAX = 100;
 export const REGION_MAX = 120;
 
 /** bio / partner_expectations — MIROIR des CHECK `profiles_bio_len` et
