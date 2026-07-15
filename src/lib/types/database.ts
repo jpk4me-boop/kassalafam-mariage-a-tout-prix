@@ -139,6 +139,10 @@ export type ProfileRow = {
   polygamy_preference: PolygamyPreference | null;
   children_intent: ChildrenIntent | null;
   blur_photos: boolean;
+  // Statut Premium — LECTURE SEULE côté membre (C1a). Écrit UNIQUEMENT par les
+  // futurs flux serveur (service_role) ; protégé en base par la garde
+  // trg_profiles_guard_admin_fields (INSERT + UPDATE, upsert inclus).
+  // Volontairement ABSENT de ProfileInsert / ProfileUpdate.
   is_premium: boolean;
   // Préférence volontaire d'espace de découverte (L3C-C). NULL = aucun choix.
   // Privée : jamais exposée aux autres membres dans cette phase.
@@ -202,7 +206,9 @@ export type ProfileInsert = {
   polygamy_preference?: PolygamyPreference | null;
   children_intent?: ChildrenIntent | null;
   blur_photos?: boolean;
-  is_premium?: boolean;
+  // NB : is_premium est VOLONTAIREMENT absent de Insert (et donc de Update) —
+  // C1a : champ administratif en lecture seule pour le membre, rejeté en
+  // écriture directe par la garde en base (PROFILE_ADMIN_FIELDS_READ_ONLY).
   discovery_universe?: DiscoveryUniverse | null;
   // NB : acquisition_source / _other / _recorded_at sont VOLONTAIREMENT absents
   // de Insert (et donc de Update). Ils sont write-once via la RPC
