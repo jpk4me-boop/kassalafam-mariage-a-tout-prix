@@ -91,14 +91,14 @@ begin
   insert into public.profiles (
     id, first_name, gender, birth_date, marital_status,
     profession, education_level, height_cm,
-    country, city, origin_country, region,
+    country, city, origin_country, origin_city, region,
     marriage_goals, desired_partner_traits, polygamy_preference, children_intent,
     bio, partner_expectations,
     acquisition_source, acquisition_source_recorded_at
   ) values (
     p_id, 'Testeur', 'homme', date '1990-01-01', 'celibataire',
     'Ingénieur', 'master', 180,
-    'Cameroun', 'Douala', 'Cameroun', 'Littoral',
+    'Cameroun', 'Douala', 'Cameroun', 'Yaoundé', 'Littoral',
     array['build_family','stable_home'], array['kindness','sincerity'], 'no', 'wants_children',
     'Présentation de test.', 'Attentes de test.',
     'google', pg_catalog.now()

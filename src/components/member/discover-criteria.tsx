@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   CircleAlert,
+  Globe,
   HeartHandshake,
   ListChecks,
   Loader2,
@@ -55,6 +56,15 @@ type State =
   | { status: "ready"; criteria: Criterion[] };
 
 function buildCriteria(profile: ProfileRow | null): Criterion[] {
+  // Origine vs résidence (PR Origine/Résidence) : deux informations
+  // DISTINCTES — origin_city/origin_country (origine) et city/country
+  // (résidence). Une origine absente (profils historiques) affiche
+  // simplement « À compléter », jamais une erreur.
+  const origin = [profile?.origin_city, profile?.origin_country]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(", ");
+
   const location = [profile?.city, profile?.country]
     .map((v) => (v ?? "").trim())
     .filter(Boolean)
@@ -80,8 +90,16 @@ function buildCriteria(profile: ProfileRow | null): Criterion[] {
 
   return [
     {
+      key: "origin",
+      label: "Origine",
+      Icon: Globe,
+      value: origin || null,
+      filled: Boolean(origin),
+      completable: true,
+    },
+    {
       key: "location",
-      label: "Ville / Pays",
+      label: "Résidence",
       Icon: MapPin,
       value: location || null,
       filled: Boolean(location),
@@ -144,7 +162,7 @@ export function DiscoverCriteria() {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "city, country, marital_status, intention, partner_expectations, blur_photos",
+          "origin_city, origin_country, city, country, marital_status, intention, partner_expectations, blur_photos",
         )
         .eq("id", user.id)
         .maybeSingle();

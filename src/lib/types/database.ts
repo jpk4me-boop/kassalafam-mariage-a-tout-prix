@@ -132,7 +132,12 @@ export type ProfileRow = {
   profession: string | null;
   education_level: EducationLevel | null;
   height_cm: number | null;
+  // Origine vs résidence (PR Origine/Résidence) : origin_country/origin_city =
+  // lieu d'ORIGINE ; country/city = lieu de RÉSIDENCE ; region = zone de
+  // résidence. Jamais déduits l'un de l'autre. origin_city NULL pour les
+  // profils historiques (CHECK profiles_origin_city_chk : non vide, ≤ 100).
   origin_country: string | null;
+  origin_city: string | null;
   region: string | null;
   marriage_goals: MarriageGoal[] | null;
   desired_partner_traits: PartnerTrait[] | null;
@@ -200,6 +205,7 @@ export type ProfileInsert = {
   education_level?: EducationLevel | null;
   height_cm?: number | null;
   origin_country?: string | null;
+  origin_city?: string | null;
   region?: string | null;
   marriage_goals?: MarriageGoal[] | null;
   desired_partner_traits?: PartnerTrait[] | null;
@@ -799,6 +805,15 @@ export interface Database {
       // onboarding_completed_at (write-once). Idempotente : un second appel
       // renvoie le premier horodatage. auth.uid() côté serveur uniquement.
       complete_member_onboarding: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      // Onboarding — FIN EXPLICITE v2 (PR Origine/Résidence) : mêmes garanties
+      // que la v1 avec UNE exigence de plus, origin_city (les 4 champs
+      // géographiques + region). La v1 reste servie à l'ancien code déployé
+      // pendant la fenêtre migration → déploiement ; le nouveau code appelle
+      // exclusivement la v2.
+      complete_member_onboarding_v2: {
         Args: Record<string, never>;
         Returns: string;
       };

@@ -138,7 +138,7 @@ export function MembersList({
           <thead>
             <tr className="border-b border-champagne-500/25 text-xs uppercase tracking-wide text-ink-700/55">
               <th className="px-4 py-3 font-medium">Membre</th>
-              <th className="px-4 py-3 font-medium">Localisation</th>
+              <th className="px-4 py-3 font-medium">Résidence</th>
               <th className="px-4 py-3 font-medium">Compte</th>
               <th className="px-4 py-3 font-medium">Vérification</th>
               <th className="px-4 py-3 font-medium">Profil</th>

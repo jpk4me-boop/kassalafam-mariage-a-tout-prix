@@ -33,6 +33,8 @@ type FormState = {
   first_name: string;
   gender: "" | Gender;
   birth_date: string;
+  origin_country: string;
+  origin_city: string;
   country: string;
   city: string;
   marital_status: "" | MaritalStatus;
@@ -46,6 +48,8 @@ const EMPTY_FORM: FormState = {
   first_name: "",
   gender: "",
   birth_date: "",
+  origin_country: "",
+  origin_city: "",
   country: "",
   city: "",
   marital_status: "",
@@ -93,6 +97,8 @@ export default function ProfilePage() {
           first_name: profile.first_name ?? "",
           gender: profile.gender ?? "",
           birth_date: profile.birth_date ?? "",
+          origin_country: profile.origin_country ?? "",
+          origin_city: profile.origin_city ?? "",
           country: profile.country ?? "",
           city: profile.city ?? "",
           marital_status: profile.marital_status ?? "",
@@ -161,6 +167,12 @@ export default function ProfilePage() {
         first_name: form.first_name.trim() || null,
         gender: form.gender,
         birth_date: form.birth_date || null,
+        // Origine (PR Origine/Résidence) : compatibilité DOUCE — jamais de
+        // chaîne vide (NULL tant que non renseignée, CHECK en base sinon).
+        // Pas de garde stricte ici : un profil historique finalisé doit
+        // pouvoir enregistrer sa bio sans renseigner l'origine.
+        origin_country: form.origin_country.trim() || null,
+        origin_city: form.origin_city.trim() || null,
         // Onboarding terminé : jamais null (bloqué par la validation
         // ci-dessus). Parcours non finalisé : comportement historique.
         country: form.country.trim() || null,
@@ -279,17 +291,45 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Pays → ville de résidence : sélecteurs dépendants (PR A géo), le
-            même composant que l'étape 6 de l'onboarding. Les anciennes
-            valeurs sont rapprochées par normalisation, jamais effacées. */}
-        <CountryCityFields
-          country={form.country}
-          city={form.city}
-          onCountryChange={(v) => update("country", v)}
-          onCityChange={(v) => update("city", v)}
-          disabled={saving}
-          idPrefix="profile-geo"
-        />
+        {/* ORIGINE d'abord (PR Origine/Résidence) : mêmes sélecteurs
+            dépendants Pays → Ville que la résidence (catalogue unique,
+            « Autre ville », valeurs héritées conservées). Instance
+            INDÉPENDANTE de la résidence. FACULTATIF pour les profils
+            historiques (origin_city NULL) : l'enregistrement des autres
+            champs n'est jamais bloqué ; le bandeau « Profil incomplet » du
+            dashboard incite à compléter. */}
+        <fieldset className="flex flex-col gap-5">
+          <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
+            Origine
+          </legend>
+          <CountryCityFields
+            country={form.origin_country}
+            city={form.origin_city}
+            onCountryChange={(v) => update("origin_country", v)}
+            onCityChange={(v) => update("origin_city", v)}
+            disabled={saving}
+            idPrefix="profile-origin"
+            countryLabel="Pays d’origine"
+            cityLabel="Ville d’origine"
+          />
+        </fieldset>
+
+        {/* RÉSIDENCE ensuite : sélecteurs dépendants (PR A géo), le même
+            composant que l'étape 6 de l'onboarding. Les anciennes valeurs
+            sont rapprochées par normalisation, jamais effacées. */}
+        <fieldset className="flex flex-col gap-5">
+          <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
+            Résidence actuelle
+          </legend>
+          <CountryCityFields
+            country={form.country}
+            city={form.city}
+            onCountryChange={(v) => update("country", v)}
+            onCityChange={(v) => update("city", v)}
+            disabled={saving}
+            idPrefix="profile-geo"
+          />
+        </fieldset>
 
         <div>
           <Label htmlFor="marital_status">Situation matrimoniale</Label>

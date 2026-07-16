@@ -35,6 +35,7 @@ import {
   CHOICE_SET_MIN,
   HEIGHT_MAX_CM,
   HEIGHT_MIN_CM,
+  ORIGIN_CITY_MAX,
   ORIGIN_COUNTRY_MAX,
   PROFESSION_MAX,
   PROFESSION_MIN,
@@ -176,7 +177,9 @@ export function OnboardingWizard({
    */
   async function finalizeOnboarding(): Promise<boolean> {
     const supabase = createClient();
-    const { error: rpcError } = await supabase.rpc("complete_member_onboarding");
+    // v2 (PR Origine/Résidence) : exige aussi origin_city — la v1 reste servie
+    // à l'ancien code déployé pendant la fenêtre migration → déploiement.
+    const { error: rpcError } = await supabase.rpc("complete_member_onboarding_v2");
     if (rpcError) {
       setError(
         "L’envoi de votre profil n’a pas abouti. Vérifiez votre connexion puis réessayez.",
@@ -213,10 +216,12 @@ export function OnboardingWizard({
       }
       case 6:
         return (
-          form.country.trim().length > 0 &&
-          form.city.trim().length > 0 &&
           form.origin_country.trim().length > 0 &&
           form.origin_country.trim().length <= ORIGIN_COUNTRY_MAX &&
+          form.origin_city.trim().length > 0 &&
+          form.origin_city.trim().length <= ORIGIN_CITY_MAX &&
+          form.country.trim().length > 0 &&
+          form.city.trim().length > 0 &&
           form.region.trim().length > 0 &&
           form.region.trim().length <= REGION_MAX
         );
@@ -284,9 +289,10 @@ export function OnboardingWizard({
       case 6:
         patch = {
           id: user.id,
+          origin_country: form.origin_country.trim(),
+          origin_city: form.origin_city.trim(),
           country: form.country.trim(),
           city: form.city.trim(),
-          origin_country: form.origin_country.trim(),
           region: form.region.trim(),
         };
         break;
@@ -496,10 +502,12 @@ export function OnboardingWizard({
                 country={form.country}
                 city={form.city}
                 originCountry={form.origin_country}
+                originCity={form.origin_city}
                 region={form.region}
                 onCountryChange={(v) => update("country", v)}
                 onCityChange={(v) => update("city", v)}
                 onOriginCountryChange={(v) => update("origin_country", v)}
+                onOriginCityChange={(v) => update("origin_city", v)}
                 onRegionChange={(v) => update("region", v)}
                 disabled={busy}
               />

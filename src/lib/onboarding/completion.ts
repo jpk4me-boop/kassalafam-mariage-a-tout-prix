@@ -24,7 +24,8 @@
  *   3. Date de naissance    → birth_date (≥ 18 ans, cf. `isAdultBirthDate`)
  *   4. Situation            → marital_status + religion
  *   5. Profession / études  → profession + education_level + height_cm
- *   6. Localisation         → country + city + origin_country + region
+ *   6. Localisation         → origin_country + origin_city (origine) puis
+ *                             country + city + region (résidence)
  *   7. Projet matrimonial   → marriage_goals + desired_partner_traits +
  *                             polygamy_preference + children_intent +
  *                             bio + partner_expectations
@@ -54,6 +55,7 @@ export type OnboardingProfileData = Pick<
   | "education_level"
   | "height_cm"
   | "origin_country"
+  | "origin_city"
   | "region"
   | "marriage_goals"
   | "desired_partner_traits"
@@ -67,7 +69,7 @@ export type OnboardingProfileData = Pick<
 
 /** Colonnes à sélectionner côté serveur pour alimenter le wizard en UN seul SELECT. */
 export const ONBOARDING_PROFILE_COLUMNS =
-  "first_name, gender, birth_date, marital_status, religion, country, city, profession, education_level, height_cm, origin_country, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at";
+  "first_name, gender, birth_date, marital_status, religion, country, city, profession, education_level, height_cm, origin_country, origin_city, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at";
 
 function isFilled(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
@@ -123,9 +125,10 @@ export function computeStepCompletion(
       profile.education_level != null &&
       profile.height_cm != null,
     6:
+      isFilled(profile.origin_country) &&
+      isFilled(profile.origin_city) &&
       isFilled(profile.country) &&
       isFilled(profile.city) &&
-      isFilled(profile.origin_country) &&
       isFilled(profile.region),
     7:
       isValidChoiceSet(profile.marriage_goals) &&

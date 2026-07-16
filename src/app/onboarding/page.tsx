@@ -44,6 +44,7 @@ const EMPTY_PROFILE: OnboardingProfileData = {
   education_level: null,
   height_cm: null,
   origin_country: null,
+  origin_city: null,
   region: null,
   marriage_goals: null,
   desired_partner_traits: null,
