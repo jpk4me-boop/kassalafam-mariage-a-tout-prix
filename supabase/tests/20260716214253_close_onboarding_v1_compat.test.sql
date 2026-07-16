@@ -1,6 +1,6 @@
 -- =============================================================================
--- pgTAP â€” fermeture de la compatibilitÃ© onboarding v1.
--- Ã€ exÃ©cuter uniquement sur le stack Supabase local : npx supabase test db
+-- pgTAP — fermeture de la compatibilité onboarding v1.
+-- À exécuter uniquement sur le stack Supabase local : npx supabase test db
 -- =============================================================================
 
 begin;
@@ -19,10 +19,10 @@ begin
     acquisition_source, acquisition_source_recorded_at
   ) values (
     p_id, 'Testeur', 'homme', date '1990-01-01', 'celibataire', 'christianisme',
-    'IngÃ©nieur', 'master', 180,
-    'SÃ©nÃ©gal', 'Dakar', 'Cameroun', 'Douala', 'Littoral',
+    'Ingénieur', 'master', 180,
+    'Sénégal', 'Dakar', 'Cameroun', 'Douala', 'Littoral',
     array['build_family','stable_home'], array['kindness','sincerity'],
-    'no', 'wants_children', 'PrÃ©sentation de test.', 'Attentes de test.',
+    'no', 'wants_children', 'Présentation de test.', 'Attentes de test.',
     'google', pg_catalog.now()
   );
   insert into public.photos (profile_id, storage_path, is_primary)
@@ -76,57 +76,57 @@ where id = '00000000-0000-0000-0000-0000000000e2';
 select plan(18);
 
 select has_function('public', 'profile_meets_onboarding_requirements',
-  array['public.profiles'], 'T1 â€” prÃ©dicat prÃ©sent');
+  array['public.profiles'], 'T1 — prédicat présent');
 select has_function('public', 'complete_member_onboarding', array[]::text[],
-  'T2 â€” RPC v1 prÃ©sente');
+  'T2 — RPC v1 présente');
 select has_function('public', 'complete_member_onboarding_v2', array[]::text[],
-  'T3 â€” RPC v2 prÃ©sente');
+  'T3 — RPC v2 présente');
 select ok(
   position('origin_city' in pg_get_functiondef(
     'public.profile_meets_onboarding_requirements(public.profiles)'::regprocedure)) > 0,
-  'T4 â€” le prÃ©dicat exige origin_city');
+  'T4 — le prédicat exige origin_city');
 select ok(
   position('complete_member_onboarding_v2' in pg_get_functiondef(
     'public.complete_member_onboarding()'::regprocedure)) > 0,
-  'T5 â€” la v1 dÃ©lÃ¨gue Ã  la v2');
+  'T5 — la v1 délègue à la v2');
 
 select function_privs_are('public', 'complete_member_onboarding',
-  '{}'::name[], 'anon', '{}'::name[], 'T6 â€” anon sans EXECUTE v1');
+  '{}'::name[], 'anon', '{}'::name[], 'T6 — anon sans EXECUTE v1');
 select function_privs_are('public', 'complete_member_onboarding',
   '{}'::name[], 'authenticated', array['EXECUTE'],
-  'T7 â€” authenticated a seulement EXECUTE v1');
+  'T7 — authenticated a seulement EXECUTE v1');
 select function_privs_are('public', 'profile_meets_onboarding_requirements',
   array['public.profiles'], 'authenticated', '{}'::name[],
-  'T8 â€” prÃ©dicat interne non exÃ©cutable par authenticated');
+  'T8 — prédicat interne non exécutable par authenticated');
 
 select ok(not public._cv1_meets('00000000-0000-0000-0000-0000000000e1'),
-  'T9 â€” profil non finalisÃ© sans origin_city : prÃ©dicat faux');
+  'T9 — profil non finalisé sans origin_city : prédicat faux');
 select isnt(public._cv1_rpc('00000000-0000-0000-0000-0000000000e1'), '',
-  'T10 â€” la v1 refuse dÃ©sormais sans origin_city');
+  'T10 — la v1 refuse désormais sans origin_city');
 select is(current_setting('test.err', true), 'ONBOARDING_INCOMPLETE_LOCATION',
-  'T11 â€” erreur stable du bloc localisation');
+  'T11 — erreur stable du bloc localisation');
 select is((select onboarding_completed_at from public.profiles
   where id = '00000000-0000-0000-0000-0000000000e1'), null,
-  'T12 â€” refus sans Ã©criture du marqueur');
+  'T12 — refus sans écriture du marqueur');
 
 update public.profiles set origin_city = 'Dakar'
 where id = '00000000-0000-0000-0000-0000000000e1';
 select ok(public._cv1_meets('00000000-0000-0000-0000-0000000000e1'),
-  'T13 â€” origin_city renseignÃ©e : prÃ©dicat vrai');
+  'T13 — origin_city renseignée : prédicat vrai');
 select is(public._cv1_rpc('00000000-0000-0000-0000-0000000000e1'), '',
-  'T14 â€” la v1 dÃ©lÃ©guÃ©e finalise un profil complet');
+  'T14 — la v1 déléguée finalise un profil complet');
 select isnt((select onboarding_completed_at from public.profiles
   where id = '00000000-0000-0000-0000-0000000000e1'), null,
-  'T15 â€” marqueur posÃ©');
+  'T15 — marqueur posé');
 
 select is(public._cv1_rpc('00000000-0000-0000-0000-0000000000e2'), '',
-  'T16 â€” profil historique dÃ©jÃ  finalisÃ© : appel idempotent');
+  'T16 — profil historique déjà finalisé : appel idempotent');
 select is(current_setting('test.ret', true)::timestamptz,
   timestamptz '2026-07-16 20:00:00+00',
-  'T17 â€” premier horodatage historique renvoyÃ© sans rÃ©Ã©criture');
+  'T17 — premier horodatage historique renvoyé sans réécriture');
 select is((select origin_city from public.profiles
   where id = '00000000-0000-0000-0000-0000000000e2'), null,
-  'T18 â€” historique jamais backfillÃ© ni re-bloquÃ©');
+  'T18 — historique jamais backfillé ni re-bloqué');
 
 select * from finish();
 rollback;

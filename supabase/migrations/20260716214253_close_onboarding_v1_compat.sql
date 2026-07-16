@@ -1,14 +1,14 @@
 -- =============================================================================
--- KASSALAFAM â€” MARIAGE Ã€ TOUT PRIX
--- Migration : fermeture de la compatibilitÃ© temporaire onboarding v1
+-- KASSALAFAM — MARIAGE À TOUT PRIX
+-- Migration : fermeture de la compatibilité temporaire onboarding v1
 -- Version   : 20260716214253
 --
--- AprÃ¨s dÃ©ploiement Production du wizard v2 :
---   1. origin_city rejoint la source de vÃ©ritÃ© serveur de complÃ©tude ;
+-- Après déploiement Production du wizard v2 :
+--   1. origin_city rejoint la source de vérité serveur de complétude ;
 --   2. complete_member_onboarding() reste disponible comme alias historique,
---      mais dÃ©lÃ¨gue strictement Ã  complete_member_onboarding_v2().
+--      mais délègue strictement à complete_member_onboarding_v2().
 --
--- Aucun profil n'est modifiÃ©. Les profils dÃ©jÃ  finalisÃ©s restent idempotents :
+-- Aucun profil n'est modifié. Les profils déjà finalisés restent idempotents :
 -- la v2 renvoie leur premier onboarding_completed_at sans les revalider.
 -- =============================================================================
 
@@ -64,7 +64,7 @@ as $$
 $$;
 
 comment on function public.complete_member_onboarding() is
-  'Alias de compatibilitÃ© fermÃ© : dÃ©lÃ¨gue strictement Ã  complete_member_onboarding_v2(), qui exige origin_country, origin_city, country, city et region. Les profils dÃ©jÃ  finalisÃ©s restent idempotents et ne sont jamais re-bloquÃ©s.';
+  'Alias de compatibilité fermé : délègue strictement à complete_member_onboarding_v2(), qui exige origin_country, origin_city, country, city et region. Les profils déjà finalisés restent idempotents et ne sont jamais re-bloqués.';
 
 revoke all on function public.complete_member_onboarding() from public;
 revoke all on function public.complete_member_onboarding() from anon;
