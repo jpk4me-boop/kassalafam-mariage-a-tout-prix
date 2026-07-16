@@ -177,7 +177,9 @@ export function OnboardingWizard({
    */
   async function finalizeOnboarding(): Promise<boolean> {
     const supabase = createClient();
-    const { error: rpcError } = await supabase.rpc("complete_member_onboarding");
+    // v2 (PR Origine/Résidence) : exige aussi origin_city — la v1 reste servie
+    // à l'ancien code déployé pendant la fenêtre migration → déploiement.
+    const { error: rpcError } = await supabase.rpc("complete_member_onboarding_v2");
     if (rpcError) {
       setError(
         "L’envoi de votre profil n’a pas abouti. Vérifiez votre connexion puis réessayez.",

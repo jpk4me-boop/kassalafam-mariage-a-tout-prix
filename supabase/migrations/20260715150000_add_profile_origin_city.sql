@@ -16,14 +16,33 @@
 --             AUCUNE déduction : l'origine n'est jamais copiée depuis la
 --             résidence (ni l'inverse), ni maintenant ni par trigger.
 --
+-- COMPATIBILITÉ DE DÉPLOIEMENT (ordre impératif : migration PUIS code) :
+--             cette migration est SANS RUPTURE pour le code actuellement
+--             déployé en Production :
+--               - public.complete_member_onboarding() (v1, appelée par le
+--                 wizard déployé) N'EST PAS MODIFIÉE : pendant la fenêtre
+--                 migration → déploiement, un nouveau membre sur l'ancienne
+--                 interface (sans champ « Ville d'origine ») peut toujours
+--                 FINALISER son onboarding ;
+--               - public.profile_meets_onboarding_requirements(profiles)
+--                 (prédicat partagé par la v1 et le backfill) N'EST PAS
+--                 MODIFIÉ : il n'exige pas origin_city ;
+--               - la nouvelle exigence vit dans une RPC VERSIONNÉE :
+--                 public.complete_member_onboarding_v2(), appelée par le
+--                 NOUVEAU code uniquement, qui exige les quatre champs
+--                 géographiques (origin_country, origin_city, country, city)
+--                 + region.
+--             Une MIGRATION ULTÉRIEURE (hors de cette PR, après stabilisation)
+--             pourra aligner le prédicat sur la v2 et retirer la v1.
+--             AUCUN DROP ni changement de signature dans cette migration.
+--
 -- Complétude : la ville d'origine devient OBLIGATOIRE pour FINALISER
---             l'onboarding (étape 6 « localisation ») :
---               - le prédicat public.profile_meets_onboarding_requirements est
---                 remplacé pour exiger origin_city non vide (avec country,
---                 city, origin_country, region déjà exigés) ;
---               - la RPC public.complete_member_onboarding est remplacée avec
---                 la même exigence, sous le code stable EXISTANT du bloc
---                 géographique : ONBOARDING_INCOMPLETE_LOCATION.
+--             l'onboarding VIA LA V2 (étape 6 « localisation », sous le code
+--             stable EXISTANT du bloc géographique :
+--             ONBOARDING_INCOMPLETE_LOCATION). Le bandeau « Profil incomplet »
+--             côté app (computeStepCompletion) exige aussi origin_city :
+--             écart temporaire ASSUMÉ avec le prédicat serveur (plus laxiste)
+--             jusqu'à la migration d'alignement.
 --
 -- Compatibilité des profils historiques (stratégie DOUCE, pattern religion) :
 --             - Colonne NULLABLE, SANS default, AUCUN backfill : les profils
@@ -32,9 +51,10 @@
 --               réciproquement).
 --             - Un membre déjà finalisé (onboarding_completed_at posé,
 --               write-once) n'est JAMAIS re-bloqué : le routage ne regarde que
---               le marqueur, et la RPC idempotente renvoie le premier
---               horodatage sans revalider. Seul le bandeau « Profil incomplet »
---               (complétude dynamique côté app) l'incite à compléter.
+--               le marqueur, et les RPC v1/v2 idempotentes renvoient le
+--               premier horodatage sans revalider. Seul le bandeau « Profil
+--               incomplet » (complétude dynamique côté app) l'incite à
+--               compléter.
 --
 -- Sécurité  : - Migration ADDITIVE et NON destructive. Aucune ligne modifiée.
 --             - Aucune policy RLS modifiée : les policies *_own existantes
@@ -44,11 +64,13 @@
 --               le membre (comme origin_country), ni write-once ni admin.
 --             - CHECK : chaîne vide / espaces seuls rejetés, longueur ≤ 100
 --               (cohérente avec profiles_origin_country_chk).
+--             - v2 : SECURITY DEFINER, search_path verrouillé, auth.uid()
+--               vérifié, EXECUTE limité à authenticated — mêmes garanties que
+--               la v1 (20260715090000).
 --             - Le backfill public.backfill_onboarding_completion n'est PAS
 --               ré-exécuté.
 --             - Idempotente : ADD COLUMN IF NOT EXISTS ; DROP CONSTRAINT IF
---               EXISTS + ADD ; CREATE OR REPLACE FUNCTION ; revokes/grants
---               réaffirmés à l'identique. search_path verrouillé conservé.
+--               EXISTS + ADD ; CREATE OR REPLACE FUNCTION (v2 uniquement).
 --
 -- Confidentialité : origin_country / origin_city ne sont PAS exposés aux
 --             autres membres : aucune projection publique (découverte,
@@ -68,8 +90,9 @@ alter table public.profiles
 comment on column public.profiles.origin_city is
   'Ville d''origine déclarée par le membre — DISTINCTE de la ville de '
   'résidence (city), jamais déduite d''elle. NULL = non renseignée (profils '
-  'historiques). Requise pour FINALISER l''onboarding ; librement éditable '
-  'ensuite. Non exposée publiquement.';
+  'historiques). Requise pour FINALISER l''onboarding via '
+  'complete_member_onboarding_v2 ; librement éditable ensuite. Non exposée '
+  'publiquement.';
 
 -- ---------------------------------------------------------------------------
 -- 2. Contrainte (NULL permis ; '' / espaces rejetés ; ≤ 100 comme
@@ -83,72 +106,17 @@ alter table public.profiles add constraint profiles_origin_city_chk
   );
 
 -- ---------------------------------------------------------------------------
--- 3. Prédicat interne — exigences serveur du parcours (source de vérité
---    UNIQUE, partagée par la RPC et le backfill). REMPLACÉ à l'identique de
---    20260715090000 avec UNE addition : l'étape 6 exige désormais aussi
---    origin_city. Miroir de `computeStepCompletion` côté app.
+-- 3. RPC de finalisation VERSIONNÉE — public.complete_member_onboarding_v2().
+--    NOUVELLE fonction appelée par le NOUVEAU code uniquement. Corps identique
+--    à la v1 (20260715090000) avec UNE addition : origin_city rejoint le bloc
+--    géographique, sous le code stable EXISTANT
+--    ONBOARDING_INCOMPLETE_LOCATION. La v1 et le prédicat partagé restent
+--    INTACTS (compatibilité de déploiement, cf. en-tête). L'idempotence est
+--    INCHANGÉE : un membre déjà finalisé (marqueur posé) reçoit le premier
+--    horodatage SANS revalidation — les profils historiques sans origin_city
+--    ne sont jamais re-bloqués.
 -- ---------------------------------------------------------------------------
-create or replace function public.profile_meets_onboarding_requirements(
-  p_profile public.profiles
-)
-returns boolean
-language sql
-stable
-set search_path = ''
-as $$
-  select
-    -- Étape 1 — acquisition (write-once déjà posée)
-    p_profile.acquisition_source_recorded_at is not null
-    -- Étape 2 — prénom + genre
-    and coalesce(pg_catalog.btrim(p_profile.first_name), '') <> ''
-    and p_profile.gender is not null
-    -- Étape 3 — date de naissance, 18 ans révolus
-    and p_profile.birth_date is not null
-    and p_profile.birth_date <= (current_date - interval '18 years')::date
-    -- Étape 4 — situation matrimoniale + religion (PR B religion)
-    and p_profile.marital_status is not null
-    and p_profile.religion is not null
-    -- Étape 5 — profession / études / taille
-    and coalesce(pg_catalog.btrim(p_profile.profession), '') <> ''
-    and p_profile.education_level is not null
-    and p_profile.height_cm is not null
-    -- Étape 6 — localisation : origine (pays + ville) PUIS résidence
-    -- (pays + ville + région). origin_city ajoutée (PR Origine/Résidence).
-    and coalesce(pg_catalog.btrim(p_profile.origin_country), '') <> ''
-    and coalesce(pg_catalog.btrim(p_profile.origin_city), '') <> ''
-    and coalesce(pg_catalog.btrim(p_profile.country), '') <> ''
-    and coalesce(pg_catalog.btrim(p_profile.city), '') <> ''
-    and coalesce(pg_catalog.btrim(p_profile.region), '') <> ''
-    -- Étape 7 — projet matrimonial + présentation + attentes
-    and coalesce(pg_catalog.array_length(p_profile.marriage_goals, 1), 0) >= 2
-    and coalesce(pg_catalog.array_length(p_profile.desired_partner_traits, 1), 0) >= 2
-    and p_profile.polygamy_preference is not null
-    and p_profile.children_intent is not null
-    and coalesce(pg_catalog.btrim(p_profile.bio), '') <> ''
-    and coalesce(pg_catalog.btrim(p_profile.partner_expectations), '') <> ''
-    -- Étape 8 — photo principale
-    and exists (
-      select 1
-      from public.photos ph
-      where ph.profile_id = p_profile.id
-        and ph.is_primary
-    );
-$$;
-
--- Prédicat interne : jamais une API métier (réaffirmé à l'identique).
-revoke all on function public.profile_meets_onboarding_requirements(public.profiles) from public;
-revoke all on function public.profile_meets_onboarding_requirements(public.profiles) from anon;
-revoke all on function public.profile_meets_onboarding_requirements(public.profiles) from authenticated;
-
--- ---------------------------------------------------------------------------
--- 4. RPC de finalisation — REMPLACÉE à l'identique de 20260715090000 avec UNE
---    addition : origin_city rejoint le bloc géographique, sous le code stable
---    EXISTANT ONBOARDING_INCOMPLETE_LOCATION. L'idempotence est INCHANGÉE :
---    un membre déjà finalisé (marqueur posé) reçoit le premier horodatage
---    SANS revalidation — les profils historiques sans origin_city ne sont
---    jamais re-bloqués.
--- ---------------------------------------------------------------------------
-create or replace function public.complete_member_onboarding()
+create or replace function public.complete_member_onboarding_v2()
 returns timestamptz
 language plpgsql
 security definer
@@ -178,7 +146,7 @@ begin
     return v_profile.onboarding_completed_at;
   end if;
 
-  -- Erreurs par exigence (mêmes règles que le prédicat, messages stables).
+  -- Erreurs par exigence (mêmes règles que la v1, messages stables).
   if v_profile.acquisition_source_recorded_at is null then
     raise exception 'ONBOARDING_INCOMPLETE_ACQUISITION';
   end if;
@@ -203,6 +171,8 @@ begin
      or v_profile.height_cm is null then
     raise exception 'ONBOARDING_INCOMPLETE_PROFESSIONAL';
   end if;
+  -- Bloc géographique v2 : origine (pays + ville) PUIS résidence (pays +
+  -- ville + région). origin_city est la SEULE addition par rapport à la v1.
   if coalesce(pg_catalog.btrim(v_profile.origin_country), '') = ''
      or coalesce(pg_catalog.btrim(v_profile.origin_city), '') = ''
      or coalesce(pg_catalog.btrim(v_profile.country), '') = ''
@@ -229,7 +199,8 @@ begin
     raise exception 'ONBOARDING_INCOMPLETE_PRIMARY_PHOTO';
   end if;
 
-  -- Garde-fou final : la source de vérité partagée avec le backfill.
+  -- Garde-fou final : le prédicat partagé (INCHANGÉ, sans origin_city — la
+  -- nouvelle exigence est déjà couverte par le contrôle explicite ci-dessus).
   if not public.profile_meets_onboarding_requirements(v_profile) then
     raise exception 'ONBOARDING_INCOMPLETE';
   end if;
@@ -245,7 +216,7 @@ begin
 end;
 $$;
 
--- Privilèges réaffirmés à l'identique de 20260715090000.
-revoke all on function public.complete_member_onboarding() from public;
-revoke all on function public.complete_member_onboarding() from anon;
-grant execute on function public.complete_member_onboarding() to authenticated;
+-- Privilèges : mêmes garanties que la v1 (EXECUTE minimal).
+revoke all on function public.complete_member_onboarding_v2() from public;
+revoke all on function public.complete_member_onboarding_v2() from anon;
+grant execute on function public.complete_member_onboarding_v2() to authenticated;

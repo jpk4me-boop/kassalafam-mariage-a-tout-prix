@@ -808,6 +808,15 @@ export interface Database {
         Args: Record<string, never>;
         Returns: string;
       };
+      // Onboarding — FIN EXPLICITE v2 (PR Origine/Résidence) : mêmes garanties
+      // que la v1 avec UNE exigence de plus, origin_city (les 4 champs
+      // géographiques + region). La v1 reste servie à l'ancien code déployé
+      // pendant la fenêtre migration → déploiement ; le nouveau code appelle
+      // exclusivement la v2.
+      complete_member_onboarding_v2: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
       // Partage PR1 — consentement au partage public limité du profil.
       // Idempotente : réutilise le consentement actif s'il existe. Texte et
       // version définis côté serveur ; auth.uid() uniquement, aucun paramètre.
