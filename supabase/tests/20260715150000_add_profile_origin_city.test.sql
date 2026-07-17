@@ -255,12 +255,13 @@ select is(public._oc_as('00000000-0000-0000-0000-0000000000d1',
 -- ###########################################################################
 
 select ok(public._oc_meets('00000000-0000-0000-0000-0000000000d2'),
-  'T18 — profil complet → prédicat vrai');
+  'T18 - profil complet : predicat vrai');
 
 update public.profiles set origin_city = null
  where id = '00000000-0000-0000-0000-0000000000d2';
-select ok(public._oc_meets('00000000-0000-0000-0000-0000000000d2'),
-  'T19 — COMPAT DÉPLOIEMENT : le prédicat partagé n''exige PAS origin_city (v1 intacte)');
+
+select ok(not public._oc_meets('00000000-0000-0000-0000-0000000000d2'),
+  'T19 - fermeture : le predicat partage exige origin_city');
 update public.profiles set origin_city = 'Dakar'
  where id = '00000000-0000-0000-0000-0000000000d2';
 
@@ -331,17 +332,16 @@ select isnt(
 -- (membre D5 = nouveau membre sur l'ANCIENNE interface, fenêtre de déploiement)
 -- ###########################################################################
 
-select is(public._oc_rpc('00000000-0000-0000-0000-0000000000d5',
+select isnt(public._oc_rpc('00000000-0000-0000-0000-0000000000d5',
   'complete_member_onboarding'), '',
-  'T31 — v1 : succès SANS origin_city après la migration (ancienne interface non bloquée)');
-select isnt(
-  (select onboarding_completed_at from public.profiles
+  'T31 - v1 deleguee : refus sans origin_city');
+select is(current_setting('test.err', true), 'ONBOARDING_INCOMPLETE_LOCATION',
+  'T32 - v1 deleguee : erreur stable du bloc geographique');
+select ok(
+  (select onboarding_completed_at is null and origin_city is null
+     from public.profiles
     where id = '00000000-0000-0000-0000-0000000000d5'),
-  null, 'T32 — marqueur posé pour D5 via la v1');
-select is(
-  (select origin_city from public.profiles
-    where id = '00000000-0000-0000-0000-0000000000d5'),
-  null, 'T33 — la v1 n''écrit jamais origin_city (reste NULL, aucune valeur parasite)');
+  'T33 - refus sans marqueur ni ecriture parasite de origin_city');
 
 -- ###########################################################################
 -- SECTION 7 — PROFIL HISTORIQUE (D3 : marqueur posé, origin_city NULL)
