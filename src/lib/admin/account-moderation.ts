@@ -81,6 +81,8 @@ export const ACCOUNT_ERROR_MESSAGES: Record<string, string> = {
   REASON_LENGTH_INVALID:
     "Le motif doit contenir entre 10 et 2 000 caractères.",
   ACTOR_NOT_FOUND: "Le compte administrateur n’a pas pu être identifié.",
+  SELF_MODERATION_FORBIDDEN:
+    "Vous ne pouvez pas modifier le statut de votre propre compte.",
   REPORT_NOT_FOUND: "Le signalement associé n’existe plus.",
   REPORT_PROFILE_MISMATCH:
     "Le signalement ne concerne pas ce membre.",

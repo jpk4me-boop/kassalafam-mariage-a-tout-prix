@@ -153,7 +153,7 @@ export default async function AdminMemberDetailPage({
   params: Promise<{ profileId: string }>;
 }) {
   const { profileId } = await params;
-  await requireAdmin(`/admin/members/${profileId}`);
+  const adminContext = await requireAdmin(`/admin/members/${profileId}`);
 
   if (!isUuid(profileId)) notFound();
 
@@ -569,6 +569,7 @@ export default async function AdminMemberDetailPage({
           <MemberAccountActions
             profileId={profile.id}
             currentStatus={profile.account_status}
+            isSelf={adminContext.userId === profile.id}
           />
         </div>
       </Section>

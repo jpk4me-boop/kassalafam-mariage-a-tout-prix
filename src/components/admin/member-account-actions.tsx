@@ -34,12 +34,18 @@ function composeReason(
   return [...reasons, ...(p ? [`Précision: ${p}`] : [])].join("; ");
 }
 
+const SELF_MODERATION_MESSAGE =
+  "Vous ne pouvez pas modifier le statut de votre propre compte.";
+
 export function MemberAccountActions({
   profileId,
   currentStatus,
+  isSelf,
 }: {
   profileId: string;
   currentStatus: AccountStatus;
+  /** `true` si l'admin consulte SA PROPRE fiche : action neutralisée. */
+  isSelf: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -68,6 +74,11 @@ export function MemberAccountActions({
 
   function submit() {
     setError(null);
+    // Défense UI : la Server Action et la RPC refusent aussi l'auto-modération.
+    if (isSelf) {
+      setError(SELF_MODERATION_MESSAGE);
+      return;
+    }
     if (selected.length === 0) {
       setError("Sélectionnez au moins un motif.");
       return;
@@ -128,18 +139,30 @@ export function MemberAccountActions({
       <button
         type="button"
         onClick={() => {
+          if (isSelf) return;
           setError(null);
           setOpen((o) => !o);
         }}
-        disabled={pending}
+        disabled={pending || isSelf}
         aria-expanded={open}
+        aria-describedby={isSelf ? `self-moderation-note-${profileId}` : undefined}
+        title={isSelf ? SELF_MODERATION_MESSAGE : undefined}
         className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${accent.trigger}`}
       >
         {isSuspend ? <Ban size={15} /> : <BadgeCheck size={15} />}
         {isSuspend ? "Suspendre le compte" : "Réactiver le compte"}
       </button>
 
-      {open ? (
+      {isSelf ? (
+        <p
+          id={`self-moderation-note-${profileId}`}
+          className="text-xs text-ink-700/60"
+        >
+          {SELF_MODERATION_MESSAGE}
+        </p>
+      ) : null}
+
+      {open && !isSelf ? (
         <div className={`flex flex-col gap-3 rounded-xl border p-4 ${accent.panel}`}>
           <div>
             <p className="text-xs font-semibold text-choco-700">
