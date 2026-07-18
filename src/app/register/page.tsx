@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, MailCheck } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { REMEMBER_EMAIL_KEY } from "@/lib/auth/remember";
+import { sendAnalyticsBeacon } from "@/lib/analytics/client";
 import { getSiteUrl } from "@/lib/site-url";
 import { AuthShell } from "@/components/auth/auth-shell";
 import {
@@ -28,6 +29,15 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+
+  // Mesure interne : « inscription commencée » = première SAISIE réelle dans
+  // le formulaire (pas le simple affichage de la page). Envoyé UNE seule fois.
+  const startedTracked = useRef(false);
+  function trackRegistrationStarted() {
+    if (startedTracked.current) return;
+    startedTracked.current = true;
+    sendAnalyticsBeacon("registration_started", "/register");
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -141,7 +151,10 @@ export default function RegisterPage() {
             required
             placeholder="vous@exemple.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              trackRegistrationStarted();
+              setEmail(e.target.value);
+            }}
             disabled={loading}
           />
         </div>
@@ -156,7 +169,10 @@ export default function RegisterPage() {
             minLength={8}
             placeholder="8 caractères minimum"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              trackRegistrationStarted();
+              setPassword(e.target.value);
+            }}
             disabled={loading}
           />
         </div>

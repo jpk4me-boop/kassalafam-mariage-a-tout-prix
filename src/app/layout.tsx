@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
+import { FirstPartyAnalytics } from "@/components/analytics/first-party-analytics";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -47,6 +49,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-cream-50 text-ink-800">
         {children}
+        {/* Mesure d'audience interne first-party (aucun service tiers). */}
+        <FirstPartyAnalytics />
       </body>
     </html>
   );
