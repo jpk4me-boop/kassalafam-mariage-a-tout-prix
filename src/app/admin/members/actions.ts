@@ -51,6 +51,16 @@ export async function setAccountStatusAction(input: {
   if (!isUuid(profileId)) {
     return { ok: false, error: "Ce membre n’existe plus." };
   }
+  // Auto-modération interdite (défense en profondeur ; l'invariant autoritatif
+  // est la garde SELF_MODERATION_FORBIDDEN de la RPC). L'identifiant de
+  // l'acteur vient EXCLUSIVEMENT de la session validée, jamais du formulaire.
+  if (profileId === auth.actor.userId) {
+    return {
+      ok: false,
+      error: "Vous ne pouvez pas modifier le statut de votre propre compte.",
+      code: "SELF_MODERATION_FORBIDDEN",
+    };
+  }
   if (expectedStatus !== "active" && expectedStatus !== "suspended") {
     return { ok: false, error: "Cette transition n’est pas autorisée." };
   }
