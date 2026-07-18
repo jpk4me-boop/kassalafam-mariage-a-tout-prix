@@ -38,6 +38,16 @@ export default function CookiesPage() {
             session mémorise ce choix, uniquement pour votre compte et le temps
             de votre navigation.
           </li>
+          <li>
+            <span className="font-medium text-choco-700">
+              Cookie de mesure d’audience interne :
+            </span>{" "}
+            un identifiant technique aléatoire (sans lien avec un profil
+            publicitaire) permet de compter les visites et les pages consultées
+            directement sur nos propres serveurs, sans aucun service tiers. Il
+            ne contient aucune donnée personnelle et expire au bout de 90
+            jours.
+          </li>
         </ul>
       </LegalSection>
 
@@ -54,9 +64,12 @@ export default function CookiesPage() {
       <LegalSection title="Pas de publicité, pas de traçage">
         <p>
           La plateforme n’utilise ni cookie publicitaire, ni pixel de suivi,
-          ni revente de données de navigation. C’est pourquoi aucun bandeau de
-          consentement publicitaire n’est nécessaire : les cookies utilisés
-          sont strictement techniques.
+          ni revente de données de navigation. La mesure d’audience est
+          réalisée en interne (« first-party ») : aucun service analytique
+          tiers (Google Analytics, Meta Pixel ou équivalent) n’est installé,
+          aucune adresse IP n’est conservée, aucune empreinte de votre
+          navigateur n’est calculée et aucun suivi entre sites ou entre
+          appareils n’est effectué.
         </p>
         <p>
           Si cela devait évoluer, cette page serait mise à jour et votre

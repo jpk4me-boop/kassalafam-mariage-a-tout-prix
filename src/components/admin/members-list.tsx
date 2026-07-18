@@ -14,6 +14,7 @@ import type { AdminMemberListItem } from "@/lib/types/database";
 import { ageFromBirthDate } from "@/lib/admin/analytics";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { ACCOUNT_STATUS_BADGE } from "@/lib/admin/account-moderation";
+import type { PresenceInfo } from "@/lib/admin/presence";
 
 /**
  * Liste des membres (présentation SEULE, rendue côté serveur). N'affiche que des
@@ -110,13 +111,38 @@ function Stat({
   );
 }
 
+/** Pastille compacte de présence (« En ligne » vert, sinon date relative). */
+function PresenceChip({ presence }: { presence: PresenceInfo | undefined }) {
+  if (!presence) {
+    return <span className="text-[11px] text-ink-700/45">Jamais vu</span>;
+  }
+  return (
+    <span
+      title={presence.absolute ?? undefined}
+      className={`inline-flex items-center gap-1.5 text-[11px] ${
+        presence.online ? "font-semibold text-emerald-700" : "text-ink-700/55"
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`h-1.5 w-1.5 rounded-full ${
+          presence.online ? "bg-emerald-500" : "bg-ink-700/30"
+        }`}
+      />
+      {presence.label}
+    </span>
+  );
+}
+
 export function MembersList({
   items,
   avatarById,
+  presenceById,
   now,
 }: {
   items: AdminMemberListItem[];
   avatarById: Map<string, string | null>;
+  presenceById: Map<string, PresenceInfo>;
   now: Date;
 }) {
   if (items.length === 0) {
@@ -172,7 +198,10 @@ export function MembersList({
                             {m.email}
                           </p>
                         ) : null}
-                        <div className="mt-1">{completenessBadge(m.is_complete)}</div>
+                        <div className="mt-1 flex items-center gap-2">
+                          {completenessBadge(m.is_complete)}
+                          <PresenceChip presence={presenceById.get(m.id)} />
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -260,6 +289,7 @@ export function MembersList({
                   <AccountBadge status={m.account_status} />
                   <AdminStatusBadge status={m.verification_status} />
                   {completenessBadge(m.is_complete)}
+                  <PresenceChip presence={presenceById.get(m.id)} />
                 </div>
 
                 <div className="flex items-center gap-4 border-t border-champagne-500/15 pt-2">

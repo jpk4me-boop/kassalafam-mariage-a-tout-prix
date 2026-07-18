@@ -663,6 +663,58 @@ export type MemberNotificationInsert = {
   created_at?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Analytique interne first-party (RPC service_role uniquement — jamais lues
+// directement par anon/authenticated). Aucune donnée personnelle : agrégats,
+// horodatages et routes NORMALISÉES exclusivement.
+// ---------------------------------------------------------------------------
+
+/** Ligne retournée par `admin_get_analytics_overview`. */
+export type AnalyticsOverviewRow = {
+  online_members: number;
+  online_anonymous_visitors: number;
+  active_members_24h: number;
+  active_members_7d: number;
+  sessions: number;
+  unique_visitors: number;
+  page_views: number;
+  registrations: number;
+  completed_profiles: number;
+  /** NULL quand le dénominateur (sessions) est nul. */
+  registration_conversion_rate: number | null;
+  /** NULL quand le dénominateur (inscriptions) est nul. */
+  profile_completion_rate: number | null;
+};
+
+/** Ligne retournée par `admin_get_acquisition_breakdown` (agrégats seuls). */
+export type AcquisitionBreakdownRow = {
+  source: string;
+  medium: string;
+  campaign: string;
+  sessions: number;
+  registrations: number;
+  completed_profiles: number;
+  conversion_rate: number | null;
+};
+
+/** Ligne retournée par `admin_get_top_pages` (routes normalisées seulement). */
+export type TopPageRow = {
+  path_group: string;
+  page_views: number;
+  sessions: number;
+};
+
+/**
+ * Ligne retournée par `admin_get_member_activity` : dernière connexion
+ * (auth.users.last_sign_in_at) + dernière activité réelle
+ * (member_activity.last_seen_at — heartbeat, PAS profiles.updated_at).
+ */
+export type MemberActivitySummaryRow = {
+  profile_id: string;
+  last_sign_in_at: string | null;
+  last_seen_at: string | null;
+};
+
 export interface Database {
   public: {
     Tables: {
@@ -996,6 +1048,74 @@ export interface Database {
       admin_audit_actors: {
         Args: Record<string, never>;
         Returns: { actor_email: string }[];
+      };
+      // Analytique first-party — ingestion de session technique (service_role
+      // uniquement, appelée par /api/analytics/collect). First-touch protégé
+      // en base ; chaînes bornées ; erreurs stables ANALYTICS_INVALID_*.
+      analytics_upsert_session: {
+        Args: {
+          p_session_id: string;
+          p_profile_id?: string | null;
+          p_path_group?: string | null;
+          p_referrer_domain?: string | null;
+          p_utm_source?: string | null;
+          p_utm_medium?: string | null;
+          p_utm_campaign?: string | null;
+          p_utm_content?: string | null;
+          p_utm_term?: string | null;
+        };
+        Returns: null;
+      };
+      // Analytique first-party — événement autorisé (allowlist ; metadata sans
+      // AUCUNE clé au MVP ; anti-doublon page_view < 30 s en base).
+      analytics_record_event: {
+        Args: {
+          p_session_id: string;
+          p_profile_id?: string | null;
+          p_event_type: string;
+          p_path_group?: string | null;
+          p_metadata?: Record<string, never>;
+        };
+        Returns: null;
+      };
+      // Présence membre — heartbeat (p_profile_id vient EXCLUSIVEMENT de la
+      // session Supabase serveur). Timestamp + route normalisée, rien d'autre.
+      analytics_touch_member_activity: {
+        Args: { p_profile_id: string; p_path_group?: string | null };
+        Returns: null;
+      };
+      // Agrégats temps réel + période (service_role uniquement). Taux NULL
+      // quand le dénominateur est nul. Seuil « en ligne » : 120 s par défaut.
+      admin_get_analytics_overview: {
+        Args: {
+          p_from: string;
+          p_to: string;
+          p_online_threshold_seconds?: number;
+        };
+        Returns: AnalyticsOverviewRow[];
+      };
+      // Ventilation acquisition TECHNIQUE (UTM sinon référent sinon direct).
+      // Agrégats uniquement : aucun identifiant de session retourné.
+      admin_get_acquisition_breakdown: {
+        Args: { p_from: string; p_to: string; p_limit?: number };
+        Returns: AcquisitionBreakdownRow[];
+      };
+      // Routes normalisées les plus consultées (jamais de token/UUID réel).
+      admin_get_top_pages: {
+        Args: { p_from: string; p_to: string; p_limit?: number };
+        Returns: TopPageRow[];
+      };
+      // Dernière connexion (auth.users) + dernière activité (member_activity)
+      // pour un LOT de profils (≤ 200) — évite N appels getUserById.
+      admin_get_member_activity: {
+        Args: { p_profile_ids: string[] };
+        Returns: MemberActivitySummaryRow[];
+      };
+      // Rétention : purge événements > 180 j et sessions inactives > 90 j.
+      // member_activity n'est JAMAIS purgée (vit avec le profil).
+      purge_expired_analytics: {
+        Args: Record<string, never>;
+        Returns: { deleted_events: number; deleted_sessions: number }[];
       };
     };
     Enums: {

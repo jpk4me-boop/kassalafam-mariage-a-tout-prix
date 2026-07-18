@@ -7,6 +7,7 @@ import { Loader2, Lock } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { REMEMBER_EMAIL_KEY } from "@/lib/auth/remember";
+import { sendAnalyticsBeacon } from "@/lib/analytics/client";
 import { AuthShell } from "@/components/auth/auth-shell";
 import {
   FormError,
@@ -74,6 +75,9 @@ function LoginForm() {
     } else {
       window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
     }
+
+    // Mesure interne : connexion réussie (aucun email/mot de passe transmis).
+    sendAnalyticsBeacon("login_succeeded", "/login");
 
     router.replace(redirectTo);
     router.refresh();

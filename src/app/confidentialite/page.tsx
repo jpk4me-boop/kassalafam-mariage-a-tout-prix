@@ -46,6 +46,20 @@ export default function ConfidentialitePage() {
             </span>{" "}
             la réponse facultative « comment nous avez-vous connus ».
           </li>
+          <li>
+            <span className="font-medium text-choco-700">
+              Mesure d’audience interne :
+            </span>{" "}
+            horodatages de visite, pages consultées sous forme de routes
+            génériques (jamais d’identifiant ni de lien précis), domaine du
+            site d’origine et éventuels paramètres de campagne (utm). Cette
+            mesure est réalisée sur nos propres serveurs, sans service
+            analytique tiers ; aucune adresse IP n’est conservée et aucune
+            empreinte de navigateur n’est calculée. Les données de visite sont
+            conservées au maximum 90 jours (sessions) et 180 jours
+            (événements), puis supprimées automatiquement. Elles ne sont
+            consultées qu’agrégées, dans notre outil d’administration.
+          </li>
         </ul>
       </LegalSection>
 
@@ -60,6 +74,10 @@ export default function ConfidentialitePage() {
           <li>
             assurer la sécurité de la communauté (modération, traitement des
             signalements) ;
+          </li>
+          <li>
+            mesurer la fréquentation du service (audience interne, sans
+            publicité) ;
           </li>
           <li>améliorer le service.</li>
         </ul>
