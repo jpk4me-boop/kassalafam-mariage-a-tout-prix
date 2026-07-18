@@ -7,12 +7,14 @@ import {
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
+import { buildPublicPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicPageMetadata({
   title: "Conditions d’utilisation | KASSALAFAM",
   description:
     "Conditions d’utilisation de la plateforme de rencontre matrimoniale KASSALAFAM — Mariage à Tout Prix.",
-};
+  path: "/conditions-utilisation",
+});
 
 export default function ConditionsUtilisationPage() {
   return (

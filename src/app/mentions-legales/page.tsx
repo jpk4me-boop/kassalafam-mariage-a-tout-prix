@@ -10,12 +10,14 @@ import {
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
+import { buildPublicPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicPageMetadata({
   title: "Mentions légales | KASSALAFAM",
   description:
     "Mentions légales de la plateforme KASSALAFAM — Mariage à Tout Prix.",
-};
+  path: "/mentions-legales",
+});
 
 /**
  * Informations officielles d’identification de l’éditeur (TITANEX SARL),
