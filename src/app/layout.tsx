@@ -18,6 +18,14 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  // Base absolue des URLs sociales/canoniques : domaine Production par défaut,
+  // surchargée par NEXT_PUBLIC_SITE_URL (Preview/Prod Vercel), slash final retiré.
+  metadataBase: new URL(
+    (process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://kassalafam.com").replace(
+      /\/+$/,
+      "",
+    ),
+  ),
   title: "KASSALAFAM — Mariage à Tout Prix | Rencontres sérieuses vérifiées",
   description:
     "KASSALAFAM — MARIAGE À TOUT PRIX aide les Africains à faire des rencontres sincères, vérifiées et orientées vers un vrai projet de foyer. Profils vérifiés, confidentialité protégée, modération stricte.",
@@ -29,11 +37,25 @@ export const metadata: Metadata = {
     "foyer",
     "KASSALAFAM",
   ],
+  alternates: {
+    canonical: "/",
+  },
+  // Les images og:image / twitter:image proviennent des conventions de fichier
+  // `opengraph-image.tsx` et `twitter-image.tsx` (dimensions et alt inclus).
   openGraph: {
     title: "KASSALAFAM — Mariage à Tout Prix",
     description:
       "La plateforme de mariage vérifiée, confidentielle et orientée foyer pour les Africains.",
     type: "website",
+    url: "/",
+    siteName: "KASSALAFAM",
+    locale: "fr_FR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KASSALAFAM — Mariage à Tout Prix",
+    description:
+      "La plateforme de mariage vérifiée, confidentielle et orientée foyer pour les Africains.",
   },
 };
 
