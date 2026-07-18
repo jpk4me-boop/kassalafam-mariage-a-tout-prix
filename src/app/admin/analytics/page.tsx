@@ -7,10 +7,15 @@ import {
   computeAnalytics,
   isAnalyticsPeriod,
   ANALYTICS_PERIODS,
-  UNAVAILABLE_METRICS,
   type AnalyticsPeriod,
   type AnalyticsInput,
 } from "@/lib/admin/analytics";
+import type {
+  AnalyticsOverviewRow,
+  AcquisitionBreakdownRow,
+  TopPageRow,
+  AcquisitionSource,
+} from "@/lib/types/database";
 import {
   Section,
   StatGrid,
@@ -34,6 +39,30 @@ const PERIOD_LABEL: Record<AnalyticsPeriod, string> = {
   "90d": "les 90 derniers jours",
   all: "toute la période",
 };
+
+const PERIOD_TO_DAYS: Record<Exclude<AnalyticsPeriod, "all">, number> = {
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+};
+
+/** Libellés FR de la source d'acquisition DÉCLARÉE (profiles, write-once). */
+const DECLARED_SOURCE_LABELS: Record<string, string> = {
+  tiktok: "TikTok",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  youtube: "YouTube",
+  whatsapp_recommendation: "WhatsApp / recommandation",
+  google: "Google",
+  other: "Autre",
+  "(non renseignée)": "(non renseignée)",
+};
+
+/** Formatte un taux 0..1 en pourcentage FR ; « — » quand le taux est NULL. */
+function fmtRate(rate: number | null): string {
+  if (rate === null || Number.isNaN(rate)) return "—";
+  return `${(rate * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
+}
 
 export default async function AdminAnalyticsPage({
   searchParams,
@@ -125,6 +154,76 @@ export default async function AdminAnalyticsPage({
   const a = computeAnalytics(input, period, now);
   const { members, engagement, security } = a;
   const scoped = PERIOD_LABEL[period];
+
+  // 3. Mesure d'audience interne FIRST-PARTY (RPC service_role, agrégats
+  //    uniquement). Échec NON bloquant : si la migration n'est pas encore
+  //    appliquée ou qu'aucune donnée n'existe, la page affiche l'état
+  //    « collecte activée » au lieu d'une erreur.
+  const rangeFrom =
+    period === "all"
+      ? new Date("2026-01-01T00:00:00Z")
+      : new Date(now.getTime() - PERIOD_TO_DAYS[period] * 86_400_000);
+  const rangeTo = new Date(now.getTime() + 60_000);
+
+  let overview: AnalyticsOverviewRow | null = null;
+  let acquisition: AcquisitionBreakdownRow[] = [];
+  let topPages: TopPageRow[] = [];
+  let declaredSources: { label: string; count: number }[] = [];
+  let webAnalyticsAvailable = false;
+
+  try {
+    const admin = createAdminClient();
+    const [overviewRes, acquisitionRes, pagesRes, declaredRes] =
+      await Promise.all([
+        admin.rpc("admin_get_analytics_overview", {
+          p_from: rangeFrom.toISOString(),
+          p_to: rangeTo.toISOString(),
+          p_online_threshold_seconds: 120,
+        }),
+        admin.rpc("admin_get_acquisition_breakdown", {
+          p_from: rangeFrom.toISOString(),
+          p_to: rangeTo.toISOString(),
+          p_limit: 12,
+        }),
+        admin.rpc("admin_get_top_pages", {
+          p_from: rangeFrom.toISOString(),
+          p_to: rangeTo.toISOString(),
+          p_limit: 12,
+        }),
+        admin.from("profiles").select("acquisition_source"),
+      ]);
+
+    if (!overviewRes.error && overviewRes.data?.[0]) {
+      overview = overviewRes.data[0];
+      webAnalyticsAvailable = true;
+    }
+    if (!acquisitionRes.error) acquisition = acquisitionRes.data ?? [];
+    if (!pagesRes.error) topPages = pagesRes.data ?? [];
+
+    if (!declaredRes.error) {
+      const counts = new Map<string, number>();
+      for (const row of declaredRes.data ?? []) {
+        const key = row.acquisition_source ?? "(non renseignée)";
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+      declaredSources = Array.from(counts.entries())
+        .map(([key, count]) => ({
+          label: DECLARED_SOURCE_LABELS[key as AcquisitionSource] ?? key,
+          count,
+        }))
+        .sort((x, y) => y.count - x.count);
+    }
+  } catch {
+    webAnalyticsAvailable = false;
+  }
+
+  const hasWebData =
+    overview !== null &&
+    (overview.sessions > 0 ||
+      overview.page_views > 0 ||
+      overview.online_members > 0 ||
+      overview.online_anonymous_visitors > 0 ||
+      overview.active_members_7d > 0);
 
   return (
     <div className="flex flex-col gap-10">
@@ -342,24 +441,207 @@ export default async function AdminAnalyticsPage({
         </div>
       </Section>
 
-      {/* Transparence : métriques non disponibles avec le schéma actuel */}
-      <Section title="Non disponible">
-        <div className="flex items-start gap-3 rounded-2xl border border-champagne-500/25 bg-champagne-400/5 px-5 py-4">
-          <Info size={18} className="mt-0.5 shrink-0 text-champagne-600" />
-          <div className="text-sm text-ink-700/75">
-            <p className="font-medium text-choco-700">
-              Métriques volontairement non affichées
+      {/* F. Audience first-party — temps réel, trafic, conversions, acquisition */}
+      {!webAnalyticsAvailable || !hasWebData || !overview ? (
+        <Section
+          title="Audience & trafic"
+          description="Mesure d'audience interne first-party — aucun service tiers."
+        >
+          <div className="flex items-start gap-3 rounded-2xl border border-champagne-500/25 bg-champagne-400/5 px-5 py-4">
+            <Info size={18} className="mt-0.5 shrink-0 text-champagne-600" />
+            <p className="text-sm text-ink-700/75">
+              La collecte first-party vient d’être activée. Les métriques
+              apparaîtront après les premières visites.
             </p>
-            <ul className="mt-2 list-disc space-y-1 pl-5">
-              {UNAVAILABLE_METRICS.map((m) => (
-                <li key={m.label}>
-                  <span className="font-medium">{m.label}</span> — {m.reason}
-                </li>
-              ))}
-            </ul>
           </div>
-        </div>
-      </Section>
+        </Section>
+      ) : (
+        <>
+          <Section
+            title="Temps réel"
+            description="Présence actuelle, mesurée par heartbeat interne."
+          >
+            <StatGrid>
+              <StatCard
+                label="Membres en ligne"
+                value={overview.online_members}
+                tone={overview.online_members > 0 ? "positive" : "default"}
+              />
+              <StatCard
+                label="Visiteurs anonymes en ligne"
+                value={overview.online_anonymous_visitors}
+              />
+              <StatCard
+                label="Membres actifs · 24 h"
+                value={overview.active_members_24h}
+              />
+              <StatCard
+                label="Membres actifs · 7 jours"
+                value={overview.active_members_7d}
+              />
+            </StatGrid>
+            <p className="text-xs text-ink-700/55">
+              En ligne = activité reçue au cours des 2 dernières minutes.
+            </p>
+          </Section>
+
+          <Section
+            title="Trafic"
+            description={`Audience first-party sur ${scoped}. Un « visiteur unique » est une session technique de navigateur, pas nécessairement une personne physique distincte.`}
+          >
+            <StatGrid>
+              <StatCard label="Sessions" value={overview.sessions} />
+              <StatCard
+                label="Visiteurs uniques techniques"
+                value={overview.unique_visitors}
+              />
+              <StatCard label="Pages vues" value={overview.page_views} />
+              <StatCard
+                label="Pages vues / session"
+                value={
+                  overview.sessions > 0
+                    ? (overview.page_views / overview.sessions).toLocaleString(
+                        "fr-FR",
+                        { maximumFractionDigits: 1 },
+                      )
+                    : "—"
+                }
+              />
+            </StatGrid>
+          </Section>
+
+          <Section
+            title="Conversions web"
+            description={`Sur ${scoped} — inscriptions et profils complétés issus des tables métier (source d’autorité).`}
+          >
+            <StatGrid>
+              <StatCard
+                label="Inscriptions"
+                value={overview.registrations}
+                tone="positive"
+              />
+              <StatCard
+                label="Profils complétés"
+                value={overview.completed_profiles}
+              />
+              <StatCard
+                label="Taux session → inscription"
+                value={fmtRate(overview.registration_conversion_rate)}
+              />
+              <StatCard
+                label="Taux inscription → profil complété"
+                value={fmtRate(overview.profile_completion_rate)}
+              />
+            </StatGrid>
+          </Section>
+
+          <Section
+            title="Acquisition"
+            description={`Sur ${scoped}. La source TECHNIQUE (UTM / référent) et la source DÉCLARÉE (réponse du membre à « Comment nous avez-vous découverts ? ») sont mesurées différemment et peuvent différer.`}
+          >
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-champagne-500/25 bg-cream-100/50 p-5 shadow-card">
+                <h3 className="mb-3 text-sm font-semibold text-choco-700">
+                  Source technique (UTM / référent)
+                </h3>
+                {acquisition.length === 0 ? (
+                  <p className="text-sm text-ink-700/60">
+                    Aucune session sur la période.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[520px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-champagne-500/20 text-[11px] uppercase tracking-wide text-ink-700/45">
+                          <th className="py-2 pr-3 font-medium">Source</th>
+                          <th className="py-2 pr-3 font-medium">Support</th>
+                          <th className="py-2 pr-3 font-medium">Campagne</th>
+                          <th className="py-2 pr-3 text-right font-medium">Sessions</th>
+                          <th className="py-2 pr-3 text-right font-medium">Inscr.</th>
+                          <th className="py-2 pr-3 text-right font-medium">Complets</th>
+                          <th className="py-2 text-right font-medium">Conv.</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-champagne-500/10">
+                        {acquisition.map((row) => (
+                          <tr key={`${row.source}-${row.medium}-${row.campaign}`}>
+                            <td className="py-2 pr-3 font-medium text-choco-700">
+                              {row.source}
+                            </td>
+                            <td className="py-2 pr-3 text-ink-700/75">{row.medium}</td>
+                            <td className="py-2 pr-3 text-ink-700/75">{row.campaign}</td>
+                            <td className="py-2 pr-3 text-right tabular-nums">
+                              {fmt(row.sessions)}
+                            </td>
+                            <td className="py-2 pr-3 text-right tabular-nums">
+                              {fmt(row.registrations)}
+                            </td>
+                            <td className="py-2 pr-3 text-right tabular-nums">
+                              {fmt(row.completed_profiles)}
+                            </td>
+                            <td className="py-2 text-right tabular-nums">
+                              {fmtRate(row.conversion_rate)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="rounded-2xl border border-champagne-500/25 bg-cream-100/50 p-5 shadow-card">
+                <h3 className="mb-3 text-sm font-semibold text-choco-700">
+                  Source déclarée par les membres
+                </h3>
+                <BarList
+                  items={declaredSources}
+                  emptyLabel="Aucune source déclarée pour l’instant."
+                />
+              </div>
+            </div>
+          </Section>
+
+          <Section
+            title="Pages consultées"
+            description={`Sur ${scoped} — routes normalisées uniquement (jamais d’identifiant ni de token réels).`}
+          >
+            <div className="rounded-2xl border border-champagne-500/25 bg-cream-100/50 p-5 shadow-card">
+              {topPages.length === 0 ? (
+                <p className="text-sm text-ink-700/60">
+                  Aucune page vue sur la période.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[360px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-champagne-500/20 text-[11px] uppercase tracking-wide text-ink-700/45">
+                        <th className="py-2 pr-3 font-medium">Route</th>
+                        <th className="py-2 pr-3 text-right font-medium">Pages vues</th>
+                        <th className="py-2 text-right font-medium">Sessions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-champagne-500/10">
+                      {topPages.map((p) => (
+                        <tr key={p.path_group}>
+                          <td className="py-2 pr-3 font-mono text-xs text-choco-700">
+                            {p.path_group}
+                          </td>
+                          <td className="py-2 pr-3 text-right tabular-nums">
+                            {fmt(p.page_views)}
+                          </td>
+                          <td className="py-2 text-right tabular-nums">
+                            {fmt(p.sessions)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </Section>
+        </>
+      )}
     </div>
   );
 }

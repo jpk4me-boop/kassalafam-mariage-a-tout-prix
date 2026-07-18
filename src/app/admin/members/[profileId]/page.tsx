@@ -38,6 +38,7 @@ import {
 } from "@/lib/admin/audit";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { ACCOUNT_STATUS_BADGE } from "@/lib/admin/account-moderation";
+import { presenceInfo } from "@/lib/admin/presence";
 import { ProfileActions } from "@/components/admin/profile-actions";
 import { MemberAccountActions } from "@/components/admin/member-account-actions";
 
@@ -239,6 +240,22 @@ export default async function AdminMemberDetailPage({
     .from("messages")
     .select("id", { count: "exact", head: true })
     .eq("sender_id", profileId);
+
+  // Connexion & activité RÉELLES : dernière connexion = auth.users
+  // .last_sign_in_at ; dernière activité = member_activity.last_seen_at
+  // (heartbeat first-party) — JAMAIS profiles.updated_at. Échec non bloquant.
+  let lastSignInAt: string | null = null;
+  let lastSeenAt: string | null = null;
+  try {
+    const { data: activityRows } = await admin.rpc("admin_get_member_activity", {
+      p_profile_ids: [profileId],
+    });
+    lastSignInAt = activityRows?.[0]?.last_sign_in_at ?? null;
+    lastSeenAt = activityRows?.[0]?.last_seen_at ?? null;
+  } catch {
+    // Migration analytics pas encore appliquée : la fiche reste utilisable.
+  }
+  const presence = presenceInfo(lastSeenAt, new Date());
 
   // Signalements REÇUS (métadonnées uniquement ; pas de snapshot privé ici).
   const { data: reportData } = await admin
@@ -532,6 +549,21 @@ export default async function AdminMemberDetailPage({
           <Field label="Statut" value={accountBadge.label} />
           <Field label="Suspendu le" value={fmt(profile.suspended_at)} />
           <Field label="Motif" value={profile.suspension_reason || "—"} />
+          <Field label="Dernière connexion" value={fmt(lastSignInAt)} />
+          <Field label="Dernière activité" value={fmt(lastSeenAt)} />
+          <Field
+            label="État"
+            value={
+              <span
+                title={presence.absolute ?? undefined}
+                className={
+                  presence.online ? "font-semibold text-emerald-700" : undefined
+                }
+              >
+                {presence.online ? "En ligne" : presence.label}
+              </span>
+            }
+          />
         </dl>
         <div className="mt-4 border-t border-champagne-500/15 pt-4">
           <MemberAccountActions

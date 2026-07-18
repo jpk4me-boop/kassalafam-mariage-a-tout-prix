@@ -486,18 +486,6 @@ function buildTrend(
  * transparence (affichage « Donnée non disponible » et section de bilan). Ne
  * jamais simuler ces valeurs.
  */
-export const UNAVAILABLE_METRICS: { label: string; reason: string }[] = [
-  {
-    label: "Membres / visiteurs en ligne",
-    reason: "Aucune source de session temps réel (pas de suivi de présence).",
-  },
-  {
-    label: "Dernière connexion / activité réelle",
-    reason:
-      "Aucun horodatage de connexion. `profiles.updated_at` reflète l'édition du profil, pas une session.",
-  },
-  {
-    label: "Sources d'acquisition / trafic",
-    reason: "Aucun suivi analytique tiers installé (choix volontaire).",
-  },
-];
+// Les anciennes « métriques non disponibles » (présence, dernière activité,
+// acquisition/trafic) sont désormais couvertes par l'analytique interne
+// first-party (migration create_first_party_analytics + /admin/analytics).

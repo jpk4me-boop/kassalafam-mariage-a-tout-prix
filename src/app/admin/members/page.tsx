@@ -9,6 +9,7 @@ import {
   buildMembersQuery,
   MEMBERS_PAGE_SIZE,
 } from "@/lib/admin/members";
+import { presenceInfo, type PresenceInfo } from "@/lib/admin/presence";
 import { MembersFilters } from "@/components/admin/members-filters";
 import { MembersList } from "@/components/admin/members-list";
 
@@ -105,6 +106,24 @@ export default async function AdminMembersPage({
   }
 
   const now = new Date();
+
+  // 4. Activité : UN SEUL appel RPC pour les IDs de la page (jamais un appel
+  //    par membre). Dernière connexion = auth.users.last_sign_in_at ; dernière
+  //    activité = member_activity.last_seen_at (heartbeat). Échec NON bloquant.
+  const presenceById = new Map<string, PresenceInfo>();
+  if (items.length > 0) {
+    try {
+      const admin = createAdminClient();
+      const { data: activity } = await admin.rpc("admin_get_member_activity", {
+        p_profile_ids: items.map((m) => m.id),
+      });
+      for (const row of activity ?? []) {
+        presenceById.set(row.profile_id, presenceInfo(row.last_seen_at, now));
+      }
+    } catch {
+      // Migration analytics pas encore appliquée : la liste reste utilisable.
+    }
+  }
   const totalPages = Math.max(1, Math.ceil(total / MEMBERS_PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
   const rangeStart = total === 0 ? 0 : offset + 1;
@@ -154,7 +173,12 @@ export default async function AdminMembersPage({
             </p>
           </div>
 
-          <MembersList items={items} avatarById={avatarById} now={now} />
+          <MembersList
+            items={items}
+            avatarById={avatarById}
+            presenceById={presenceById}
+            now={now}
+          />
 
           {totalPages > 1 ? (
             <nav className="flex items-center justify-between gap-3">
