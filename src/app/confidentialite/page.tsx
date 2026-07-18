@@ -7,12 +7,14 @@ import {
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
+import { buildPublicPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicPageMetadata({
   title: "Politique de confidentialité | KASSALAFAM",
   description:
     "Comment KASSALAFAM collecte, utilise et protège vos données personnelles.",
-};
+  path: "/confidentialite",
+});
 
 export default function ConfidentialitePage() {
   return (

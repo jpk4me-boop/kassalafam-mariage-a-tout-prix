@@ -6,12 +6,14 @@ import {
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
+import { buildPublicPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicPageMetadata({
   title: "Centre d’aide | KASSALAFAM",
   description:
     "Aide, contact, conseils de sécurité et signalement d’un profil sur KASSALAFAM — Mariage à Tout Prix.",
-};
+  path: "/aide",
+});
 
 /** Conseils de sécurité affichés dans la section #securite. */
 const SAFETY_TIPS = [

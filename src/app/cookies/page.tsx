@@ -5,12 +5,14 @@ import {
   LegalPageShell,
   LegalSection,
 } from "@/components/legal/legal-page-shell";
+import { buildPublicPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicPageMetadata({
   title: "Cookies | KASSALAFAM",
   description:
     "Utilisation des cookies sur KASSALAFAM : uniquement des cookies nécessaires au fonctionnement, sans publicité ni traçage.",
-};
+  path: "/cookies",
+});
 
 export default function CookiesPage() {
   return (
