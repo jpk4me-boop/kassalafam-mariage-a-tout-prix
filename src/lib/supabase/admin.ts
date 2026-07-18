@@ -1,3 +1,8 @@
+// Protection COMPILE-TIME : tout import de ce module depuis un bundle client
+// fait échouer le build (alias natif Next, aucune dépendance npm). Complète —
+// sans remplacer — la garde runtime `typeof window` ci-dessous.
+import "server-only";
+
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/types/database";
