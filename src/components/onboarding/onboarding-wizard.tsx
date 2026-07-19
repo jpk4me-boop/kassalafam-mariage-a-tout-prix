@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, Send } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import type {
@@ -42,11 +40,11 @@ import {
   PROFILE_TEXT_MAX,
   REGION_MAX,
 } from "@/lib/onboarding/options";
-import { Logo } from "@/components/landing/logo";
 import { FormError } from "@/components/ui/field";
 import type { ProfilePhotosState } from "@/components/member/profile-photos";
 import { AcquisitionStep } from "@/components/onboarding/acquisition-source-form";
-import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
+import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
+import { OnboardingNavigation } from "@/components/onboarding/onboarding-navigation";
 import { OnboardingIntro } from "@/components/onboarding/onboarding-intro";
 import { OnboardingConfirmation } from "@/components/onboarding/onboarding-confirmation";
 import { GenderStep } from "@/components/onboarding/steps/gender-step";
@@ -69,29 +67,6 @@ import { PhotosStep } from "@/components/onboarding/steps/photos-step";
  */
 
 type Phase = "intro" | "steps" | "confirm";
-
-function OnboardingShell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-12">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-champagne-400/25 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-choco-400/15 blur-3xl"
-      />
-      <div className="relative w-full max-w-lg">
-        <div className="mb-8 flex justify-center">
-          <Link href="/" aria-label="Retour à l'accueil KASSALAFAM">
-            <Logo />
-          </Link>
-        </div>
-        {children}
-      </div>
-    </main>
-  );
-}
 
 export function OnboardingWizard({
   mode,
@@ -371,25 +346,23 @@ export function OnboardingWizard({
   if (mode === "acquisition_only") {
     return (
       <OnboardingShell>
-        <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-          {error ? (
-            <div className="mb-5 flex flex-col gap-3">
-              <FormError message={error} />
-              <button
-                type="button"
-                onClick={() => void finalizeAcquisitionOnly()}
-                disabled={busy}
-                className="self-start rounded-full border border-champagne-500/40 px-5 py-2 text-sm font-semibold text-choco-700 transition-colors hover:bg-cream-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Réessayer l’envoi
-              </button>
-            </div>
-          ) : null}
-          <AcquisitionStep
-            onRecorded={() => void finalizeAcquisitionOnly()}
-            disabled={busy}
-          />
-        </div>
+        {error ? (
+          <div className="mb-5 flex flex-col gap-3">
+            <FormError message={error} />
+            <button
+              type="button"
+              onClick={() => void finalizeAcquisitionOnly()}
+              disabled={busy}
+              className="self-start rounded-full border border-champagne-500/40 px-5 py-2 text-sm font-semibold text-choco-700 transition-colors hover:bg-cream-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Réessayer l’envoi
+            </button>
+          </div>
+        ) : null}
+        <AcquisitionStep
+          onRecorded={() => void finalizeAcquisitionOnly()}
+          disabled={busy}
+        />
       </OnboardingShell>
     );
   }
@@ -398,12 +371,10 @@ export function OnboardingWizard({
   if (phase === "intro") {
     return (
       <OnboardingShell>
-        <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-          <OnboardingIntro
-            firstName={initialProfile.first_name ?? firstNameSuggestion ?? null}
-            onStart={() => setPhase("steps")}
-          />
-        </div>
+        <OnboardingIntro
+          firstName={initialProfile.first_name ?? firstNameSuggestion ?? null}
+          onStart={() => setPhase("steps")}
+        />
       </OnboardingShell>
     );
   }
@@ -412,9 +383,7 @@ export function OnboardingWizard({
   if (phase === "confirm") {
     return (
       <OnboardingShell>
-        <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-          <OnboardingConfirmation onContinue={goToDestination} busy={busy} />
-        </div>
+        <OnboardingConfirmation onContinue={goToDestination} busy={busy} />
       </OnboardingShell>
     );
   }
@@ -439,15 +408,12 @@ export function OnboardingWizard({
     !photoOpInProgress;
 
   return (
-    <OnboardingShell>
-      <OnboardingProgress step={currentStep} />
-
-      <div className="glass rounded-3xl p-6 shadow-card sm:p-8">
-        {error ? (
-          <div className="mb-5">
-            <FormError message={error} />
-          </div>
-        ) : null}
+    <OnboardingShell progressStep={currentStep}>
+      {error ? (
+        <div className="mb-5">
+          <FormError message={error} />
+        </div>
+      ) : null}
 
         {currentStep === 1 ? (
           // L'étape acquisition porte son propre bouton (appel RPC) ; pas de
@@ -541,64 +507,19 @@ export function OnboardingWizard({
               />
             ) : null}
 
-            <div className="mt-7 flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                {showBack ? (
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    disabled={busy}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full border border-champagne-500/40 bg-cream-50/60 px-5 py-3 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <ArrowLeft size={16} />
-                    Retour
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={busy || !isStepValid(currentStep)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-6 py-3 text-sm font-semibold text-cream-50 shadow-[0_14px_34px_-14px_rgba(43,26,18,0.85)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                >
-                  {busy ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Enregistrement…
-                    </>
-                  ) : isLastStep ? (
-                    <>
-                      <Send size={16} />
-                      Envoyer mon profil
-                    </>
-                  ) : (
-                    <>
-                      Continuer
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {canContinueLater ? (
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <button
-                    type="button"
-                    onClick={continueLater}
-                    disabled={busy || photoOpInProgress}
-                    className="rounded-full px-4 py-2 text-sm font-medium text-choco-700/75 underline-offset-4 transition-colors hover:text-choco-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-400/50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Continuer plus tard
-                  </button>
-                  <p className="text-xs text-ink-700/55">
-                    Les étapes déjà validées sont enregistrées.
-                  </p>
-                </div>
-              ) : null}
-            </div>
+            <OnboardingNavigation
+              showBack={showBack}
+              onBack={handleBack}
+              onNext={() => void handleNext()}
+              nextDisabled={busy || !isStepValid(currentStep)}
+              busy={busy}
+              isLastStep={isLastStep}
+              canContinueLater={canContinueLater}
+              onContinueLater={continueLater}
+              continueLaterDisabled={busy || photoOpInProgress}
+            />
           </>
         )}
-      </div>
     </OnboardingShell>
   );
 }

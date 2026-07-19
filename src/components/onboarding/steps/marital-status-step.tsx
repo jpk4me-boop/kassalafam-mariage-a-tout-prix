@@ -5,7 +5,7 @@ import {
   MARITAL_STATUS_OPTIONS,
   RELIGION_OPTIONS,
 } from "@/lib/onboarding/options";
-import { ChoiceTile } from "@/components/onboarding/choice-tile";
+import { ChoiceCard } from "@/components/onboarding/choice-card";
 import { StepShell } from "@/components/onboarding/step-shell";
 
 export function MaritalStatusStep({
@@ -37,14 +37,13 @@ export function MaritalStatusStep({
             className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
           >
             {MARITAL_STATUS_OPTIONS.map((option) => (
-              <ChoiceTile
+              <ChoiceCard
                 key={option.value}
                 selected={value === option.value}
                 onSelect={() => onChange(option.value)}
                 disabled={disabled}
-              >
-                {option.label}
-              </ChoiceTile>
+                title={option.label}
+              />
             ))}
           </div>
         </div>
@@ -59,14 +58,13 @@ export function MaritalStatusStep({
             className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
           >
             {RELIGION_OPTIONS.map((option) => (
-              <ChoiceTile
+              <ChoiceCard
                 key={option.value}
                 selected={religion === option.value}
                 onSelect={() => onReligionChange(option.value)}
                 disabled={disabled}
-              >
-                {option.label}
-              </ChoiceTile>
+                title={option.label}
+              />
             ))}
           </div>
           <p className="mt-2 text-xs text-ink-700/55">

@@ -8,72 +8,15 @@ import type {
 } from "@/lib/types/database";
 import {
   CHILDREN_INTENT_OPTIONS,
-  CHOICE_SET_MAX,
-  CHOICE_SET_MIN,
   MARRIAGE_GOAL_OPTIONS,
   PARTNER_TRAIT_OPTIONS,
   POLYGAMY_PREFERENCE_OPTIONS,
   PROFILE_TEXT_MAX,
-  type Option,
 } from "@/lib/onboarding/options";
 import { Label, Textarea } from "@/components/ui/field";
-import { ChoiceTile } from "@/components/onboarding/choice-tile";
+import { ChoiceCard } from "@/components/onboarding/choice-card";
+import { MultiChoiceChips } from "@/components/onboarding/multi-choice-chips";
 import { StepShell } from "@/components/onboarding/step-shell";
-
-/** Bascule une valeur dans une liste, en respectant le plafond (max 3). Retire
- *  si déjà présente ; ignore l'ajout au-delà du plafond. */
-function toggle<T extends string>(list: T[], value: T): T[] {
-  if (list.includes(value)) return list.filter((v) => v !== value);
-  if (list.length >= CHOICE_SET_MAX) return list;
-  return [...list, value];
-}
-
-function MultiChoiceGroup<T extends string>({
-  legend,
-  options,
-  values,
-  onChange,
-  disabled,
-}: {
-  legend: string;
-  options: Option<T>[];
-  values: T[];
-  onChange: (next: T[]) => void;
-  disabled?: boolean;
-}) {
-  const atMax = values.length >= CHOICE_SET_MAX;
-  return (
-    <fieldset className="flex flex-col gap-2.5">
-      <legend className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="text-sm font-medium text-ink-700">{legend}</span>
-        <span className="text-xs text-ink-700/55">
-          {values.length}/{CHOICE_SET_MAX} · {CHOICE_SET_MIN} minimum
-        </span>
-      </legend>
-      <div
-        role="group"
-        aria-label={legend}
-        className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-      >
-        {options.map((option) => {
-          const selected = values.includes(option.value);
-          return (
-            <ChoiceTile
-              key={option.value}
-              multi
-              selected={selected}
-              onSelect={() => onChange(toggle(values, option.value))}
-              // Empêche d'aller au-delà de 3 sans figer la désélection.
-              disabled={disabled || (atMax && !selected)}
-            >
-              {option.label}
-            </ChoiceTile>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
 
 /** Textarea requise avec compteur — mêmes règles que /profile (≤ 2000). */
 function CountedTextarea({
@@ -146,7 +89,7 @@ export function MatrimonialStep({
       title="Votre projet matrimonial"
       description="Ce qui compte pour vous et ce que vous recherchez chez un futur conjoint."
     >
-      <MultiChoiceGroup
+      <MultiChoiceChips
         legend="Vos objectifs de mariage"
         options={MARRIAGE_GOAL_OPTIONS}
         values={marriageGoals}
@@ -154,7 +97,7 @@ export function MatrimonialStep({
         disabled={disabled}
       />
 
-      <MultiChoiceGroup
+      <MultiChoiceChips
         legend="Qualités recherchées"
         options={PARTNER_TRAIT_OPTIONS}
         values={partnerTraits}
@@ -170,14 +113,13 @@ export function MatrimonialStep({
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"
         >
           {POLYGAMY_PREFERENCE_OPTIONS.map((option) => (
-            <ChoiceTile
+            <ChoiceCard
               key={option.value}
               selected={polygamyPreference === option.value}
               onSelect={() => onPolygamyChange(option.value)}
               disabled={disabled}
-            >
-              {option.label}
-            </ChoiceTile>
+              title={option.label}
+            />
           ))}
         </div>
       </div>
@@ -190,14 +132,13 @@ export function MatrimonialStep({
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
         >
           {CHILDREN_INTENT_OPTIONS.map((option) => (
-            <ChoiceTile
+            <ChoiceCard
               key={option.value}
               selected={childrenIntent === option.value}
               onSelect={() => onChildrenChange(option.value)}
               disabled={disabled}
-            >
-              {option.label}
-            </ChoiceTile>
+              title={option.label}
+            />
           ))}
         </div>
       </div>

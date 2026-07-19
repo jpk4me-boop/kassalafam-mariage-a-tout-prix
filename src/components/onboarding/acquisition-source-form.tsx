@@ -6,9 +6,9 @@ import { ArrowRight, Loader2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import type { AcquisitionSource } from "@/lib/types/database";
-import { FormError, Label } from "@/components/ui/field";
+import { FormError, Label, PrimaryButton } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
-import { ChoiceTile } from "@/components/onboarding/choice-tile";
+import { ChoiceCard } from "@/components/onboarding/choice-card";
 import { StepShell } from "@/components/onboarding/step-shell";
 
 /**
@@ -124,7 +124,7 @@ export function AcquisitionStep({
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
         >
           {OPTIONS.map((option) => (
-            <ChoiceTile
+            <ChoiceCard
               key={option.value}
               selected={source === option.value}
               disabled={busy}
@@ -133,9 +133,8 @@ export function AcquisitionStep({
                 setError(null);
                 if (option.value !== "other") setOther("");
               }}
-            >
-              {option.label}
-            </ChoiceTile>
+              title={option.label}
+            />
           ))}
         </div>
 
@@ -182,11 +181,7 @@ export function AcquisitionStep({
           </div>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={!isValid || busy}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-6 py-3 text-sm font-semibold text-cream-50 shadow-[0_14px_34px_-14px_rgba(43,26,18,0.85)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-        >
+        <PrimaryButton type="submit" disabled={!isValid || busy}>
           {status === "saving" ? (
             <>
               <Loader2 size={18} className="animate-spin" />
@@ -198,7 +193,7 @@ export function AcquisitionStep({
               <ArrowRight size={16} />
             </>
           )}
-        </button>
+        </PrimaryButton>
       </form>
     </StepShell>
   );
