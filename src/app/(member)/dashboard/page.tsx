@@ -173,8 +173,8 @@ export default function DashboardPage() {
       <MemberNotificationsPanel />
 
       <p className="text-sm text-ink-700/55">
-        Les mises en relation, la messagerie et l’accompagnement arriveront
-        prochainement. Merci de votre confiance.
+        La découverte de profils, les mises en relation et la messagerie sont
+        ouvertes. Merci de votre confiance.
       </p>
     </div>
   );
