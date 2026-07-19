@@ -185,8 +185,9 @@ export function DiscoverUniverses() {
           Choisir mon univers de découverte
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-ink-700/75">
-          Ces univers serviront plus tard à organiser progressivement la
-          découverte des profils. Aucun matching réel n’est encore actif.
+          Choisissez un univers pour ouvrir immédiatement son flux de profils
+          compatibles. L’accès aux cartes reste réservé aux membres dont le
+          profil a été vérifié.
         </p>
       </div>
 

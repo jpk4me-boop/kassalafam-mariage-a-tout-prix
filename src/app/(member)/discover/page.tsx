@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Clock,
+  BadgeCheck,
   Compass,
   HeartHandshake,
   ListChecks,
@@ -14,15 +14,12 @@ import { DiscoverCriteria } from "@/components/member/discover-criteria";
 import { DiscoverUniverses } from "@/components/member/discover-universes";
 
 /**
- * Espace « Découverte des profils » — préparation (L3C-B puis L3C-C).
+ * Hub de découverte des profils.
  *
- * La page reste « en préparation » et ne liste JAMAIS d'autres profils membres.
- * Le matching réel n'est pas activé.
- *
- * Le cadre (en-tête, principes, cartes, CTA) est statique. La section
- * « Mes critères de découverte » (DiscoverCriteria) est un îlot client qui lit
- * UNIQUEMENT le profil du membre connecté pour en afficher un résumé — aucune
- * autre donnée membre n'est interrogée.
+ * Cette page permet au membre connecté de vérifier ses critères, de choisir son
+ * univers matrimonial puis d'ouvrir le flux réel correspondant. Les profils ne
+ * sont jamais chargés sur ce hub : chaque page d'univers applique sa propre
+ * garde de vérification et appelle la RPC sécurisée `discover_candidates`.
  *
  * L'accès est protégé par le middleware (préfixe « /discover » dans
  * PROTECTED_PREFIXES) au même titre que /dashboard et /profile : un visiteur
@@ -56,16 +53,15 @@ export default function DiscoverPage() {
           <h1 className="font-serif text-3xl font-semibold text-choco-700 sm:text-4xl">
             Découverte des profils
           </h1>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne-500/40 bg-champagne-400/15 px-3 py-1 text-xs font-medium text-choco-700">
-            <Clock size={13} />
-            En préparation
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-emerald-600/10 px-3 py-1 text-xs font-medium text-emerald-800">
+            <BadgeCheck size={13} />
+            Espace actif
           </span>
         </div>
         <p className="mt-3 max-w-2xl text-ink-700/75">
-          Cet espace ouvrira progressivement. Les profils compatibles vous
-          seront proposés avec soin, dans le respect de votre confidentialité et
-          d’une démarche de mariage sérieuse. En attendant, vous pouvez préparer
-          votre profil pour être prêt(e) le moment venu.
+          Choisissez votre univers matrimonial pour découvrir les profils
+          compatibles déjà disponibles. L’accès aux cartes reste réservé aux
+          membres dont le profil a été vérifié par notre équipe.
         </p>
       </section>
 
@@ -92,9 +88,9 @@ export default function DiscoverPage() {
           enregistrée uniquement sur le profil connecté */}
       <DiscoverUniverses />
 
-      {/* Cartes de préparation */}
+      {/* Repères de découverte */}
       <section className="grid gap-4 sm:grid-cols-2">
-        {/* 1. Ce qui arrive bientôt */}
+        {/* 1. Découverte par univers */}
         <article className={cardClass}>
           <div className="flex items-start gap-3">
             <span className={iconWrapClass}>
@@ -102,18 +98,17 @@ export default function DiscoverPage() {
             </span>
             <div className="flex-1">
               <h2 className="font-serif text-lg font-semibold text-choco-700">
-                Ce qui arrive bientôt
+                Découverte par univers
               </h2>
               <p className="mt-1 text-sm text-ink-700/75">
-                Un espace sobre pour découvrir, à votre rythme, des personnes
-                partageant une intention de mariage sincère. L’ouverture se fera
-                progressivement, par étapes mesurées.
+                Ouvrez l’espace chrétien, islamique ou pour tous afin de parcourir
+                immédiatement les profils vérifiés compatibles avec votre choix.
               </p>
             </div>
           </div>
         </article>
 
-        {/* 2. Comment les profils seront proposés */}
+        {/* 2. Comment les profils sont proposés */}
         <article className={cardClass}>
           <div className="flex items-start gap-3">
             <span className={iconWrapClass}>
@@ -121,13 +116,13 @@ export default function DiscoverPage() {
             </span>
             <div className="flex-1">
               <h2 className="font-serif text-lg font-semibold text-choco-700">
-                Comment les profils seront proposés
+                Comment les profils sont proposés
               </h2>
               <p className="mt-1 text-sm text-ink-700/75">
-                Les suggestions s’appuieront sur les informations que vous
-                renseignez vous-même : situation, attentes, ville. Une approche
-                posée et transparente, pensée pour des rencontres réellement
-                compatibles.
+                Les suggestions s’appuient sur les informations que vous
+                renseignez vous-même : univers, situation, attentes et lieu de
+                résidence. Une approche transparente, pensée pour des rencontres
+                réellement compatibles.
               </p>
             </div>
           </div>
@@ -160,12 +155,12 @@ export default function DiscoverPage() {
             </span>
             <div className="flex-1">
               <h2 className="font-serif text-lg font-semibold text-choco-700">
-                Préparer mon profil
+                Améliorer mes suggestions
               </h2>
               <p className="mt-1 text-sm text-ink-700/75">
-                Un profil complet et sincère prépare des mises en relation de
-                qualité. Renseignez votre situation et vos attentes dès
-                maintenant pour être prêt(e) à l’ouverture.
+                Un profil complet et sincère améliore la pertinence des profils
+                proposés. Renseignez votre situation, vos attentes et ajoutez une
+                photo principale avant de commencer.
               </p>
             </div>
           </div>
@@ -176,11 +171,11 @@ export default function DiscoverPage() {
       <section className="flex flex-col items-start gap-3 rounded-3xl border border-champagne-500/30 bg-cream-50/60 p-6 shadow-card sm:flex-row sm:items-center sm:justify-between sm:p-8">
         <div>
           <h2 className="font-serif text-xl font-semibold text-choco-700">
-            Préparez-vous dès aujourd’hui
+            Votre profil est la base
           </h2>
           <p className="mt-1 max-w-xl text-sm text-ink-700/75">
-            Complétez votre profil matrimonial pour aborder sereinement la
-            découverte des profils, dès son ouverture.
+            Complétez votre profil matrimonial pour recevoir des suggestions
+            plus pertinentes et accéder sereinement aux espaces de découverte.
           </p>
         </div>
         <Link
@@ -188,7 +183,7 @@ export default function DiscoverPage() {
           className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
         >
           <UserRound size={16} />
-          Préparer mon profil
+          Compléter mon profil
           <ArrowRight size={16} />
         </Link>
       </section>
