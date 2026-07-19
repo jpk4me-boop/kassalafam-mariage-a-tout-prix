@@ -3,7 +3,7 @@
 import type { Gender } from "@/lib/types/database";
 import { GENDER_OPTIONS } from "@/lib/onboarding/options";
 import { Input, Label } from "@/components/ui/field";
-import { ChoiceTile } from "@/components/onboarding/choice-tile";
+import { ChoiceCard } from "@/components/onboarding/choice-card";
 import { StepShell } from "@/components/onboarding/step-shell";
 
 export function GenderStep({
@@ -44,14 +44,13 @@ export function GenderStep({
         className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
       >
         {GENDER_OPTIONS.map((option) => (
-          <ChoiceTile
+          <ChoiceCard
             key={option.value}
             selected={value === option.value}
             onSelect={() => onChange(option.value)}
             disabled={disabled}
-          >
-            {option.label}
-          </ChoiceTile>
+            title={option.label}
+          />
         ))}
       </div>
     </StepShell>
