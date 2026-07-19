@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   CircleCheck,
   CircleDashed,
-  Clock,
   Compass,
   HeartHandshake,
   ListChecks,
@@ -19,8 +18,8 @@ import type { ProfileVerificationStatus } from "@/lib/types/database";
  *
  * Composant purement présentationnel : il ne fait AUCUNE requête. Toutes les
  * valeurs proviennent du profil déjà chargé par la page dashboard
- * (`profiles.select("*")`). Pas de matching, de messagerie, de paiement ni
- * d'IA : la découverte des profils est explicitement annoncée « en préparation ».
+ * (`profiles.select("*")`). Pas de paiement ni d'IA : la découverte, les
+ * intérêts et la messagerie sont actifs et accessibles via leurs pages dédiées.
  */
 
 type Props = {
@@ -125,7 +124,7 @@ export function DashboardNextSteps({
         </Link>
       </article>
 
-      {/* 4. Découverte des profils — EN PRÉPARATION (aucun matching actif) */}
+      {/* 4. Découverte des profils — espace actif */}
       <article className={cardClass}>
         <div className="flex items-start gap-3">
           <span className={iconWrapClass}>
@@ -137,14 +136,13 @@ export function DashboardNextSteps({
                 Découverte des profils
               </h3>
               <span className={softPillClass}>
-                <Clock size={13} />
-                En préparation
+                <BadgeCheck size={13} />
+                Espace actif
               </span>
             </div>
             <p className="mt-1 text-sm text-ink-700/75">
-              La découverte de profils compatibles ouvrira progressivement. Nous
-              préparons un espace sobre et respectueux pour vos futures
-              rencontres.
+              Explorez des profils compatibles dans votre univers matrimonial,
+              exprimez un intérêt et échangez dès qu’il est partagé.
             </p>
           </div>
         </div>
@@ -152,7 +150,7 @@ export function DashboardNextSteps({
           href="/discover"
           className="mt-4 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-choco-700 transition-colors hover:text-choco-800"
         >
-          Découvrir l’espace
+          Découvrir des profils
           <ArrowRight size={15} />
         </Link>
       </article>
@@ -181,8 +179,8 @@ export function DashboardNextSteps({
                 label="Laisser notre équipe valider votre profil"
               />
               <Step
-                upcoming
-                label="Découvrir des profils compatibles (bientôt disponible)"
+                done={verificationStatus === "approved"}
+                label="Découvrir des profils compatibles"
               />
             </ul>
           </div>
