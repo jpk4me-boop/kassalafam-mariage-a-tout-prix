@@ -730,6 +730,106 @@ export type MemberActivitySummaryRow = {
   last_seen_at: string | null;
 };
 
+// ---------------------------------------------------------------------------
+// C1b — Premium autoritatif fournisseur-neutre.
+// ---------------------------------------------------------------------------
+
+export type PremiumSubscriptionStatus = "active" | "expired" | "revoked";
+export type PremiumSubscriptionSource = "admin" | "payment";
+export type PremiumActionType =
+  | "granted"
+  | "revoked"
+  | "expired"
+  | "payment_activated"
+  | "payment_refunded";
+export type PaymentTransactionStatus =
+  | "initiated"
+  | "pending"
+  | "succeeded"
+  | "failed"
+  | "cancelled"
+  | "refunded";
+
+export type PremiumPlanRow = {
+  id: string;
+  code: string;
+  version: number;
+  display_name: string;
+  duration_days: number;
+  price_xaf: number;
+  currency: "XAF";
+  available_from: string;
+  available_until: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type PremiumSubscriptionRow = {
+  id: string;
+  profile_id: string | null;
+  profile_id_snapshot: string;
+  plan_id: string;
+  status: PremiumSubscriptionStatus;
+  source: PremiumSubscriptionSource;
+  starts_at: string;
+  ends_at: string;
+  granted_by: string | null;
+  provider: string | null;
+  provider_subscription_ref: string | null;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  revocation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PaymentTransactionRow = {
+  id: string;
+  profile_id: string | null;
+  profile_id_snapshot: string;
+  plan_id: string;
+  subscription_id: string | null;
+  provider: string;
+  provider_reference: string;
+  idempotency_key: string;
+  status: PaymentTransactionStatus;
+  amount_xaf: number;
+  currency: "XAF";
+  requested_at: string;
+  completed_at: string | null;
+  failure_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PremiumSubscriptionActionRow = {
+  id: string;
+  subscription_id: string | null;
+  subscription_id_snapshot: string;
+  profile_id: string | null;
+  profile_id_snapshot: string;
+  plan_id: string;
+  actor_id: string | null;
+  actor_email_snapshot: string | null;
+  action_type: PremiumActionType;
+  previous_status: PremiumSubscriptionStatus | null;
+  new_status: PremiumSubscriptionStatus;
+  reason: string;
+  created_at: string;
+};
+
+export type PremiumStatusRow = {
+  is_premium: boolean;
+  subscription_id: string | null;
+  subscription_status: PremiumSubscriptionStatus | null;
+  plan_code: string | null;
+  plan_name: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  source: PremiumSubscriptionSource | null;
+};
+
+
 export interface Database {
   public: {
     Tables: {
@@ -836,6 +936,34 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+
+// C1b — tables Premium entièrement privées. Aucune écriture directe via
+      // le client typé : transitions exclusivement par les RPC autoritatives.
+      premium_plans: {
+        Row: PremiumPlanRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      premium_subscriptions: {
+        Row: PremiumSubscriptionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      payment_transactions: {
+        Row: PaymentTransactionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      premium_subscription_actions: {
+        Row: PremiumSubscriptionActionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+
     };
     Views: Record<string, never>;
     Functions: {
@@ -960,6 +1088,44 @@ export interface Database {
         Args: { p_expires_at?: string | null };
         Returns: CreateProfileShareLinkResult[];
       };
+
+// C1b — statut Premium du membre connecté. L'identité vient uniquement de
+      // auth.uid(); expire au passage toute période arrivée à échéance.
+      get_my_premium_status: {
+        Args: Record<string, never>;
+        Returns: PremiumStatusRow[];
+      };
+      // C1b — expiration ciblée/interne, réservée au service_role.
+      expire_profile_premium_subscription: {
+        Args: { p_profile_id: string };
+        Returns: number;
+      };
+      // C1b — expiration en lot, réservée au service_role.
+      expire_due_premium_subscriptions: {
+        Args: { p_limit?: number };
+        Returns: number;
+      };
+      // C1b — attribution administrative journalisée.
+      admin_grant_premium_subscription: {
+        Args: {
+          p_profile_id: string;
+          p_plan_id: string;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: PremiumSubscriptionRow;
+      };
+      // C1b — révocation administrative avec concurrence optimiste.
+      admin_revoke_premium_subscription: {
+        Args: {
+          p_subscription_id: string;
+          p_expected_status: PremiumSubscriptionStatus;
+          p_reason: string;
+          p_actor_id: string;
+        };
+        Returns: PremiumSubscriptionRow;
+      };
+
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
       send_message: {
         Args: { p_match: string; p_content: string };
