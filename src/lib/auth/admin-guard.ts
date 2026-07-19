@@ -1,6 +1,7 @@
 import "server-only";
 
 import { notFound, redirect } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUserId, isSuperAdminUserId } from "@/lib/auth/admin";
@@ -8,18 +9,10 @@ import { isAdminUserId, isSuperAdminUserId } from "@/lib/auth/admin";
 /**
  * Gardes d'accès back-office — SERVEUR UNIQUEMENT.
  *
- * Centralise le contrôle d'accès à toutes les pages `/admin/*` et aux Server
- * Actions de modération, afin de ne PAS dupliquer la logique
- * `getUser() → allowlist` dans chaque fichier.
- *
- * Politique :
- *  - non authentifié  → `redirect` vers /login (avec retour) pour une PAGE ;
- *  - authentifié mais non admin → `notFound()` (404, ne révèle pas le
- *    back-office ni ne confirme l'existence d'un espace protégé) ;
- *  - action super-admin sur un simple admin → `notFound()` également.
- *
- * `import "server-only"` garantit un échec de build si ce module est
- * accidentellement importé dans un bundle client.
+ * Une allowlist admin n'annule jamais une suspension de compte : chaque garde
+ * relit `profiles.account_status` côté serveur avant d'autoriser une page ou une
+ * Server Action. Un profil absent reste compatible avec les comptes techniques
+ * historiques présents dans l'allowlist.
  */
 
 export type AdminContext = {
@@ -31,30 +24,56 @@ export type AdminContext = {
   isSuperAdmin: boolean;
 };
 
-async function getSessionUser() {
+type SessionActor = {
+  user: User | null;
+  isSuspended: boolean;
+  statusReadFailed: boolean;
+};
+
+async function getSessionActor(): Promise<SessionActor> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user;
+
+  if (!user) {
+    return { user: null, isSuspended: false, statusReadFailed: false };
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("account_status")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
+    user,
+    isSuspended: profile?.account_status === "suspended",
+    statusReadFailed: error != null,
+  };
 }
 
 /**
- * Garde de PAGE : exige un administrateur (super admin inclus). Redirige vers
- * la connexion si non authentifié, renvoie 404 si non autorisé. Retourne le
- * contexte admin (dont `isSuperAdmin`) sinon.
+ * Garde de PAGE : exige un administrateur actif (super admin inclus).
  *
  * @param redirectPath chemin de retour encodé dans /login?redirect=…
  */
 export async function requireAdmin(redirectPath: string): Promise<AdminContext> {
-  const user = await getSessionUser();
+  const session = await getSessionActor();
+  const { user } = session;
+
   if (!user) {
     redirect(`/login?redirect=${encodeURIComponent(redirectPath)}`);
   }
-  if (!isAdminUserId(user.id)) {
-    // 404 plutôt que 403 : ne révèle pas l'existence du back-office.
+  if (session.isSuspended) {
+    redirect("/account-suspended");
+  }
+  // Fail-closed pour le back-office : une panne de lecture du statut ne doit
+  // jamais ouvrir un accès privilégié par défaut.
+  if (session.statusReadFailed || !isAdminUserId(user.id)) {
     notFound();
   }
+
   return {
     userId: user.id,
     email: user.email ?? null,
@@ -62,11 +81,7 @@ export async function requireAdmin(redirectPath: string): Promise<AdminContext> 
   };
 }
 
-/**
- * Garde de PAGE : exige un SUPER administrateur. Un simple admin (ou un membre)
- * reçoit une 404. À utiliser pour les fonctions sensibles (modération de
- * comptes, paramètres plateforme, journal d'administration).
- */
+/** Garde de PAGE réservée au super administrateur actif. */
 export async function requireSuperAdmin(
   redirectPath: string,
 ): Promise<AdminContext> {
@@ -77,21 +92,23 @@ export async function requireSuperAdmin(
   return ctx;
 }
 
-/**
- * Variante NON bloquante pour les Server Actions : renvoie un résultat plutôt
- * que de rediriger / lever une 404, afin que l'action puisse retourner un
- * message d'erreur exploitable par l'UI (formulaire).
- */
+/** Variante non bloquante pour les Server Actions. */
 export type AdminActorResult =
   | { ok: true; actor: AdminContext }
   | { ok: false; error: string };
 
 export async function resolveAdminActor(): Promise<AdminActorResult> {
-  const user = await getSessionUser();
+  const session = await getSessionActor();
+  const { user } = session;
+
   if (!user) return { ok: false, error: "Session expirée. Reconnectez-vous." };
-  if (!isAdminUserId(user.id)) {
+  if (session.isSuspended) {
+    return { ok: false, error: "Ce compte est suspendu." };
+  }
+  if (session.statusReadFailed || !isAdminUserId(user.id)) {
     return { ok: false, error: "Accès non autorisé." };
   }
+
   return {
     ok: true,
     actor: {
