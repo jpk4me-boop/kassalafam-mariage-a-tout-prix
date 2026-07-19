@@ -54,6 +54,7 @@ const DECLARED_SOURCE_LABELS: Record<string, string> = {
   youtube: "YouTube",
   whatsapp_recommendation: "WhatsApp / recommandation",
   google: "Google",
+  event_community: "Événement ou communauté",
   other: "Autre",
   "(non renseignée)": "(non renseignée)",
 };
