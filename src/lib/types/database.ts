@@ -583,6 +583,21 @@ export type AdminProfileShareLinkItem = {
 };
 
 /**
+ * Partage PR4 — Métadonnées du dernier lien appartenant au membre connecté.
+ * La RPC propriétaire ne retourne jamais le jeton complet, son hash, les UUID
+ * d'acteurs ni le motif de révocation. Le jeton n'est disponible qu'au retour
+ * immédiat de create/rotate_my_profile_share_link.
+ */
+export type MemberProfileShareLinkItem = {
+  link_id: string;
+  token_prefix: string;
+  created_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  status: "active" | "expired" | "revoked";
+};
+
+/**
  * L3G — Une ligne renvoyée par la RPC `public.admin_list_members` (service_role,
  * SERVEUR uniquement). Projection de MODÉRATION : champs strictement utiles +
  * agrégats calculés en base. Ne contient JAMAIS d'email (auth.users), de
@@ -920,6 +935,30 @@ export interface Database {
       admin_list_profile_share_links: {
         Args: { p_profile_id?: string | null };
         Returns: AdminProfileShareLinkItem[];
+      };
+      // Partage PR4 — métadonnées du dernier lien du membre connecté.
+      // Aucun paramètre d'identité, aucun token/hash dans la réponse.
+      get_my_profile_share_link_status: {
+        Args: Record<string, never>;
+        Returns: MemberProfileShareLinkItem[];
+      };
+      // Partage PR4 — création du propre lien. auth.uid() est l'unique identité.
+      // Le jeton en clair est retourné une seule fois.
+      create_my_profile_share_link: {
+        Args: { p_expires_at?: string | null };
+        Returns: CreateProfileShareLinkResult[];
+      };
+      // Partage PR4 — révocation du propre lien, avec contrôle d'appartenance
+      // autoritatif en base. Idempotente.
+      revoke_my_profile_share_link: {
+        Args: { p_link_id: string };
+        Returns: boolean;
+      };
+      // Partage PR4 — rotation atomique : ancien lien révoqué, nouveau jeton
+      // retourné une seule fois. Toute erreur annule l'ensemble de la transaction.
+      rotate_my_profile_share_link: {
+        Args: { p_expires_at?: string | null };
+        Returns: CreateProfileShareLinkResult[];
       };
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
       send_message: {
