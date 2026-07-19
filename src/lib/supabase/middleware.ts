@@ -7,6 +7,8 @@ import {
 } from "@/lib/onboarding/continue-later";
 import type { Database } from "@/lib/types/database";
 
+const ACCOUNT_SUSPENDED_PATH = "/account-suspended";
+
 /** Routes réservées aux utilisateurs connectés (membres + back-office admin).
  *  Le contrôle fin du rôle admin (allowlist) est fait dans le Server Component
  *  de la page admin ; ici on garantit seulement qu'un anonyme est redirigé. */
@@ -17,9 +19,25 @@ const PROTECTED_PREFIXES = [
   "/matches",
   "/admin",
   "/onboarding",
+  ACCOUNT_SUSPENDED_PATH,
 ];
 /** Routes d'authentification : un membre déjà connecté est redirigé ailleurs. */
 const AUTH_PREFIXES = ["/login", "/register"];
+
+/**
+ * Routes membre bloquées quand `profiles.account_status = suspended`.
+ * Le préfixe `/admin` est inclus : une allowlist serveur ne doit jamais
+ * contourner la suspension du compte. La garde admin répète ce contrôle côté
+ * serveur pour protéger également les Server Actions.
+ */
+const MEMBER_APP_PREFIXES = [
+  "/dashboard",
+  "/profile",
+  "/discover",
+  "/matches",
+  "/onboarding",
+  "/admin",
+];
 
 /**
  * Routes du parcours membre soumises à la garde d'onboarding, fondée sur le
@@ -95,6 +113,10 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((p) => matchesRoute(pathname, p));
   const isAuthRoute = AUTH_PREFIXES.some((p) => matchesRoute(pathname, p));
+  const isSuspensionPage = matchesRoute(pathname, ACCOUNT_SUSPENDED_PATH);
+  const isMemberAppRoute = MEMBER_APP_PREFIXES.some((p) =>
+    matchesRoute(pathname, p),
+  );
 
   if (!user && isProtected) {
     const redirectUrl = request.nextUrl.clone();
@@ -110,50 +132,68 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Garde d'onboarding : fondée sur le MARQUEUR de fin explicite — un seul
-  // SELECT indexé sur la PK, payé uniquement sur les routes gardées ; aucune
-  // complétude recalculée ici.
-  if (user && ONBOARDING_GATE_PREFIXES.some((p) => matchesRoute(pathname, p))) {
+  // Une seule lecture du profil pour la suspension et l'onboarding. La base
+  // reste l'autorité : cette garde améliore l'UX mais ne remplace pas les RPC/RLS.
+  if (user && (isMemberAppRoute || isSuspensionPage)) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("acquisition_source_recorded_at, onboarding_completed_at")
+      .select(
+        "account_status, acquisition_source_recorded_at, onboarding_completed_at",
+      )
       .eq("id", user.id)
       .maybeSingle();
 
-    // Fail-open : sur erreur Supabase (réseau, indisponibilité…), on NE bloque
-    // PAS le membre — on le laisse poursuivre plutôt que de le piéger dans une
-    // redirection. La garde se réappliquera à la prochaine navigation.
+    // Fail-open sur incident Supabase : le membre n'est pas piégé par une panne.
+    // Les protections PostgreSQL autoritatives continuent de bloquer les actions.
     if (!profileError) {
-      let needsOnboarding = !profile?.onboarding_completed_at;
+      const isSuspended = profile?.account_status === "suspended";
 
-      // Acquisition posée mais parcours non finalisé : l'échappatoire
-      // « Continuer plus tard » (cookie de session lié au compte — l'empreinte
-      // n'est calculée que si un cookie est présent ; un cookie hérité d'un
-      // autre compte du même navigateur est ignoré) donne un accès temporaire.
-      // Acquisition NULL : bloquant sans échappatoire.
-      if (needsOnboarding && profile?.acquisition_source_recorded_at) {
-        const rawContinueLater = request.cookies.get(
-          CONTINUE_LATER_COOKIE,
-        )?.value;
-        if (
-          rawContinueLater != null &&
-          rawContinueLater === (await continueLaterCookieValue(user.id))
-        ) {
-          needsOnboarding = false;
-        }
+      if (isSuspended && !isSuspensionPage) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = ACCOUNT_SUSPENDED_PATH;
+        redirectUrl.search = "";
+        return NextResponse.redirect(redirectUrl);
       }
 
-      if (needsOnboarding) {
+      if (!isSuspended && isSuspensionPage) {
         const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = "/onboarding";
+        redirectUrl.pathname = "/dashboard";
         redirectUrl.search = "";
-        // Destination initialement demandée (chemin + éventuels paramètres),
-        // restituée après l'onboarding (ou « Continuer plus tard »).
-        redirectUrl.searchParams.set(
-          "redirect",
-          `${pathname}${request.nextUrl.search}`,
-        );
         return NextResponse.redirect(redirectUrl);
+      }
+
+      // Garde d'onboarding : fondée sur le MARQUEUR de fin explicite.
+      if (
+        !isSuspensionPage &&
+        ONBOARDING_GATE_PREFIXES.some((p) => matchesRoute(pathname, p))
+      ) {
+        let needsOnboarding = !profile?.onboarding_completed_at;
+
+        // Acquisition posée mais parcours non finalisé : l'échappatoire
+        // « Continuer plus tard » (cookie de session lié au compte) donne un
+        // accès temporaire.
+        if (needsOnboarding && profile?.acquisition_source_recorded_at) {
+          const rawContinueLater = request.cookies.get(
+            CONTINUE_LATER_COOKIE,
+          )?.value;
+          if (
+            rawContinueLater != null &&
+            rawContinueLater === (await continueLaterCookieValue(user.id))
+          ) {
+            needsOnboarding = false;
+          }
+        }
+
+        if (needsOnboarding) {
+          const redirectUrl = request.nextUrl.clone();
+          redirectUrl.pathname = "/onboarding";
+          redirectUrl.search = "";
+          redirectUrl.searchParams.set(
+            "redirect",
+            `${pathname}${request.nextUrl.search}`,
+          );
+          return NextResponse.redirect(redirectUrl);
+        }
       }
     }
   }
