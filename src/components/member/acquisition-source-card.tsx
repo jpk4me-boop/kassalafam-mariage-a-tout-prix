@@ -39,6 +39,7 @@ const OPTIONS: { value: AcquisitionSource; label: string }[] = [
   { value: "youtube", label: "YouTube" },
   { value: "whatsapp_recommendation", label: "WhatsApp / recommandation" },
   { value: "google", label: "Google" },
+  { value: "event_community", label: "Événement ou communauté" },
   { value: "other", label: "Autre" },
 ];
 

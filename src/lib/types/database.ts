@@ -55,6 +55,7 @@ export type AcquisitionSource =
   | "youtube"
   | "whatsapp_recommendation"
   | "google"
+  | "event_community"
   | "other";
 
 /**
