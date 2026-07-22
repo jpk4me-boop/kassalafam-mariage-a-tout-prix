@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type {
   Gender,
   MaritalStatus,
+  ProfileInsert,
   ProfileRow,
   ProfileVerificationStatus,
   Religion,
@@ -28,6 +29,23 @@ import {
 } from "@/components/ui/field";
 
 const INTENTION_VALUE = "mariage_serieux";
+
+function getAdultBirthDateMax(): string {
+  const today = new Date();
+  const cutoff = new Date(
+    today.getFullYear() - 18,
+    today.getMonth(),
+    today.getDate(),
+  );
+
+  const year = cutoff.getFullYear();
+  const month = String(cutoff.getMonth() + 1).padStart(2, "0");
+  const day = String(cutoff.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+const ADULT_BIRTH_DATE_MAX = getAdultBirthDateMax();
 
 type FormState = {
   first_name: string;
@@ -133,6 +151,14 @@ export default function ProfilePage() {
       setError("Merci d’indiquer votre genre.");
       return;
     }
+    if (
+      !onboardingDone &&
+      form.birth_date &&
+      form.birth_date > ADULT_BIRTH_DATE_MAX
+    ) {
+      setError("Vous devez avoir au moins 18 ans.");
+      return;
+    }
     if (!form.marital_status) {
       setError("Merci d’indiquer votre situation matrimoniale.");
       return;
@@ -161,34 +187,40 @@ export default function ProfilePage() {
       return;
     }
 
-    const { error: upsertError } = await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        first_name: form.first_name.trim() || null,
-        gender: form.gender,
-        birth_date: form.birth_date || null,
-        // Origine (PR Origine/Résidence) : compatibilité DOUCE — jamais de
-        // chaîne vide (NULL tant que non renseignée, CHECK en base sinon).
-        // Pas de garde stricte ici : un profil historique finalisé doit
-        // pouvoir enregistrer sa bio sans renseigner l'origine.
-        origin_country: form.origin_country.trim() || null,
-        origin_city: form.origin_city.trim() || null,
-        // Onboarding terminé : jamais null (bloqué par la validation
-        // ci-dessus). Parcours non finalisé : comportement historique.
-        country: form.country.trim() || null,
-        city: form.city.trim() || null,
-        marital_status: form.marital_status || null,
-        // Compatibilité douce (PR B religion) : jamais de chaîne vide — NULL
-        // tant qu'un profil historique ne l'a pas renseignée. Une fois choisie,
-        // la valeur appartient forcément aux quatre autorisées (CHECK en base).
-        religion: form.religion || null,
-        intention: INTENTION_VALUE,
-        bio: form.bio.trim() || null,
-        partner_expectations: form.partner_expectations.trim() || null,
-        blur_photos: form.blur_photos,
-      },
-      { onConflict: "id" },
-    );
+    const profilePayload: ProfileInsert = {
+      id: user.id,
+      first_name: form.first_name.trim() || null,
+      // Origine (PR Origine/Résidence) : compatibilité DOUCE — jamais de
+      // chaîne vide (NULL tant que non renseignée, CHECK en base sinon).
+      // Pas de garde stricte ici : un profil historique finalisé doit
+      // pouvoir enregistrer sa bio sans renseigner l'origine.
+      origin_country: form.origin_country.trim() || null,
+      origin_city: form.origin_city.trim() || null,
+      // Onboarding terminé : jamais null (bloqué par la validation
+      // ci-dessus). Parcours non finalisé : comportement historique.
+      country: form.country.trim() || null,
+      city: form.city.trim() || null,
+      marital_status: form.marital_status || null,
+      // Compatibilité douce (PR B religion) : jamais de chaîne vide — NULL
+      // tant qu'un profil historique ne l'a pas renseignée. Une fois choisie,
+      // la valeur appartient forcément aux quatre autorisées (CHECK en base).
+      religion: form.religion || null,
+      intention: INTENTION_VALUE,
+      bio: form.bio.trim() || null,
+      partner_expectations: form.partner_expectations.trim() || null,
+      blur_photos: form.blur_photos,
+    };
+
+    // Défense en profondeur : après finalisation, ces propriétés sont
+    // totalement absentes du payload — l'UI disabled n'est pas la seule garde.
+    if (!onboardingDone) {
+      profilePayload.gender = form.gender;
+      profilePayload.birth_date = form.birth_date || null;
+    }
+
+    const { error: upsertError } = await supabase
+      .from("profiles")
+      .upsert(profilePayload, { onConflict: "id" });
 
     if (upsertError) {
       setError("Enregistrement impossible pour le moment. Réessayez.");
@@ -268,7 +300,7 @@ export default function ProfilePage() {
               required
               value={form.gender}
               onChange={(e) => update("gender", e.target.value as Gender)}
-              disabled={saving}
+              disabled={saving || onboardingDone}
             >
               <option value="" disabled>
                 Sélectionner…
@@ -285,11 +317,20 @@ export default function ProfilePage() {
               name="birth_date"
               type="date"
               value={form.birth_date}
+              max={ADULT_BIRTH_DATE_MAX}
               onChange={(e) => update("birth_date", e.target.value)}
-              disabled={saving}
+              disabled={saving || onboardingDone}
             />
           </div>
         </div>
+
+        {onboardingDone ? (
+          <p className="rounded-2xl border border-champagne-400/35 bg-champagne-100/45 px-4 py-3 text-sm text-ink-700/75">
+            Le genre et la date de naissance sont verrouillés après la
+            finalisation du profil. Une correction exceptionnelle doit être
+            demandée à l’assistance.
+          </p>
+        ) : null}
 
         {/* ORIGINE d'abord (PR Origine/Résidence) : mêmes sélecteurs
             dépendants Pays → Ville que la résidence (catalogue unique,

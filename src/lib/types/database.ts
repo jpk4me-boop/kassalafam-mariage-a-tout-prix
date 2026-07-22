@@ -461,7 +461,14 @@ export type AccountModerationActionRow = {
  * ([[account_moderation_actions]] / [[safety_report_actions]]) et ne sont PAS
  * redupliqués ici.
  */
-export type AdminAuditActionType = "verification_set";
+export type AdminAuditActionType =
+  | "verification_set"
+  | "profile_identity_corrected";
+
+export type ProfileIdentityAuditValues = {
+  gender: Gender | null;
+  birth_date: string | null;
+};
 
 /**
  * L3G — Ligne du journal APPEND-ONLY `public.admin_audit_log`, écrite
@@ -483,6 +490,8 @@ export type AdminAuditLogRow = {
   target_profile_id_snapshot: string;
   previous_status: string | null;
   new_status: string | null;
+  previous_values: ProfileIdentityAuditValues | null;
+  new_values: ProfileIdentityAuditValues | null;
   reason: string | null;
   created_at: string;
 };
@@ -1215,6 +1224,18 @@ export interface Database {
           p_expected_status: string;
           p_new_status: string;
           p_reason: string | null;
+          p_actor_id: string;
+        };
+        Returns: ProfileRow;
+      };
+      // B1b — correction exceptionnelle des champs d'identité, appelée
+      // uniquement côté serveur après resolveSuperAdminActor().
+      admin_correct_profile_identity_fields: {
+        Args: {
+          p_profile_id: string;
+          p_gender: Gender | null;
+          p_birth_date: string | null;
+          p_reason: string;
           p_actor_id: string;
         };
         Returns: ProfileRow;
