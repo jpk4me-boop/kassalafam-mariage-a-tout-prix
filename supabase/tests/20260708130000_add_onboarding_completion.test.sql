@@ -222,11 +222,14 @@ select is(
     $$update public.profiles set gender = 'homme' where id = '00000000-0000-0000-0000-0000000000f2'$$),
   'ONBOARDING_INCOMPLETE_GENDER', 'T13 — refus sans genre');
 
-select is(
-  public._onb_refusal_case(
-    $$update public.profiles set birth_date = (current_date - interval '17 years')::date where id = '00000000-0000-0000-0000-0000000000f2'$$,
-    $$update public.profiles set birth_date = date '1990-01-01' where id = '00000000-0000-0000-0000-0000000000f2'$$),
-  'ONBOARDING_INCOMPLETE_BIRTH_DATE', 'T14 — refus si moins de 18 ans');
+select throws_ok(
+  $$update public.profiles
+       set birth_date = (current_date - interval '17 years')::date
+     where id = '00000000-0000-0000-0000-0000000000f2'$$,
+  '22023',
+  'PROFILE_MINIMUM_AGE_REQUIRED',
+  'T14 — refus immédiat si moins de 18 ans'
+);
 
 select is(
   public._onb_refusal_case(
