@@ -54,7 +54,7 @@ insert into auth.users(id, email) values
   ('00000000-0000-0000-d200-000000000004', 'v2-d@example.test'),
   ('00000000-0000-0000-e200-000000000005', 'v2-e@example.test'),
   ('00000000-0000-0000-f200-000000000006', 'v2-f@example.test'),
-  ('00000000-0000-0000-g200-000000000007', 'v2-g@example.test');
+  ('00000000-0000-0000-7200-000000000007', 'v2-g@example.test');
 
 insert into public.profiles(
   id, first_name, gender, birth_date, country, city, bio, blur_photos,
@@ -122,7 +122,7 @@ insert into public.profiles(
     'no', 'has_children', now(), 'autre', null, null, null
   ),
   (
-    '00000000-0000-0000-g200-000000000007',
+    '00000000-0000-0000-7200-000000000007',
     'Grâce', 'femme', '1996-01-01', 'Cameroun', 'Yaoundé',
     repeat('B', 700), false, 'approved', 'separe', repeat('E', 700),
     'islamic_marriage', 'active', 'Juriste', 'master', 169,
@@ -152,9 +152,9 @@ insert into public.photos(
   ('20000000-0000-0000-f200-000000000006',
    '00000000-0000-0000-f200-000000000006',
    '00000000-0000-0000-f200-000000000006/f.webp', true, 'image/webp', 120000),
-  ('20000000-0000-0000-g200-000000000007',
-   '00000000-0000-0000-g200-000000000007',
-   '00000000-0000-0000-g200-000000000007/g.png', true, 'image/png', 130000);
+  ('20000000-0000-0000-7200-000000000007',
+   '00000000-0000-0000-7200-000000000007',
+   '00000000-0000-0000-7200-000000000007/g.png', true, 'image/png', 130000);
 
 insert into public.candidate_showcase_consents(
   id, profile_id, policy_version, consent_text, consented_at,
@@ -179,8 +179,8 @@ insert into public.candidate_showcase_consents(
   ('30000000-0000-0000-f200-000000000006',
    '00000000-0000-0000-f200-000000000006', '2026-07-showcase-v1',
    repeat('F', 80), now() - interval '2 days', null, null),
-  ('30000000-0000-0000-g200-000000000007',
-   '00000000-0000-0000-g200-000000000007', '2026-07-showcase-v1',
+  ('30000000-0000-0000-7200-000000000007',
+   '00000000-0000-0000-7200-000000000007', '2026-07-showcase-v1',
    repeat('G', 80), now() - interval '2 days', null, null);
 
 insert into public.candidate_showcase_publications(
@@ -211,9 +211,9 @@ insert into public.candidate_showcase_publications(
    '00000000-0000-0000-f200-000000000006', 'F000000000000000000000',
    '20000000-0000-0000-f200-000000000006', false,
    now() - interval '2 days', now() - interval '1 day'),
-  ('40000000-0000-0000-g200-000000000007',
-   '00000000-0000-0000-g200-000000000007', 'G000000000000000000000',
-   '20000000-0000-0000-g200-000000000007', true,
+  ('40000000-0000-0000-7200-000000000007',
+   '00000000-0000-0000-7200-000000000007', 'G000000000000000000000',
+   '20000000-0000-0000-7200-000000000007', true,
    now(), null);
 
 select plan(58);
@@ -318,21 +318,36 @@ select is((
     and grantee = 'PUBLIC'
 ), 0, 'T11 — PUBLIC n’a aucun EXECUTE V2');
 
-select unlike(
-  pg_get_function_result('public.get_public_candidate_showcase(text)'::regprocedure),
-  '%uuid%', 'T12 — la fiche publique ne retourne aucun UUID');
-select unlike(
-  pg_get_function_result('public.get_public_candidate_showcase(text)'::regprocedure),
-  '%birth_date%', 'T13 — la fiche publique ne retourne pas la date de naissance');
-select unlike(
-  pg_get_function_result('public.get_public_candidate_showcase(text)'::regprocedure),
-  '%religion%', 'T14 — la fiche publique ne retourne pas la religion déclarée');
-select unlike(
-  pg_get_function_result('public.list_public_candidate_showcases(integer,integer)'::regprocedure),
-  '%storage_path%', 'T15 — la liste publique ne retourne aucun chemin Storage');
-select like(
-  pg_get_function_result('public.get_public_candidate_showcase_photo(text)'::regprocedure),
-  '%storage_path%', 'T16 — le chemin Storage existe uniquement dans la RPC photo serveur');
+select ok(
+  pg_get_function_result(
+    'public.get_public_candidate_showcase(text)'::regprocedure
+  ) not like '%uuid%',
+  'T12 — la fiche publique ne retourne aucun UUID'
+);
+select ok(
+  pg_get_function_result(
+    'public.get_public_candidate_showcase(text)'::regprocedure
+  ) not like '%birth_date%',
+  'T13 — la fiche publique ne retourne pas la date de naissance'
+);
+select ok(
+  pg_get_function_result(
+    'public.get_public_candidate_showcase(text)'::regprocedure
+  ) not like '%religion%',
+  'T14 — la fiche publique ne retourne pas la religion déclarée'
+);
+select ok(
+  pg_get_function_result(
+    'public.list_public_candidate_showcases(integer,integer)'::regprocedure
+  ) not like '%storage_path%',
+  'T15 — la liste publique ne retourne aucun chemin Storage'
+);
+select ok(
+  pg_get_function_result(
+    'public.get_public_candidate_showcase_photo(text)'::regprocedure
+  ) like '%storage_path%',
+  'T16 — le chemin Storage existe uniquement dans la RPC photo serveur'
+);
 
 select is(public._csv_v2_direct_as(
   'service_role',
@@ -449,7 +464,7 @@ select ok((select bool_and(last_modified is not null)
 update public.profiles
 set account_status = 'suspended',
     suspended_at = now(),
-    suspended_by = '00000000-0000-0000-g200-000000000007',
+    suspended_by = '00000000-0000-0000-7200-000000000007',
     suspension_reason = 'Suspension immédiate fictive A pour test V2.'
 where id = '00000000-0000-0000-a200-000000000001';
 
