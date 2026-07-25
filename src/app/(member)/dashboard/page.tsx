@@ -9,6 +9,7 @@ import {
 import { AcquisitionSourceCard } from "@/components/member/acquisition-source-card";
 import { DashboardNextSteps } from "@/components/member/dashboard-next-steps";
 import { DashboardProfileOverview } from "@/components/member/dashboard-profile-overview";
+import { DashboardSelection } from "@/components/member/dashboard-selection";
 import { MemberNotificationsPanel } from "@/components/member/member-notifications-panel";
 import { computeProfileCompletionSummary } from "@/lib/onboarding/completion";
 import { createClient } from "@/lib/supabase/client";
@@ -124,6 +125,8 @@ export default function DashboardPage() {
         completionPercentage={completionPercentage}
         verificationStatus={verificationStatus}
       />
+
+      <DashboardSelection />
 
       {!acquisitionRecorded ? (
         <AcquisitionSourceCard
