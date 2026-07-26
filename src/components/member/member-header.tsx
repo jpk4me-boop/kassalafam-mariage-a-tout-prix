@@ -3,115 +3,280 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Share2, ShieldCheck } from "lucide-react";
+import {
+  Bell,
+  Compass,
+  Crown,
+  Eye,
+  Heart,
+  Home,
+  LogOut,
+  MessageCircle,
+  Rocket,
+  Share2,
+  ShieldCheck,
+  UserRound,
+  UserRoundCheck,
+} from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { Logo } from "@/components/landing/logo";
 import { clearContinueLaterCookie } from "@/lib/onboarding/continue-later";
 import { createClient } from "@/lib/supabase/client";
-import { Logo } from "@/components/landing/logo";
+import { cn } from "@/lib/utils";
 
-const MEMBER_LINKS = [
-  { label: "Tableau de bord", href: "/dashboard" },
-  { label: "Découvrir", href: "/discover" },
-  { label: "Rencontres", href: "/matches" },
-  { label: "Mon profil", href: "/profile" },
-];
+type MemberHeaderProps = Readonly<{
+  isAdmin?: boolean;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+}>;
 
-/**
- * `isAdmin` est calculé CÔTÉ SERVEUR (member layout) puis passé en prop : ce
- * composant client ne voit qu'un booléen, jamais un UUID d'administrateur.
- */
-export function MemberHeader({ isAdmin = false }: { isAdmin?: boolean }) {
+const PRIMARY_LINKS = [
+  {
+    label: "Accueil",
+    href: "/dashboard",
+    icon: Home,
+  },
+  {
+    label: "Découverte",
+    href: "/discover",
+    icon: Compass,
+  },
+  {
+    label: "Visiteurs",
+    href: "/visitors",
+    icon: Eye,
+  },
+  {
+    label: "Favoris",
+    href: "/favorites",
+    icon: Heart,
+  },
+  {
+    label: "Demandes",
+    href: "/matches?tab=received",
+    icon: UserRoundCheck,
+  },
+  {
+    label: "Premium",
+    href: "/premium",
+    icon: Crown,
+    premium: true,
+  },
+] as const;
+
+const ACTION_LINKS = [
+  {
+    label: "Boost",
+    href: "/boost",
+    icon: Rocket,
+  },
+  {
+    label: "Messages",
+    href: "/matches?tab=matched",
+    icon: MessageCircle,
+  },
+  {
+    label: "Notifications",
+    href: "/notifications",
+    icon: Bell,
+  },
+] as const;
+
+function routePath(href: string): string {
+  return href.split("?")[0] ?? href;
+}
+
+function isRouteActive(pathname: string, href: string): boolean {
+  const path = routePath(href);
+
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
+export function MemberHeader({
+  isAdmin = false,
+  displayName = null,
+  avatarUrl = null,
+}: MemberHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut() {
     setSigningOut(true);
+
     const supabase = createClient();
     await supabase.auth.signOut();
-    // Le report « Continuer plus tard » est personnel : il ne doit pas survivre
-    // à la déconnexion ni bénéficier à un autre compte du même navigateur.
+
     clearContinueLaterCookie();
     router.replace("/login");
     router.refresh();
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-champagne-500/20 bg-cream-50/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/dashboard" aria-label="Espace membre KASSALAFAM">
+    <header className="sticky top-0 z-50 border-b border-champagne-500/20 bg-cream-50/95 shadow-[0_10px_35px_-28px_rgba(43,26,18,0.5)] backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <Link
+          href="/dashboard"
+          aria-label="Accueil de l’espace membre KASSALAFAM"
+          className="shrink-0"
+        >
           <Logo className="[&_span]:text-base" />
         </Link>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <nav className="hidden items-center gap-1 sm:flex">
-            {MEMBER_LINKS.map((link) => (
+        <nav
+          aria-label="Navigation principale"
+          className="ml-auto hidden items-center gap-1 lg:flex"
+        >
+          {PRIMARY_LINKS.map((link) => {
+            const active = isRouteActive(pathname, link.href);
+            const Icon = link.icon;
+
+            return (
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  pathname === link.href
-                    ? "bg-champagne-400/20 text-choco-700"
-                    : "text-ink-700/75 hover:text-choco-600",
+                  "group flex min-w-[76px] flex-col items-center justify-center gap-1 rounded-2xl border px-2.5 py-2 text-xs font-semibold transition-all",
+                  "premium" in link && link.premium
+                    ? active
+                      ? "border-champagne-600/75 bg-gradient-to-br from-champagne-300 via-champagne-200 to-champagne-500 text-choco-900 shadow-[0_12px_28px_-16px_rgba(180,125,30,0.9)]"
+                      : "border-champagne-500/55 bg-gradient-to-br from-champagne-200/80 via-cream-50 to-champagne-300/70 text-champagne-800 shadow-[0_10px_24px_-18px_rgba(180,125,30,0.8)] hover:-translate-y-0.5 hover:border-champagne-600/70 hover:text-choco-900"
+                    : active
+                      ? "border-transparent bg-champagne-400/20 text-choco-700"
+                      : "border-transparent text-ink-700/65 hover:bg-cream-100 hover:text-choco-700",
                 )}
               >
-                {link.label}
+                <Icon
+                  size={18}
+                  strokeWidth={active ? 2.4 : 2}
+                />
+                <span>{link.label}</span>
               </Link>
-            ))}
-          </nav>
+            );
+          })}
+        </nav>
 
-          {isAdmin ? (
-            <Link
-              href="/admin"
-              aria-label="Administration KASSALAFAM"
-              className="flex items-center gap-2 rounded-full border border-choco-600/30 bg-choco-600/10 px-4 py-2 text-sm font-semibold text-choco-700 transition-colors hover:bg-choco-600/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-500/60"
+        <div className="ml-auto flex items-center gap-1 lg:ml-3">
+          {ACTION_LINKS.map((link) => {
+            const Icon = link.icon;
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-label={link.label}
+                title={link.label}
+                className="flex h-10 min-w-10 items-center justify-center gap-2 rounded-full px-2.5 text-ink-700/65 transition-colors hover:bg-champagne-400/15 hover:text-choco-700 xl:px-3"
+              >
+                <Icon size={19} />
+                <span className="hidden text-xs font-semibold xl:inline">
+                  {link.label}
+                </span>
+              </Link>
+            );
+          })}
+
+          <details className="group relative">
+            <summary
+              aria-label="Ouvrir le menu du profil"
+              className="flex h-11 w-11 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full border-2 border-champagne-400 bg-choco-700 text-cream-50 shadow-sm outline-none transition-transform hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-champagne-500/60 [&::-webkit-details-marker]:hidden"
             >
-              <ShieldCheck size={16} />
-              <span className="hidden sm:inline">Administration</span>
-            </Link>
-          ) : null}
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={
+                    displayName
+                      ? `Photo de ${displayName}`
+                      : "Photo du membre"
+                  }
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <UserRound size={21} />
+              )}
+            </summary>
 
-          <Link
-            href="/partager"
-            aria-label="Partager KASSALAFAM"
-            className="flex items-center gap-2 rounded-full border border-champagne-500/30 bg-cream-100/60 px-4 py-2 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-500/60"
-          >
-            <Share2 size={16} />
-            <span className="hidden sm:inline">Partager</span>
-          </Link>
+            <div className="absolute right-0 top-14 w-64 overflow-hidden rounded-2xl border border-champagne-500/25 bg-cream-50 p-2 shadow-[0_24px_60px_-24px_rgba(43,26,18,0.55)]">
+              <div className="border-b border-champagne-500/20 px-3 py-3">
+                <p className="text-xs uppercase tracking-[0.16em] text-ink-700/45">
+                  Mon espace
+                </p>
+                <p className="mt-1 truncate text-sm font-semibold text-choco-700">
+                  {displayName || "Membre KASSALAFAM"}
+                </p>
+              </div>
 
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={signingOut}
-            className="flex items-center gap-2 rounded-full border border-champagne-500/30 bg-cream-100/60 px-4 py-2 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 disabled:opacity-60"
-          >
-            <LogOut size={16} />
-            <span className="hidden sm:inline">
-              {signingOut ? "Déconnexion…" : "Se déconnecter"}
-            </span>
-          </button>
+              <Link
+                href="/profile"
+                className="mt-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-700/75 transition-colors hover:bg-champagne-400/15 hover:text-choco-700"
+              >
+                <UserRound size={17} />
+                Mon profil
+              </Link>
+
+              <Link
+                href="/partager"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-700/75 transition-colors hover:bg-champagne-400/15 hover:text-choco-700"
+              >
+                <Share2 size={17} />
+                Partager KASSALAFAM
+              </Link>
+
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-700/75 transition-colors hover:bg-champagne-400/15 hover:text-choco-700"
+                >
+                  <ShieldCheck size={17} />
+                  Administration
+                </Link>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <LogOut size={17} />
+                {signingOut ? "Déconnexion…" : "Se déconnecter"}
+              </button>
+            </div>
+          </details>
         </div>
       </div>
 
-      {/* Navigation mobile */}
-      <nav className="flex items-center gap-1 border-t border-champagne-500/15 px-4 py-2 sm:hidden">
-        {MEMBER_LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "flex-1 rounded-full px-3 py-2 text-center text-sm font-medium transition-colors",
-              pathname === link.href
-                ? "bg-champagne-400/20 text-choco-700"
-                : "text-ink-700/75 hover:text-choco-600",
-            )}
-          >
-            {link.label}
-          </Link>
-        ))}
+      <nav
+        aria-label="Navigation membre mobile"
+        className="scrollbar-none flex items-center gap-1 overflow-x-auto border-t border-champagne-500/15 px-3 py-2 lg:hidden"
+      >
+        {PRIMARY_LINKS.map((link) => {
+          const active = isRouteActive(pathname, link.href);
+          const Icon = link.icon;
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex min-w-[82px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-2 text-[11px] font-semibold transition-all",
+                "premium" in link && link.premium
+                  ? active
+                    ? "border-champagne-600/75 bg-gradient-to-br from-champagne-300 via-champagne-200 to-champagne-500 text-choco-900 shadow-sm"
+                    : "border-champagne-500/55 bg-gradient-to-br from-champagne-200/80 via-cream-50 to-champagne-300/70 text-champagne-800 shadow-sm"
+                  : active
+                    ? "border-transparent bg-champagne-400/20 text-choco-700"
+                    : "border-transparent text-ink-700/60 hover:bg-cream-100 hover:text-choco-700",
+              )}
+            >
+              <Icon size={17} />
+              {link.label}
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );

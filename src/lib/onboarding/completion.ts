@@ -36,6 +36,7 @@ import type { ProfileRow } from "@/lib/types/database";
 import { CHOICE_SET_MAX, CHOICE_SET_MIN } from "@/lib/onboarding/options";
 
 export const ONBOARDING_TOTAL_STEPS = 8;
+export const PROFILE_COMPLETION_STEPS = [2, 3, 4, 5, 6, 7, 8] as const;
 export const ONBOARDING_MIN_AGE = 18;
 
 export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -165,11 +166,61 @@ export function isProfileDataComplete(
   profile: OnboardingProfileData,
   hasPrimaryPhoto: boolean,
 ): boolean {
-  const completion = computeStepCompletion(profile, hasPrimaryPhoto);
-  for (let step = 2; step <= ONBOARDING_TOTAL_STEPS; step++) {
-    if (!completion[step as OnboardingStep]) return false;
-  }
-  return true;
+  return computeProfileCompletionSummary(
+    profile,
+    hasPrimaryPhoto,
+  ).complete;
+}
+
+export type ProfileCompletionSummary = Readonly<{
+  completedSteps: number;
+  totalSteps: number;
+  percentage: number;
+  complete: boolean;
+}>;
+
+/**
+ * Résumé de complétude du profil matrimonial.
+ *
+ * L'étape Acquisition est exclue : elle constitue une information marketing
+ * interne et non une information du profil présenté aux autres membres.
+ */
+export function computeProfileCompletionSummary(
+  profile: OnboardingProfileData,
+  hasPrimaryPhoto: boolean,
+): ProfileCompletionSummary {
+  const completion = computeStepCompletion(
+    profile,
+    hasPrimaryPhoto,
+  );
+
+  const completedSteps = PROFILE_COMPLETION_STEPS.reduce(
+    (count, step) =>
+      count + (completion[step] ? 1 : 0),
+    0,
+  );
+
+  const totalSteps = PROFILE_COMPLETION_STEPS.length;
+  const percentage = Math.round(
+    (completedSteps / totalSteps) * 100,
+  );
+
+  return {
+    completedSteps,
+    totalSteps,
+    percentage,
+    complete: completedSteps === totalSteps,
+  };
+}
+
+export function computeProfileCompletionPercentage(
+  profile: OnboardingProfileData,
+  hasPrimaryPhoto: boolean,
+): number {
+  return computeProfileCompletionSummary(
+    profile,
+    hasPrimaryPhoto,
+  ).percentage;
 }
 
 export type OnboardingMode = "full" | "acquisition_only" | "complete";

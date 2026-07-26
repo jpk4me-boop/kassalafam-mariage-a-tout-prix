@@ -1,29 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, UserRound } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { attachSignedPhotos } from "@/lib/discovery/candidate-photos";
+import { DiscoverFeedView } from "@/components/member/discover-feed-view";
+import { loadDiscoveryCandidates } from "@/lib/discovery/load-candidates";
 import type {
-  DiscoverCandidate,
-  DiscoverCandidateWithPhoto,
   DiscoveryUniverse,
 } from "@/lib/types/database";
-import { DiscoverFeedView } from "@/components/member/discover-feed-view";
-
-/**
- * L3D-B PR2 — Flux de découverte réel (Server Component).
- *
- * Confidentialité (contraintes absolues) :
- *   - lit le profil du SEUL viewer connecté (RLS owner-only) pour la garde ;
- *   - si le viewer n'est pas `approved` (ou genre inconnu), NE FAIT AUCUN appel
- *     à la RPC : zéro donnée candidat n'est chargée (aucune fuite possible) ;
- *   - sinon appelle `discover_candidates` (chemin de lecture sécurisé PR1) puis
- *     signe les photos côté serveur (`attachSignedPhotos`) ;
- *   - ne transmet au client QUE des champs sûrs + `signedUrl` (jamais
- *     `storage_path`, `birth_date`, `verification_*`, `email`, etc.).
- *
- * Aucune écriture DB, aucune interaction (likes/matches/messages/paiement).
- */
 
 function StateCard({
   title,
@@ -32,19 +18,27 @@ function StateCard({
 }: {
   title: string;
   text: string;
-  cta?: { href: string; label: string };
+  cta?: {
+    href: string;
+    label: string;
+  };
 }) {
   return (
     <section className="flex flex-col items-start gap-3 rounded-3xl border border-champagne-500/30 bg-cream-50/60 p-6 shadow-card sm:p-8">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-champagne-400/20 text-choco-600">
         <ShieldCheck size={20} />
       </span>
+
       <div>
         <h2 className="font-serif text-xl font-semibold text-choco-700">
           {title}
         </h2>
-        <p className="mt-1 max-w-xl text-sm text-ink-700/75">{text}</p>
+
+        <p className="mt-1 max-w-xl text-sm text-ink-700/75">
+          {text}
+        </p>
       </div>
+
       {cta ? (
         <Link
           href={cta.href}
@@ -64,78 +58,54 @@ export async function DiscoverFeed({
 }: {
   universe: DiscoveryUniverse;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const result = await loadDiscoveryCandidates({
+    universe,
+    includeRelationshipStates: true,
+  });
 
-  // Le middleware redirige déjà un visiteur non authentifié ; garde défensive.
-  if (!user) {
-    return (
-      <StateCard
-        title="Votre profil doit être vérifié avant la découverte."
-        text="Notre équipe vérifie chaque profil pour garantir des rencontres sérieuses et sûres."
-        cta={{ href: "/profile", label: "Voir mon profil" }}
-      />
-    );
-  }
-
-  // Profil du SEUL viewer (owner-only) pour la garde — pas de données d'autrui.
-  const { data: viewer, error: viewerError } = await supabase
-    .from("profiles")
-    .select("gender, verification_status")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (viewerError) {
-    console.error("[discover-feed] lecture viewer échouée:", viewerError.message);
-    return (
-      <StateCard
-        title="La découverte est momentanément indisponible."
-        text="Réessayez dans un instant."
-      />
-    );
-  }
-
-  // Viewer non approuvé → message doux, AUCUN appel RPC (aucune fuite).
-  if (!viewer || viewer.verification_status !== "approved") {
+  if (
+    result.status === "unauthenticated" ||
+    result.status === "needs_verification"
+  ) {
     return (
       <StateCard
         title="Votre profil doit être vérifié avant la découverte."
         text="Notre équipe vérifie chaque profil pour garantir des rencontres sérieuses et sûres. Vous serez prévenu(e) dès validation."
-        cta={{ href: "/profile", label: "Voir mon profil" }}
+        cta={{
+          href: "/profile",
+          label: "Voir mon profil",
+        }}
       />
     );
   }
 
-  // Genre inconnu → impossible de proposer des profils compatibles (MVP hétéro).
-  if (!viewer.gender) {
+  if (result.status === "needs_gender") {
     return (
       <StateCard
         title="Complétez votre profil pour découvrir des profils."
         text="Indiquez votre genre dans votre profil : il nous aide à proposer des personnes réellement compatibles."
-        cta={{ href: "/profile", label: "Compléter mon profil" }}
+        cta={{
+          href: "/profile",
+          label: "Compléter mon profil",
+        }}
       />
     );
   }
 
-  // Lecture sécurisée des candidats + signature serveur des photos.
-  // (Aucune JSX construite dans le try/catch : on calcule puis on rend après.)
-  let candidates: DiscoverCandidateWithPhoto[] | null = null;
-  try {
-    const { data, error } = await supabase.rpc("discover_candidates", {
-      p_universe: universe,
-    });
-    if (error) throw error;
-    candidates = await attachSignedPhotos((data ?? []) as DiscoverCandidate[]);
-  } catch (e) {
-    console.error(
-      "[discover-feed] échec découverte:",
-      e instanceof Error ? e.message : String(e),
+  if (result.status === "needs_universe") {
+    return (
+      <StateCard
+        title="Choisissez votre univers matrimonial."
+        text="Votre univers permet de proposer des profils cohérents avec votre démarche."
+        cta={{
+          href: "/discover",
+          label: "Choisir mon univers",
+        }}
+      />
     );
   }
 
-  if (!candidates) {
+  if (result.status === "unavailable") {
     return (
       <StateCard
         title="La découverte est momentanément indisponible."
@@ -144,39 +114,11 @@ export async function DiscoverFeed({
     );
   }
 
-  // États d'intérêt du viewer parmi les candidats affichés :
-  //   - « sent »    : intérêt SORTANT en attente (user_a = viewer, pending) ;
-  //   - « matched » : intérêt mutuel (accepted, quel que soit l'initiateur).
-  // Les intérêts ENTRANTS en attente (user_a = cible) ne sont PAS révélés.
-  const initialStates: Record<string, "sent" | "matched"> = {};
-  const ids = candidates.map((c) => c.id);
-  if (ids.length > 0) {
-    const list = ids.join(",");
-    const { data: rels, error: relError } = await supabase
-      .from("matches")
-      .select("user_a, user_b, status")
-      .or(
-        `and(user_a.eq.${user.id},user_b.in.(${list})),and(user_b.eq.${user.id},user_a.in.(${list}))`,
-      );
-    if (relError) {
-      console.error("[discover-feed] lecture intérêts échouée:", relError.message);
-    } else {
-      for (const r of rels ?? []) {
-        const otherId = r.user_a === user.id ? r.user_b : r.user_a;
-        if (r.status === "accepted") {
-          initialStates[otherId] = "matched";
-        } else if (r.status === "pending" && r.user_a === user.id) {
-          initialStates[otherId] = "sent";
-        }
-      }
-    }
-  }
-
   return (
     <DiscoverFeedView
-      candidates={candidates}
-      universe={universe}
-      initialStates={initialStates}
+      candidates={result.candidates}
+      universe={result.universe}
+      initialStates={result.initialStates}
     />
   );
 }
