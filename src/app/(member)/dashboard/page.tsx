@@ -10,11 +10,14 @@ import { AcquisitionSourceCard } from "@/components/member/acquisition-source-ca
 import { DashboardNextSteps } from "@/components/member/dashboard-next-steps";
 import { DashboardProfileOverview } from "@/components/member/dashboard-profile-overview";
 import { DashboardGuidance } from "@/components/member/dashboard-guidance";
+import { DashboardProfileVisibility } from "@/components/member/dashboard-profile-visibility";
 import { DashboardSelection } from "@/components/member/dashboard-selection";
 import { MemberNotificationsPanel } from "@/components/member/member-notifications-panel";
 import { computeProfileCompletionSummary } from "@/lib/onboarding/completion";
 import { createClient } from "@/lib/supabase/client";
 import type {
+  AccountStatus,
+  DiscoveryUniverse,
   ProfileRow,
   ProfileVerificationStatus,
 } from "@/lib/types/database";
@@ -31,6 +34,14 @@ export default function DashboardPage() {
     useState(0);
   const [complete, setComplete] = useState(false);
   const [blurPhotos, setBlurPhotos] = useState(true);
+  const [hasPrimaryPhoto, setHasPrimaryPhoto] =
+    useState(false);
+
+  const [accountStatus, setAccountStatus] =
+    useState<AccountStatus | null>(null);
+
+  const [discoveryUniverse, setDiscoveryUniverse] =
+    useState<DiscoveryUniverse | null>(null);
 
   const [verificationStatus, setVerificationStatus] =
     useState<ProfileVerificationStatus>("pending");
@@ -73,10 +84,13 @@ export default function DashboardPage() {
       const profile =
         (data as ProfileRow | null) ?? null;
 
+      const hasPrimaryPhotoValue =
+        primaryPhoto != null;
+
       const completion = profile
         ? computeProfileCompletionSummary(
             profile,
-            primaryPhoto != null,
+            hasPrimaryPhotoValue,
           )
         : null;
 
@@ -90,6 +104,15 @@ export default function DashboardPage() {
 
       setComplete(completion?.complete ?? false);
       setBlurPhotos(profile?.blur_photos ?? true);
+      setHasPrimaryPhoto(hasPrimaryPhotoValue);
+
+      setAccountStatus(
+        profile?.account_status ?? null,
+      );
+
+      setDiscoveryUniverse(
+        profile?.discovery_universe ?? null,
+      );
 
       setVerificationStatus(
         profile?.verification_status ?? "pending",
@@ -130,6 +153,15 @@ export default function DashboardPage() {
       <DashboardSelection />
 
       <DashboardGuidance />
+
+      <DashboardProfileVisibility
+        accountStatus={accountStatus}
+        verificationStatus={verificationStatus}
+        complete={complete}
+        discoveryUniverse={discoveryUniverse}
+        blurPhotos={blurPhotos}
+        hasPrimaryPhoto={hasPrimaryPhoto}
+      />
 
       {!acquisitionRecorded ? (
         <AcquisitionSourceCard
