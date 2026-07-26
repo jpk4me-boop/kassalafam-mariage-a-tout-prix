@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PremiumExperience } from "@/components/member/premium-experience";
+import styles from "./premium-page.module.css";
 
 export default async function PremiumPage() {
   const supabase = await createClient();
@@ -27,10 +28,14 @@ export default async function PremiumPage() {
   }
 
   return (
-    <PremiumExperience
-      firstName={firstName}
-      gender={gender as Parameters<typeof PremiumExperience>[0]["gender"]}
-      religion={religion as Parameters<typeof PremiumExperience>[0]["religion"]}
-    />
+    <div className={styles.compactPremium}>
+      <PremiumExperience
+        firstName={firstName}
+        gender={gender as Parameters<typeof PremiumExperience>[0]["gender"]}
+        religion={
+          religion as Parameters<typeof PremiumExperience>[0]["religion"]
+        }
+      />
+    </div>
   );
 }
