@@ -27,33 +27,33 @@ import { getPremiumHeroCopy } from "@/lib/premium/hero-copy";
 const BENEFITS = [
   {
     icon: Eye,
-    title: "Découvre qui visite ton profil",
+    title: "DÃ©couvre qui visite ton profil",
     description:
       "Identifie les membres qui consultent ton profil et montre-toi au bon moment.",
-    standard: "Masqué",
+    standard: "MasquÃ©",
     premium: "Visible",
   },
   {
     icon: Heart,
-    title: "Vois qui t’ajoute en favori",
+    title: "Vois qui tâ€™ajoute en favori",
     description:
-      "Repère les personnes qui ont déjà manifesté un intérêt discret pour toi.",
-    standard: "Masqué",
+      "RepÃ¨re les personnes qui ont dÃ©jÃ  manifestÃ© un intÃ©rÃªt discret pour toi.",
+    standard: "MasquÃ©",
     premium: "Visible",
   },
   {
     icon: UserRoundCheck,
     title: "Demandes sans limite standard",
     description:
-      "Avance plus librement lorsque tu découvres des profils réellement compatibles.",
-    standard: "Limité",
-    premium: "Étendu",
+      "Avance plus librement lorsque tu dÃ©couvres des profils rÃ©ellement compatibles.",
+    standard: "LimitÃ©",
+    premium: "Ã‰tendu",
   },
   {
     icon: MessageCircle,
-    title: "Échanges facilités",
+    title: "Ã‰changes facilitÃ©s",
     description:
-      "Profite d’une expérience de conversation plus complète avec tes connexions mutuelles.",
+      "Profite dâ€™une expÃ©rience de conversation plus complÃ¨te avec tes connexions mutuelles.",
     standard: "Essentiel",
     premium: "Enrichi",
   },
@@ -61,15 +61,15 @@ const BENEFITS = [
     icon: Rocket,
     title: "Profil mis en avant",
     description:
-      "Bénéficie d’une priorité de présentation dans les espaces de découverte compatibles.",
+      "BÃ©nÃ©ficie dâ€™une prioritÃ© de prÃ©sentation dans les espaces de dÃ©couverte compatibles.",
     standard: "Classique",
     premium: "Prioritaire",
   },
   {
     icon: Zap,
-    title: "Boosts de visibilité",
+    title: "Boosts de visibilitÃ©",
     description:
-      "Donne ponctuellement plus de présence à ton profil auprès des bons membres.",
+      "Donne ponctuellement plus de prÃ©sence Ã  ton profil auprÃ¨s des bons membres.",
     standard: "Non inclus",
     premium: "Inclus",
   },
@@ -77,7 +77,7 @@ const BENEFITS = [
     icon: BadgeCheck,
     title: "Traitement prioritaire",
     description:
-      "Les opérations Premium prévues bénéficient d’un parcours de traitement prioritaire.",
+      "Les opÃ©rations Premium prÃ©vues bÃ©nÃ©ficient dâ€™un parcours de traitement prioritaire.",
     standard: "Standard",
     premium: "Prioritaire",
   },
@@ -85,100 +85,100 @@ const BENEFITS = [
     icon: Crown,
     title: "Badge Premium",
     description:
-      "Affiche un signe distinctif qui renforce la lisibilité de ton engagement matrimonial.",
+      "Affiche un signe distinctif qui renforce la lisibilitÃ© de ton engagement matrimonial.",
     standard: "Absent",
     premium: "Inclus",
   },
   {
     icon: Star,
-    title: "Accès anticipé aux nouveautés",
+    title: "AccÃ¨s anticipÃ© aux nouveautÃ©s",
     description:
-      "Découvre en priorité les nouvelles fonctions utiles à ta recherche.",
-    standard: "Après lancement",
+      "DÃ©couvre en prioritÃ© les nouvelles fonctions utiles Ã  ta recherche.",
+    standard: "AprÃ¨s lancement",
     premium: "Prioritaire",
   },
   {
     icon: LockKeyhole,
-    title: "Confidentialité renforcée",
+    title: "ConfidentialitÃ© renforcÃ©e",
     description:
-      "Profite de réglages plus précis pour maîtriser la présentation de tes photos.",
+      "Profite de rÃ©glages plus prÃ©cis pour maÃ®triser la prÃ©sentation de tes photos.",
     standard: "Essentielle",
-    premium: "Avancée",
+    premium: "AvancÃ©e",
   },
 ] as const;
 
 const DURATIONS = [
   {
     name: "15 jours",
-    description: "Pour découvrir l’expérience Premium sur une courte période.",
+    description: "Pour dÃ©couvrir lâ€™expÃ©rience Premium sur une courte pÃ©riode.",
   },
   {
     name: "1 mois",
-    description: "Une durée souple pour renforcer activement ta recherche.",
+    description: "Une durÃ©e souple pour renforcer activement ta recherche.",
   },
   {
     name: "3 mois",
-    description: "Plus de temps pour construire des échanges sérieux.",
+    description: "Plus de temps pour construire des Ã©changes sÃ©rieux.",
   },
   {
     name: "6 mois",
-    description: "Une démarche suivie pour avancer avec constance.",
+    description: "Une dÃ©marche suivie pour avancer avec constance.",
   },
 ] as const;
 
 const FAQS = [
   {
-    question: "Les paiements Premium sont-ils déjà actifs ?",
+    question: "Les paiements Premium sont-ils dÃ©jÃ  actifs ?",
     answer:
-      "Non. Cette page présente l’expérience prévue, mais aucun paiement et aucune collecte Mobile Money ne peuvent actuellement être lancés.",
+      "Non. Cette page prÃ©sente lâ€™expÃ©rience prÃ©vue, mais aucun paiement et aucune collecte Mobile Money ne peuvent actuellement Ãªtre lancÃ©s.",
   },
   {
-    question: "Quels moyens de paiement sont prévus ?",
+    question: "Quels moyens de paiement sont prÃ©vus ?",
     answer:
-      "MTN Mobile Money et Orange Money sont les moyens actuellement envisagés pour le Cameroun. Leur disponibilité définitive sera confirmée avant l’ouverture.",
+      "MTN Mobile Money et Orange Money sont les moyens actuellement envisagÃ©s pour le Cameroun. Leur disponibilitÃ© dÃ©finitive sera confirmÃ©e avant lâ€™ouverture.",
   },
   {
     question: "Quels seront les tarifs ?",
     answer:
-      "Les tarifs KASSALAFAM ne sont pas encore confirmés. Aucun montant affiché sur une autre plateforme ne constitue un tarif officiel KASSALAFAM.",
+      "Les tarifs KASSALAFAM ne sont pas encore confirmÃ©s. Aucun montant affichÃ© sur une autre plateforme ne constitue un tarif officiel KASSALAFAM.",
   },
   {
-    question: "L’abonnement sera-t-il renouvelé automatiquement ?",
+    question: "Lâ€™abonnement sera-t-il renouvelÃ© automatiquement ?",
     answer:
-      "Aucun renouvellement automatique n’est actif aujourd’hui. Les règles de durée et de renouvellement seront présentées clairement avant tout paiement.",
+      "Aucun renouvellement automatique nâ€™est actif aujourdâ€™hui. Les rÃ¨gles de durÃ©e et de renouvellement seront prÃ©sentÃ©es clairement avant tout paiement.",
   },
   {
-    question: "Puis-je continuer à utiliser KASSALAFAM gratuitement ?",
+    question: "Puis-je continuer Ã  utiliser KASSALAFAM gratuitement ?",
     answer:
-      "Oui. L’espace membre standard reste disponible. Premium viendra compléter l’expérience sans empêcher l’utilisation des fonctions gratuites existantes.",
+      "Oui. Lâ€™espace membre standard reste disponible. Premium viendra complÃ©ter lâ€™expÃ©rience sans empÃªcher lâ€™utilisation des fonctions gratuites existantes.",
   },
   {
-    question: "Quand les avantages seront-ils réellement disponibles ?",
+    question: "Quand les avantages seront-ils rÃ©ellement disponibles ?",
     answer:
-      "Chaque avantage sera annoncé comme actif uniquement après validation de son fonctionnement, de sa sécurité et de son intégration au compte membre.",
+      "Chaque avantage sera annoncÃ© comme actif uniquement aprÃ¨s validation de son fonctionnement, de sa sÃ©curitÃ© et de son intÃ©gration au compte membre.",
   },
 ] as const;
 
 const TRUST_ITEMS = [
   {
     icon: ShieldCheck,
-    title: "Activation contrôlée",
+    title: "Activation contrÃ´lÃ©e",
     text: "Aucun avantage ne sera vendu avant sa validation technique.",
   },
   {
     icon: LockKeyhole,
-    title: "Paiement sécurisé",
-    text: "Les secrets de paiement resteront exclusivement côté serveur.",
+    title: "Paiement sÃ©curisÃ©",
+    text: "Les secrets de paiement resteront exclusivement cÃ´tÃ© serveur.",
   },
   {
     icon: BellRing,
     title: "Information transparente",
-    text: "Prix, durée et conditions seront affichés avant toute confirmation.",
+    text: "Prix, durÃ©e et conditions seront affichÃ©s avant toute confirmation.",
   },
   {
     icon: BadgeCheck,
-    title: "Données protégées",
-    text: "La confidentialité du profil reste au cœur de l’expérience.",
+    title: "DonnÃ©es protÃ©gÃ©es",
+    text: "La confidentialitÃ© du profil reste au cÅ“ur de lâ€™expÃ©rience.",
   },
 ] as const;
 
@@ -196,8 +196,8 @@ export function PremiumExperience({
   const copy = getPremiumHeroCopy({ firstName, gender, religion });
 
   return (
-    <div className="space-y-8 pb-12">
-      <section className="relative overflow-hidden rounded-[2.25rem] border border-champagne-500/35 bg-gradient-to-br from-choco-800 via-choco-700 to-choco-900 px-6 py-10 text-cream-50 shadow-[0_30px_90px_-40px_rgba(43,26,18,0.95)] sm:px-10 sm:py-14 lg:px-14">
+    <div className="mx-auto grid w-full max-w-[900px] gap-6 pb-12">
+      <section className="relative overflow-hidden rounded-3xl border border-champagne-500/35 bg-gradient-to-br from-choco-800 via-choco-700 to-choco-900 px-6 py-10 text-cream-50 shadow-[0_30px_90px_-40px_rgba(43,26,18,0.95)] sm:px-10 sm:py-14 lg:px-14">
         <div
           aria-hidden="true"
           className="absolute -right-20 -top-24 h-80 w-80 rounded-full bg-champagne-400/20 blur-3xl"
@@ -226,9 +226,9 @@ export function PremiumExperience({
           </p>
 
           <p className="mt-5 max-w-3xl text-base leading-8 text-cream-100/80 sm:text-lg">
-            Premium est conçu pour donner plus de visibilité à ton profil,
-            faciliter les connexions sérieuses et t’aider à avancer avec
-            davantage de clarté dans ta recherche matrimoniale.
+            Premium est conÃ§u pour donner plus de visibilitÃ© Ã  ton profil,
+            faciliter les connexions sÃ©rieuses et tâ€™aider Ã  avancer avec
+            davantage de clartÃ© dans ta recherche matrimoniale.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -236,7 +236,7 @@ export function PremiumExperience({
               href="#avantages-premium"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-champagne-500 via-champagne-300 to-champagne-500 px-6 py-3.5 text-sm font-bold text-choco-900 shadow-[0_18px_44px_-18px_rgba(232,201,106,0.9)] transition-transform hover:-translate-y-0.5"
             >
-              Découvrir les avantages
+              DÃ©couvrir les avantages
               <ArrowRight size={17} />
             </Link>
 
@@ -244,7 +244,7 @@ export function PremiumExperience({
               href="/profile"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-cream-50/20 bg-cream-50/8 px-6 py-3.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-cream-50/14"
             >
-              Préparer mon profil
+              PrÃ©parer mon profil
             </Link>
           </div>
 
@@ -252,30 +252,30 @@ export function PremiumExperience({
             <div className="rounded-2xl border border-cream-50/12 bg-cream-50/8 p-4 backdrop-blur-sm">
               <Sparkles className="text-champagne-300" size={20} />
               <p className="mt-3 font-semibold text-cream-50">
-                Plus de visibilité
+                Plus de visibilitÃ©
               </p>
               <p className="mt-1 text-xs leading-5 text-cream-100/65">
-                Une présence renforcée dans la Découverte.
+                Une prÃ©sence renforcÃ©e dans la DÃ©couverte.
               </p>
             </div>
 
             <div className="rounded-2xl border border-cream-50/12 bg-cream-50/8 p-4 backdrop-blur-sm">
               <BadgeCheck className="text-champagne-300" size={20} />
               <p className="mt-3 font-semibold text-cream-50">
-                Démarche sérieuse
+                DÃ©marche sÃ©rieuse
               </p>
               <p className="mt-1 text-xs leading-5 text-cream-100/65">
-                Une expérience pensée pour le mariage.
+                Une expÃ©rience pensÃ©e pour le mariage.
               </p>
             </div>
 
             <div className="rounded-2xl border border-cream-50/12 bg-cream-50/8 p-4 backdrop-blur-sm">
               <ShieldCheck className="text-champagne-300" size={20} />
               <p className="mt-3 font-semibold text-cream-50">
-                Ouverture sécurisée
+                Ouverture sÃ©curisÃ©e
               </p>
               <p className="mt-1 text-xs leading-5 text-cream-100/65">
-                Aucun paiement avant validation complète.
+                Aucun paiement avant validation complÃ¨te.
               </p>
             </div>
           </div>
@@ -288,36 +288,36 @@ export function PremiumExperience({
         </span>
 
         <p className="leading-6">
-          <strong>Aperçu de l’offre prévue :</strong> les tarifs, les paiements
-          et l’activation Premium restent désactivés jusqu’à leur validation
+          <strong>AperÃ§u de lâ€™offre prÃ©vue :</strong> les tarifs, les paiements
+          et lâ€™activation Premium restent dÃ©sactivÃ©s jusquâ€™Ã  leur validation
           officielle.
         </p>
       </aside>
 
       <section
         id="avantages-premium"
-        className="scroll-mt-36 overflow-hidden rounded-[2rem] border border-champagne-500/30 bg-cream-50/70 shadow-card"
+        className="scroll-mt-36 overflow-hidden rounded-3xl border border-champagne-500/30 bg-cream-50/70 shadow-card"
       >
         <div className="border-b border-champagne-500/25 bg-gradient-to-r from-champagne-300/20 via-cream-50 to-champagne-300/10 px-6 py-7 sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
-            Une expérience plus complète
+            Une expÃ©rience plus complÃ¨te
           </p>
 
           <h2 className="mt-2 font-serif text-3xl font-semibold text-choco-800">
-            Ce que Premium débloque pour toi
+            Ce que Premium dÃ©bloque pour toi
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-700/68">
-            Chaque avantage est présenté séparément afin que tu voies
-            clairement la différence entre l’expérience standard et
-            l’expérience Premium prévue.
+            Chaque avantage est prÃ©sentÃ© sÃ©parÃ©ment afin que tu voies
+            clairement la diffÃ©rence entre lâ€™expÃ©rience standard et
+            lâ€™expÃ©rience Premium prÃ©vue.
           </p>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1fr)_110px_110px] border-b border-champagne-500/20 bg-cream-100/45 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-700/55 md:grid sm:px-8">
+        <div className="hidden grid-cols-[minmax(0,1fr)_124px_124px] border-b border-champagne-500/20 bg-cream-100/45 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-700/55 md:grid sm:px-8">
           <span>Avantage</span>
           <span className="text-center">Standard</span>
-          <span className="text-center text-champagne-700">Premium</span>
+          <span className="mx-auto rounded-full bg-champagne-400/15 px-4 py-1.5 text-center text-champagne-700">Premium</span>
         </div>
 
         <div className="divide-y divide-champagne-500/18">
@@ -327,7 +327,7 @@ export function PremiumExperience({
             return (
               <article
                 key={benefit.title}
-                className="grid gap-4 px-6 py-5 transition-colors hover:bg-champagne-300/7 md:grid-cols-[minmax(0,1fr)_110px_110px] md:items-center sm:px-8"
+                className="grid gap-4 px-6 py-4 transition-colors hover:bg-champagne-300/7 md:grid-cols-[minmax(0,1fr)_124px_124px] md:items-center sm:px-8"
               >
                 <div className="flex gap-4">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-champagne-400/18 text-champagne-700">
@@ -346,12 +346,12 @@ export function PremiumExperience({
                 </div>
 
                 <div className="flex items-center justify-between gap-3 md:contents">
-                  <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 md:mx-auto">
+                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 md:mx-auto">
                     <EyeOff size={13} />
                     {benefit.standard}
                   </span>
 
-                  <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
+                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
                     <Check size={13} strokeWidth={3} />
                     {benefit.premium}
                   </span>
@@ -387,19 +387,19 @@ export function PremiumExperience({
         })}
       </section>
 
-      <section className="rounded-[2rem] border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
+      <section className="rounded-3xl border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
             Formules Premium
           </p>
 
           <h2 className="mt-2 font-serif text-3xl font-semibold text-choco-800">
-            Choisis la durée qui te correspond
+            Choisis la durÃ©e qui te correspond
           </h2>
 
           <p className="mt-3 text-sm leading-6 text-ink-700/65">
-            Les durées sont présentées pour préparer l’interface. Les prix
-            officiels seront ajoutés uniquement après validation.
+            Les durÃ©es sont prÃ©sentÃ©es pour prÃ©parer lâ€™interface. Les prix
+            officiels seront ajoutÃ©s uniquement aprÃ¨s validation.
           </p>
         </div>
 
@@ -428,7 +428,7 @@ export function PremiumExperience({
               </p>
 
               <p className="relative mt-5 border-t border-champagne-500/20 pt-4 text-sm font-semibold text-champagne-700">
-                Tarif à confirmer
+                Tarif Ã  confirmer
               </p>
             </article>
           ))}
@@ -436,13 +436,13 @@ export function PremiumExperience({
       </section>
 
       <section className="grid gap-5 lg:grid-cols-2">
-        <article className="rounded-[2rem] border border-champagne-500/30 bg-gradient-to-br from-choco-800 to-choco-700 p-6 text-cream-50 shadow-card sm:p-8">
+        <article className="rounded-3xl border border-champagne-500/30 bg-gradient-to-br from-choco-800 to-choco-700 p-6 text-cream-50 shadow-card sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-300">
             Paiement Mobile Money
           </p>
 
           <h2 className="mt-2 font-serif text-3xl font-semibold">
-            Des moyens adaptés au Cameroun
+            Des moyens adaptÃ©s au Cameroun
           </h2>
 
           <div className="mt-6 space-y-3">
@@ -450,12 +450,12 @@ export function PremiumExperience({
               <div>
                 <p className="font-semibold">MTN Mobile Money</p>
                 <p className="mt-1 text-xs text-cream-100/60">
-                  Intégration prévue
+                  IntÃ©gration prÃ©vue
                 </p>
               </div>
 
               <span className="rounded-full bg-champagne-300/15 px-3 py-1 text-xs font-semibold text-champagne-200">
-                Bientôt disponible
+                BientÃ´t disponible
               </span>
             </div>
 
@@ -463,12 +463,12 @@ export function PremiumExperience({
               <div>
                 <p className="font-semibold">Orange Money</p>
                 <p className="mt-1 text-xs text-cream-100/60">
-                  Intégration prévue
+                  IntÃ©gration prÃ©vue
                 </p>
               </div>
 
               <span className="rounded-full bg-champagne-300/15 px-3 py-1 text-xs font-semibold text-champagne-200">
-                Bientôt disponible
+                BientÃ´t disponible
               </span>
             </div>
           </div>
@@ -480,36 +480,36 @@ export function PremiumExperience({
             />
 
             <p className="text-xs leading-5 text-cream-100/70">
-              Aucun numéro de téléphone, aucun opérateur et aucun montant ne
-              sont demandés sur cette version de la page.
+              Aucun numÃ©ro de tÃ©lÃ©phone, aucun opÃ©rateur et aucun montant ne
+              sont demandÃ©s sur cette version de la page.
             </p>
           </div>
         </article>
 
-        <article className="rounded-[2rem] border border-champagne-500/30 bg-cream-100/45 p-6 shadow-card sm:p-8">
+        <article className="rounded-3xl border border-champagne-500/30 bg-cream-100/45 p-6 shadow-card sm:p-8">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-champagne-400/20 text-champagne-700">
             <Infinity size={22} />
           </span>
 
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
-            Une démarche durable
+            Une dÃ©marche durable
           </p>
 
           <h2 className="mt-2 font-serif text-3xl font-semibold text-choco-800">
-            Plus qu’un abonnement
+            Plus quâ€™un abonnement
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-ink-700/68">
-            Premium est pensé comme un accompagnement de ta recherche :
-            davantage de présence, une meilleure lecture des intérêts et une
-            expérience plus fluide pour construire des échanges sérieux.
+            Premium est pensÃ© comme un accompagnement de ta recherche :
+            davantage de prÃ©sence, une meilleure lecture des intÃ©rÃªts et une
+            expÃ©rience plus fluide pour construire des Ã©changes sÃ©rieux.
           </p>
 
           <ul className="mt-6 space-y-3">
             {[
-              "Aucun faux témoignage affiché",
+              "Aucun faux tÃ©moignage affichÃ©",
               "Aucune promesse de mariage garantie",
-              "Aucun débit avant confirmation explicite",
+              "Aucun dÃ©bit avant confirmation explicite",
             ].map((item) => (
               <li
                 key={item}
@@ -525,13 +525,13 @@ export function PremiumExperience({
         </article>
       </section>
 
-      <section className="rounded-[2rem] border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
+      <section className="rounded-3xl border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
-          Questions fréquentes
+          Questions frÃ©quentes
         </p>
 
         <h2 className="mt-2 font-serif text-3xl font-semibold text-choco-800">
-          Tout savoir avant l’ouverture
+          Tout savoir avant lâ€™ouverture
         </h2>
 
         <div className="mt-7 divide-y divide-champagne-500/20">
@@ -557,20 +557,20 @@ export function PremiumExperience({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[2.25rem] border border-champagne-400/35 bg-gradient-to-br from-emerald-950 via-emerald-900 to-choco-900 p-7 text-cream-50 shadow-[0_30px_80px_-42px_rgba(6,78,59,0.9)] sm:p-10">
+      <section className="overflow-hidden rounded-3xl border border-champagne-400/35 bg-gradient-to-br from-emerald-950 via-emerald-900 to-choco-900 p-7 text-cream-50 shadow-[0_30px_80px_-42px_rgba(6,78,59,0.9)] sm:p-10">
         <div className="max-w-3xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-champagne-300/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-champagne-200">
             <Crown size={14} />
-            Prépare ton lancement Premium
+            PrÃ©pare ton lancement Premium
           </span>
 
           <h2 className="mt-5 font-serif text-3xl font-semibold sm:text-4xl">
-            Le bon moment pour préparer ton profil, c’est maintenant.
+            Le bon moment pour prÃ©parer ton profil, câ€™est maintenant.
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-cream-100/72 sm:text-base">
-            Complète tes informations, soigne ta présentation et ajoute une
-            photo principale afin d’être prêt lorsque Premium sera
+            ComplÃ¨te tes informations, soigne ta prÃ©sentation et ajoute une
+            photo principale afin dâ€™Ãªtre prÃªt lorsque Premium sera
             officiellement ouvert.
           </p>
 
@@ -579,7 +579,7 @@ export function PremiumExperience({
               href="/profile"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-champagne-500 to-champagne-300 px-6 py-3.5 text-sm font-bold text-choco-900 transition-transform hover:-translate-y-0.5"
             >
-              Préparer mon profil
+              PrÃ©parer mon profil
               <ArrowRight size={17} />
             </Link>
 
