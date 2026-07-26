@@ -21,6 +21,9 @@ import {
   Zap,
 } from "lucide-react";
 
+import type { Gender, Religion } from "@/lib/types/database";
+import { getPremiumHeroCopy } from "@/lib/premium/hero-copy";
+
 const BENEFITS = [
   {
     icon: Eye,
@@ -179,7 +182,19 @@ const TRUST_ITEMS = [
   },
 ] as const;
 
-export function PremiumExperience() {
+type PremiumExperienceProps = {
+  firstName?: string | null;
+  gender?: Gender | null;
+  religion?: Religion | null;
+};
+
+export function PremiumExperience({
+  firstName,
+  gender,
+  religion,
+}: PremiumExperienceProps) {
+  const copy = getPremiumHeroCopy({ firstName, gender, religion });
+
   return (
     <div className="space-y-8 pb-12">
       <section className="relative overflow-hidden rounded-[2.25rem] border border-champagne-500/35 bg-gradient-to-br from-choco-800 via-choco-700 to-choco-900 px-6 py-10 text-cream-50 shadow-[0_30px_90px_-40px_rgba(43,26,18,0.95)] sm:px-10 sm:py-14 lg:px-14">
@@ -200,13 +215,17 @@ export function PremiumExperience() {
           </span>
 
           <h1 className="mt-7 max-w-4xl font-serif text-4xl font-semibold leading-[1.08] text-cream-50 sm:text-5xl lg:text-6xl">
-            Ta future épouse t’attend.
+            {copy.headline}
             <span className="mt-1 block text-champagne-300">
-              Ne la rate pas.
+              {copy.opportunity}
             </span>
           </h1>
 
-          <p className="mt-6 max-w-3xl text-base leading-8 text-cream-100/80 sm:text-lg">
+          <p className="mt-3 text-lg font-medium text-champagne-200/90">
+            {copy.reassurance}
+          </p>
+
+          <p className="mt-5 max-w-3xl text-base leading-8 text-cream-100/80 sm:text-lg">
             Premium est conçu pour donner plus de visibilité à ton profil,
             faciliter les connexions sérieuses et t’aider à avancer avec
             davantage de clarté dans ta recherche matrimoniale.
