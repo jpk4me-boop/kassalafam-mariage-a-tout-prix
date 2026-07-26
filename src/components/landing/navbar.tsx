@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 
 const NAV_LINKS = [
+  { label: "Candidats", href: "/candidats" },
   { label: "Le concept", href: "#concept" },
   { label: "Comment ça marche", href: "#comment" },
   { label: "Fonctionnalités", href: "#fonctionnalites" },
@@ -77,15 +79,15 @@ export function Navbar() {
               <Logo />
             </Link>
 
-            <ul className="hidden items-center gap-7 lg:flex">
+            <ul className="hidden items-center gap-6 lg:flex">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-sm font-medium text-ink-700/80 transition-colors hover:text-choco-600"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -147,13 +149,13 @@ export function Navbar() {
               <ul className="flex flex-col gap-1">
                 {NAV_LINKS.map((link) => (
                   <li key={link.href}>
-                    <a
+                    <Link
                       href={link.href}
                       onClick={() => setOpen(false)}
                       className="flex min-h-[48px] items-center rounded-2xl px-4 text-[15px] font-medium text-ink-800 transition-colors hover:bg-champagne-400/20 hover:text-choco-700"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

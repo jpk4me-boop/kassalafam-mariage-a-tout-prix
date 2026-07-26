@@ -1,23 +1,34 @@
 import type { MetadataRoute } from "next";
 
+import { listPublicCandidateShowcaseSitemap } from "@/lib/server/public-candidate-showcase";
 import { getSiteUrl } from "@/lib/site-url";
 
-/**
- * /sitemap.xml — convention Next.js, statique et déterministe.
- *
- * Uniquement les pages PUBLIQUES dont le canonical se référence lui-même
- * (vérifié page par page) : jamais de route protégée, d'API, de token ni
- * d'UUID. Pas de `lastModified` : aucune date fiable liée au contenu n'est
- * maintenue en code, et une date artificielle serait trompeuse.
- */
-export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = getSiteUrl();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-  return [
+/**
+ * /sitemap.xml — pages publiques à canonical propre + fiches candidates encore
+ * effectivement publiables au moment de la requête.
+ *
+ * Les routes candidates sont obtenues par une RPC service_role dédiée qui ne
+ * retourne que le slug opaque et last_modified. En cas d'incident Supabase, le
+ * helper échoue fermé : le sitemap statique reste disponible mais aucune fiche
+ * candidate potentiellement obsolète n'est énumérée.
+ */
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const siteUrl = getSiteUrl();
+  const candidates = await listPublicCandidateShowcaseSitemap();
+
+  const staticEntries: MetadataRoute.Sitemap = [
     {
       url: siteUrl,
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      url: `${siteUrl}/candidats`,
+      changeFrequency: "daily",
+      priority: 0.9,
     },
     {
       url: `${siteUrl}/partager`,
@@ -50,4 +61,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
   ];
+
+  const candidateEntries: MetadataRoute.Sitemap = candidates.map((candidate) => ({
+    url: `${siteUrl}/candidats/${candidate.slug}`,
+    lastModified: candidate.lastModified,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...candidateEntries];
 }
