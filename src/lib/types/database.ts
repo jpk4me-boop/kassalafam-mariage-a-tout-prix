@@ -529,7 +529,7 @@ export type GrantProfileShareConsentResult = {
 };
 
 /**
- * Réseaux explicitement autorisables pour la promotion dun profil.
+ * Réseaux explicitement autorisables pour la promotion d’un profil.
  */
 export type ProfilePromotionChannel =
   | "facebook"
@@ -540,7 +540,7 @@ export type ProfilePromotionChannel =
 export type ProfilePromotionDurationDays = 7 | 30 | 90;
 
 /**
- * Consentement promotionnel social dun membre.
+ * Consentement promotionnel social d’un membre.
  *
  * Toute modification ou révocation conserve la ligne historique.
  * Une seule autorisation non clôturée peut exister par profil.

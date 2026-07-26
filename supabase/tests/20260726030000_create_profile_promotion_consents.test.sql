@@ -3,7 +3,7 @@
 -- Migration cible :
 --   20260726030000_create_profile_promotion_consents.sql
 --
--- Aucun test neffectue une publication ou un appel à un réseau social.
+-- Aucun test n’effectue une publication ou un appel à un réseau social.
 -- Toutes les données sont fictives et annulées par ROLLBACK.
 -- =============================================================================
 
@@ -493,7 +493,7 @@ select is(
       '00000000-0000-0000-0000-0000000000a1'
       and withdrawn_at is null
   ),
-  'Jautorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.',
+  'J’autorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.',
   'texte officiel défini côté serveur'
 );
 

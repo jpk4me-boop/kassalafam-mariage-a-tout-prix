@@ -12,7 +12,7 @@
 --
 -- HISTORIQUE
 --   Toute modification remplace le consentement actif par une NOUVELLE ligne.
---   Lancienne ligne est conservée avec withdrawal_reason = 'replaced'.
+--   L’ancienne ligne est conservée avec withdrawal_reason = 'replaced'.
 --   Le retrait manuel conserve également la ligne.
 --
 -- SÉCURITÉ
@@ -24,7 +24,7 @@
 --   - texte et version du consentement définis côté serveur.
 --
 -- Cette migration ne crée aucune campagne, publication ou intégration sociale.
--- Elle ne publie aucun profil et neffectue aucune action externe.
+-- Elle ne publie aucun profil et n’effectue aucune action externe.
 --
 -- NE PAS appliquer automatiquement à Supabase Production.
 -- =============================================================================
@@ -36,7 +36,7 @@ create table if not exists public.profile_promotion_consents (
     references public.profiles(id)
     on delete cascade,
 
-  -- Une suppression ultérieure de la photo ne supprime pas lhistorique légal.
+  -- Une suppression ultérieure de la photo ne supprime pas l’historique légal.
   -- La ligne reste conservée mais devient inutilisable pour une publication.
   photo_id uuid
     references public.photos(id)
@@ -136,7 +136,7 @@ grant select on table public.profile_promotion_consents to authenticated;
 -- Toute activation ou modification crée une nouvelle ligne :
 --   1. fermeture des anciennes lignes expirées ;
 --   2. remplacement éventuel du consentement actif ;
---   3. insertion dune nouvelle autorisation.
+--   3. insertion d’une nouvelle autorisation.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.set_my_profile_promotion_consent(
@@ -163,7 +163,7 @@ declare
   v_version constant text := '2026-07-social-v1';
 
   v_text constant text :=
-    'Jautorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.';
+    'J’autorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.';
 
   v_channels text[];
   v_now timestamptz := now();
@@ -231,7 +231,7 @@ begin
       using errcode = 'P0002';
   end if;
 
-  -- Fermer dabord une autorisation éventuellement arrivée à expiration.
+  -- Fermer d’abord une autorisation éventuellement arrivée à expiration.
   update public.profile_promotion_consents
   set
     withdrawn_at = v_now,
@@ -241,7 +241,7 @@ begin
     and withdrawn_at is null
     and expires_at <= v_now;
 
-  -- Une modification conserve lancienne ligne comme historique.
+  -- Une modification conserve l’ancienne ligne comme historique.
   update public.profile_promotion_consents
   set
     withdrawn_at = v_now,
@@ -310,7 +310,7 @@ grant execute on function public.set_my_profile_promotion_consent(
 -- ---------------------------------------------------------------------------
 -- RPC : withdraw_my_profile_promotion_consent
 --
--- Retrait idempotent. Lhistorique nest jamais supprimé.
+-- Retrait idempotent. Lhistorique n’est jamais supprimé.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.withdraw_my_profile_promotion_consent()

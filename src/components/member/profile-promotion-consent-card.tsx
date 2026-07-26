@@ -22,7 +22,7 @@ const BUCKET = "profile-photos";
 const SIGNED_URL_TTL = 3600;
 
 const CONSENT_TEXT =
-  "Jautorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.";
+  "J’autorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.";
 
 const CHANNEL_OPTIONS: {
   value: ProfilePromotionChannel;
@@ -297,7 +297,7 @@ export function ProfilePromotionConsentCard() {
 
     if (rpcError || !result) {
       setError(
-        "Lautorisation promotionnelle na pas pu être enregistrée. Réessayez.",
+        "L’autorisation promotionnelle n’a pas pu être enregistrée. Réessayez.",
       );
       return;
     }
@@ -335,7 +335,7 @@ export function ProfilePromotionConsentCard() {
     setPending(false);
 
     if (rpcError) {
-      setError("Le retrait de lautorisation a échoué. Réessayez.");
+      setError("Le retrait de l’autorisation a échoué. Réessayez.");
       return;
     }
 
@@ -343,7 +343,7 @@ export function ProfilePromotionConsentCard() {
     setNotice(
       data
         ? "Votre autorisation a été retirée. Aucune nouvelle promotion ne pourra être créée."
-        : "Aucune autorisation active nétait enregistrée.",
+        : "Aucune autorisation active n’était enregistrée.",
     );
   }
 
@@ -405,7 +405,7 @@ export function ProfilePromotionConsentCard() {
 
             <div>
               <dt className="text-xs uppercase tracking-wide text-ink-700/45">
-                Fin de lautorisation
+                Fin de l’autorisation
               </dt>
               <dd className="mt-1 inline-flex items-center gap-1.5 text-ink-800">
                 <Clock size={14} aria-hidden />
@@ -564,7 +564,7 @@ export function ProfilePromotionConsentCard() {
               htmlFor="promotion-duration"
               className="text-sm font-semibold text-choco-700"
             >
-              3. Durée de lautorisation
+              3. Durée de l’autorisation
             </label>
 
             <Select
