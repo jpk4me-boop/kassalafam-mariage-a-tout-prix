@@ -137,12 +137,14 @@ export function MemberHeader({
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group flex min-w-[76px] flex-col items-center justify-center gap-1 rounded-2xl px-2.5 py-2 text-xs font-semibold transition-colors",
-                  active
-                    ? "bg-champagne-400/20 text-choco-700"
-                    : "text-ink-700/65 hover:bg-cream-100 hover:text-choco-700",
-                  "premium" in link && link.premium &&
-                    "text-champagne-700 hover:text-champagne-700",
+                  "group flex min-w-[76px] flex-col items-center justify-center gap-1 rounded-2xl border px-2.5 py-2 text-xs font-semibold transition-all",
+                  "premium" in link && link.premium
+                    ? active
+                      ? "border-champagne-600/75 bg-gradient-to-br from-champagne-300 via-champagne-200 to-champagne-500 text-choco-900 shadow-[0_12px_28px_-16px_rgba(180,125,30,0.9)]"
+                      : "border-champagne-500/55 bg-gradient-to-br from-champagne-200/80 via-cream-50 to-champagne-300/70 text-champagne-800 shadow-[0_10px_24px_-18px_rgba(180,125,30,0.8)] hover:-translate-y-0.5 hover:border-champagne-600/70 hover:text-choco-900"
+                    : active
+                      ? "border-transparent bg-champagne-400/20 text-choco-700"
+                      : "border-transparent text-ink-700/65 hover:bg-cream-100 hover:text-choco-700",
                 )}
               >
                 <Icon
@@ -260,11 +262,14 @@ export function MemberHeader({
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-w-[82px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-[11px] font-semibold transition-colors",
-                active
-                  ? "bg-champagne-400/20 text-choco-700"
-                  : "text-ink-700/60 hover:bg-cream-100 hover:text-choco-700",
-                "premium" in link && link.premium && "text-champagne-700",
+                "flex min-w-[82px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-2 text-[11px] font-semibold transition-all",
+                "premium" in link && link.premium
+                  ? active
+                    ? "border-champagne-600/75 bg-gradient-to-br from-champagne-300 via-champagne-200 to-champagne-500 text-choco-900 shadow-sm"
+                    : "border-champagne-500/55 bg-gradient-to-br from-champagne-200/80 via-cream-50 to-champagne-300/70 text-champagne-800 shadow-sm"
+                  : active
+                    ? "border-transparent bg-champagne-400/20 text-choco-700"
+                    : "border-transparent text-ink-700/60 hover:bg-cream-100 hover:text-choco-700",
               )}
             >
               <Icon size={17} />
