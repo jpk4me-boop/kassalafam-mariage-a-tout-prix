@@ -30,7 +30,7 @@ function buildHeadline(name: string | null, gender: Gender | null): string {
         ? "ton futur époux"
         : "la personne qui te correspond";
 
-  const subject = `${partner} t'attend.`;
+  const subject = `${partner} t’attend.`;
 
   if (name) {
     return `${name}, ${subject}`;

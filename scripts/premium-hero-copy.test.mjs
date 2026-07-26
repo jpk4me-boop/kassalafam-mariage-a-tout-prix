@@ -14,7 +14,7 @@ test("Pierre, homme, christianisme", () => {
     gender: "homme",
     religion: "christianisme",
   });
-  assert.equal(c.headline, "Pierre, ta future femme t'attend.");
+  assert.equal(c.headline, "Pierre, ta future femme t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion divine.");
   assert.equal(c.reassurance, "Dieu est au contrôle.");
 });
@@ -26,7 +26,7 @@ test("Maryvonne, femme, christianisme", () => {
     gender: "femme",
     religion: "christianisme",
   });
-  assert.equal(c.headline, "Maryvonne, ton futur époux t'attend.");
+  assert.equal(c.headline, "Maryvonne, ton futur époux t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion divine.");
   assert.equal(c.reassurance, "Dieu est au contrôle.");
 });
@@ -38,7 +38,7 @@ test("Ibrahim, homme, islam", () => {
     gender: "homme",
     religion: "islam",
   });
-  assert.equal(c.headline, "Ibrahim, ta future femme t'attend.");
+  assert.equal(c.headline, "Ibrahim, ta future femme t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion divine.");
   assert.equal(c.reassurance, "Allah est au contrôle.");
 });
@@ -50,7 +50,7 @@ test("Yasmina, femme, islam", () => {
     gender: "femme",
     religion: "islam",
   });
-  assert.equal(c.headline, "Yasmina, ton futur époux t'attend.");
+  assert.equal(c.headline, "Yasmina, ton futur époux t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion divine.");
   assert.equal(c.reassurance, "Allah est au contrôle.");
 });
@@ -62,7 +62,7 @@ test("Antoine, homme, sans_religion", () => {
     gender: "homme",
     religion: "sans_religion",
   });
-  assert.equal(c.headline, "Antoine, ta future femme t'attend.");
+  assert.equal(c.headline, "Antoine, ta future femme t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion unique.");
   assert.equal(c.reassurance, "Tes ancêtres veillent sur toi.");
 });
@@ -74,7 +74,7 @@ test("Anna, femme, sans_religion", () => {
     gender: "femme",
     religion: "sans_religion",
   });
-  assert.equal(c.headline, "Anna, ton futur époux t'attend.");
+  assert.equal(c.headline, "Anna, ton futur époux t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion unique.");
   assert.equal(c.reassurance, "Tes ancêtres veillent sur toi.");
 });
@@ -86,7 +86,7 @@ test("homme, religion autre", () => {
     gender: "homme",
     religion: "autre",
   });
-  assert.equal(c.headline, "Pierre, ta future femme t'attend.");
+  assert.equal(c.headline, "Pierre, ta future femme t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette belle occasion.");
   assert.equal(c.reassurance, "Ton avenir est entre tes mains.");
 });
@@ -98,7 +98,7 @@ test("femme, religion null", () => {
     gender: "femme",
     religion: null,
   });
-  assert.equal(c.headline, "Maryvonne, ton futur époux t'attend.");
+  assert.equal(c.headline, "Maryvonne, ton futur époux t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette belle occasion.");
   assert.equal(c.reassurance, "Ton avenir est entre tes mains.");
 });
@@ -110,7 +110,7 @@ test("prénom vide, homme, christianisme", () => {
     gender: "homme",
     religion: "christianisme",
   });
-  assert.equal(c.headline, "Ta future femme t'attend.");
+  assert.equal(c.headline, "Ta future femme t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion divine.");
   assert.equal(c.reassurance, "Dieu est au contrôle.");
 });
@@ -122,7 +122,7 @@ test("genre null, repli neutre", () => {
     gender: null,
     religion: "islam",
   });
-  assert.equal(c.headline, "Alex, la personne qui te correspond t'attend.");
+  assert.equal(c.headline, "Alex, la personne qui te correspond t’attend.");
   assert.equal(c.opportunity, "Ne rate pas cette occasion divine.");
   assert.equal(c.reassurance, "Allah est au contrôle.");
 });
@@ -136,7 +136,7 @@ test("tout null — repli complet", () => {
   });
   assert.equal(
     c.headline,
-    "La personne qui te correspond t'attend.",
+    "La personne qui te correspond t’attend.",
   );
   assert.equal(c.opportunity, "Ne rate pas cette belle occasion.");
   assert.equal(c.reassurance, "Ton avenir est entre tes mains.");
@@ -149,5 +149,5 @@ test("prénom avec espaces", () => {
     gender: "femme",
     religion: "christianisme",
   });
-  assert.equal(c.headline, "Sarah, ton futur époux t'attend.");
+  assert.equal(c.headline, "Sarah, ton futur époux t’attend.");
 });
