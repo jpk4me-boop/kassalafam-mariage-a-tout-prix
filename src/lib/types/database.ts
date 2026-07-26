@@ -529,6 +529,56 @@ export type GrantProfileShareConsentResult = {
 };
 
 /**
+ * Réseaux explicitement autorisables pour la promotion dun profil.
+ */
+export type ProfilePromotionChannel =
+  | "facebook"
+  | "instagram"
+  | "snapchat"
+  | "whatsapp";
+
+export type ProfilePromotionDurationDays = 7 | 30 | 90;
+
+/**
+ * Consentement promotionnel social dun membre.
+ *
+ * Toute modification ou révocation conserve la ligne historique.
+ * Une seule autorisation non clôturée peut exister par profil.
+ */
+export type ProfilePromotionConsentRow = {
+  id: string;
+  profile_id: string;
+  photo_id: string | null;
+  policy_version: string;
+  consent_text: string;
+  channels: ProfilePromotionChannel[];
+  duration_days: ProfilePromotionDurationDays;
+  consented_at: string;
+  expires_at: string;
+  withdrawn_at: string | null;
+  withdrawn_by: string | null;
+  withdrawal_reason:
+    | "member_withdrawn"
+    | "replaced"
+    | "expired"
+    | null;
+  created_at: string;
+};
+
+/**
+ * Résultat de la RPC set_my_profile_promotion_consent.
+ */
+export type SetProfilePromotionConsentResult = {
+  consent_id: string;
+  photo_id: string;
+  channels: ProfilePromotionChannel[];
+  duration_days: ProfilePromotionDurationDays;
+  consented_at: string;
+  expires_at: string;
+  replaced_previous: boolean;
+};
+
+/**
  * Partage PR2 — Ligne de `public.profile_share_links` : lien de partage public
  * limité d'un profil. Le jeton public n'est JAMAIS stocké : seul son hash
  * SHA-256 (`token_hash`, renvoyé en hex par PostgREST) et un préfixe non
@@ -936,6 +986,14 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      // Consentement promotionnel social  lecture de son propre historique
+      // via RLS. Écritures exclusivement par les RPC set/withdraw.
+      profile_promotion_consents: {
+        Row: ProfilePromotionConsentRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       // Partage PR2 — liens de partage publics. AUCUN accès client (RLS sans
       // policy, privilèges révoqués) ; opérations uniquement via les RPC
       // create/revoke/resolve_profile_share_link + admin_list (service_role,
@@ -1032,6 +1090,21 @@ export interface Database {
       // Partage PR1 — retrait du consentement actif (historique conservé).
       // Idempotente : retourne false si aucun consentement actif.
       withdraw_my_profile_share_consent: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      // Consentement promotionnel social du membre connecté.
+      // Lidentité provient exclusivement de auth.uid().
+      set_my_profile_promotion_consent: {
+        Args: {
+          p_photo_id: string;
+          p_channels: ProfilePromotionChannel[];
+          p_duration_days: ProfilePromotionDurationDays;
+        };
+        Returns: SetProfilePromotionConsentResult[];
+      };
+      // Retrait idempotent du consentement promotionnel actif.
+      withdraw_my_profile_promotion_consent: {
         Args: Record<string, never>;
         Returns: boolean;
       };
