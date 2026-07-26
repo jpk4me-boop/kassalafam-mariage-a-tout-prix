@@ -32,7 +32,7 @@ const BENEFITS = [
   },
   {
     icon: Heart,
-    title: "Vois qui tajoute en favori",
+    title: "Vois qui t’ajoute en favori",
     description:
       "Repère les personnes qui ont déjà manifesté un intérêt discret pour toi.",
     standard: "Masqué",
@@ -50,7 +50,7 @@ const BENEFITS = [
     icon: MessageCircle,
     title: "Échanges facilités",
     description:
-      "Profite dune expérience de conversation plus complète avec tes connexions mutuelles.",
+      "Profite d’une expérience de conversation plus complète avec tes connexions mutuelles.",
     standard: "Essentiel",
     premium: "Enrichi",
   },
@@ -58,7 +58,7 @@ const BENEFITS = [
     icon: Rocket,
     title: "Profil mis en avant",
     description:
-      "Bénéficie dune priorité de présentation dans les espaces de découverte compatibles.",
+      "Bénéficie d’une priorité de présentation dans les espaces de découverte compatibles.",
     standard: "Classique",
     premium: "Prioritaire",
   },
@@ -74,7 +74,7 @@ const BENEFITS = [
     icon: BadgeCheck,
     title: "Traitement prioritaire",
     description:
-      "Les opérations Premium prévues bénéficient dun parcours de traitement prioritaire.",
+      "Les opérations Premium prévues bénéficient d’un parcours de traitement prioritaire.",
     standard: "Standard",
     premium: "Prioritaire",
   },
@@ -107,7 +107,7 @@ const BENEFITS = [
 const DURATIONS = [
   {
     name: "15 jours",
-    description: "Pour découvrir lexpérience Premium sur une courte période.",
+    description: "Pour découvrir l’expérience Premium sur une courte période.",
   },
   {
     name: "1 mois",
@@ -127,12 +127,12 @@ const FAQS = [
   {
     question: "Les paiements Premium sont-ils déjà actifs ?",
     answer:
-      "Non. Cette page présente lexpérience prévue, mais aucun paiement et aucune collecte Mobile Money ne peuvent actuellement être lancés.",
+      "Non. Cette page présente l’expérience prévue, mais aucun paiement et aucune collecte Mobile Money ne peuvent actuellement être lancés.",
   },
   {
     question: "Quels moyens de paiement sont prévus ?",
     answer:
-      "MTN Mobile Money et Orange Money sont les moyens actuellement envisagés pour le Cameroun. Leur disponibilité définitive sera confirmée avant louverture.",
+      "MTN Mobile Money et Orange Money sont les moyens actuellement envisagés pour le Cameroun. Leur disponibilité définitive sera confirmée avant l’ouverture.",
   },
   {
     question: "Quels seront les tarifs ?",
@@ -140,14 +140,14 @@ const FAQS = [
       "Les tarifs KASSALAFAM ne sont pas encore confirmés. Aucun montant affiché sur une autre plateforme ne constitue un tarif officiel KASSALAFAM.",
   },
   {
-    question: "Labonnement sera-t-il renouvelé automatiquement ?",
+    question: "L’abonnement sera-t-il renouvelé automatiquement ?",
     answer:
-      "Aucun renouvellement automatique nest actif aujourdhui. Les règles de durée et de renouvellement seront présentées clairement avant tout paiement.",
+      "Aucun renouvellement automatique n’est actif aujourd’hui. Les règles de durée et de renouvellement seront présentées clairement avant tout paiement.",
   },
   {
     question: "Puis-je continuer à utiliser KASSALAFAM gratuitement ?",
     answer:
-      "Oui. Lespace membre standard reste disponible. Premium viendra compléter lexpérience sans empêcher lutilisation des fonctions gratuites existantes.",
+      "Oui. L’espace membre standard reste disponible. Premium viendra compléter l’expérience sans empêcher l’utilisation des fonctions gratuites existantes.",
   },
   {
     question: "Quand les avantages seront-ils réellement disponibles ?",
@@ -175,7 +175,7 @@ const TRUST_ITEMS = [
   {
     icon: BadgeCheck,
     title: "Données protégées",
-    text: "La confidentialité du profil reste au cœur de lexpérience.",
+    text: "La confidentialité du profil reste au cœur de l’expérience.",
   },
 ] as const;
 
@@ -200,7 +200,7 @@ export function PremiumExperience() {
           </span>
 
           <h1 className="mt-7 max-w-4xl font-serif text-4xl font-semibold leading-[1.08] text-cream-50 sm:text-5xl lg:text-6xl">
-            Ta future épouse tattend.
+            Ta future épouse t’attend.
             <span className="mt-1 block text-champagne-300">
               Ne la rate pas.
             </span>
@@ -208,7 +208,7 @@ export function PremiumExperience() {
 
           <p className="mt-6 max-w-3xl text-base leading-8 text-cream-100/80 sm:text-lg">
             Premium est conçu pour donner plus de visibilité à ton profil,
-            faciliter les connexions sérieuses et taider à avancer avec
+            faciliter les connexions sérieuses et t’aider à avancer avec
             davantage de clarté dans ta recherche matrimoniale.
           </p>
 
@@ -269,8 +269,8 @@ export function PremiumExperience() {
         </span>
 
         <p className="leading-6">
-          <strong>Aperçu de loffre prévue :</strong> les tarifs, les paiements
-          et lactivation Premium restent désactivés jusquà leur validation
+          <strong>Aperçu de l’offre prévue :</strong> les tarifs, les paiements
+          et l’activation Premium restent désactivés jusqu’à leur validation
           officielle.
         </p>
       </aside>
@@ -290,8 +290,8 @@ export function PremiumExperience() {
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-700/68">
             Chaque avantage est présenté séparément afin que tu voies
-            clairement la différence entre lexpérience standard et
-            lexpérience Premium prévue.
+            clairement la différence entre l’expérience standard et
+            l’expérience Premium prévue.
           </p>
         </div>
 
@@ -379,7 +379,7 @@ export function PremiumExperience() {
           </h2>
 
           <p className="mt-3 text-sm leading-6 text-ink-700/65">
-            Les durées sont présentées pour préparer linterface. Les prix
+            Les durées sont présentées pour préparer l’interface. Les prix
             officiels seront ajoutés uniquement après validation.
           </p>
         </div>
@@ -477,7 +477,7 @@ export function PremiumExperience() {
           </p>
 
           <h2 className="mt-2 font-serif text-3xl font-semibold text-choco-800">
-            Plus quun abonnement
+            Plus qu’un abonnement
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-ink-700/68">
@@ -512,7 +512,7 @@ export function PremiumExperience() {
         </p>
 
         <h2 className="mt-2 font-serif text-3xl font-semibold text-choco-800">
-          Tout savoir avant louverture
+          Tout savoir avant l’ouverture
         </h2>
 
         <div className="mt-7 divide-y divide-champagne-500/20">
@@ -546,12 +546,12 @@ export function PremiumExperience() {
           </span>
 
           <h2 className="mt-5 font-serif text-3xl font-semibold sm:text-4xl">
-            Le bon moment pour préparer ton profil, cest maintenant.
+            Le bon moment pour préparer ton profil, c’est maintenant.
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-cream-100/72 sm:text-base">
             Complète tes informations, soigne ta présentation et ajoute une
-            photo principale afin dêtre prêt lorsque Premium sera
+            photo principale afin d’être prêt lorsque Premium sera
             officiellement ouvert.
           </p>
 
