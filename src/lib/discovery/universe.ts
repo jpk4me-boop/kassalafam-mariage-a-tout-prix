@@ -22,3 +22,13 @@ export const UNIVERSE_LABEL: Record<DiscoveryUniverse, string> = {
   islamic_marriage: "Mariage islamique",
   open_marriage: "Mariage pour tous",
 };
+
+
+export const DISCOVER_PATH_BY_UNIVERSE: Record<
+  DiscoveryUniverse,
+  string
+> = {
+  christian_marriage: "/discover/chretien",
+  islamic_marriage: "/discover/islamique",
+  open_marriage: "/discover/pour-tous",
+};
