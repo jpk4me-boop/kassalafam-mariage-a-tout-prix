@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:geo": "node --test scripts/geo.test.mjs",
     "test:analytics": "node --test scripts/analytics.test.mjs",
-    "test:premium-copy": "node --test scripts/premium-hero-copy.test.mjs"
+    "test:premium-copy": "node --test scripts/premium-hero-copy.test.mjs",
+    "test:sebpay-foundation": "node --conditions=react-server --test scripts/sebpay-foundation.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -20,6 +21,7 @@
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "0.0.1",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
