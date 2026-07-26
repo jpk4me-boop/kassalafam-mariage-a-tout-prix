@@ -17,6 +17,7 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/discover",
   "/matches",
+  "/premium",
   "/admin",
   "/onboarding",
   ACCOUNT_SUSPENDED_PATH,
@@ -35,6 +36,7 @@ const MEMBER_APP_PREFIXES = [
   "/profile",
   "/discover",
   "/matches",
+  "/premium",
   "/onboarding",
   "/admin",
 ];
@@ -60,6 +62,7 @@ const ONBOARDING_GATE_PREFIXES = [
   "/dashboard",
   "/discover",
   "/matches",
+  "/premium",
   "/profile",
 ];
 
