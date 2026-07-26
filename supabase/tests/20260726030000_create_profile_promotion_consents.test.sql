@@ -382,34 +382,58 @@ select has_index(
 );
 
 -- 17
-select has_check(
-  'public',
-  'profile_promotion_consents',
-  'profile_promotion_consents_channels_valid',
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid =
+      'public.profile_promotion_consents'::regclass
+      and contype = 'c'
+      and conname = 'profile_promotion_consents_channels_valid'
+      and convalidated
+  ),
   'contrainte canaux présente'
 );
 
 -- 18
-select has_check(
-  'public',
-  'profile_promotion_consents',
-  'profile_promotion_consents_duration_valid',
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid =
+      'public.profile_promotion_consents'::regclass
+      and contype = 'c'
+      and conname = 'profile_promotion_consents_duration_valid'
+      and convalidated
+  ),
   'contrainte durée présente'
 );
 
 -- 19
-select has_check(
-  'public',
-  'profile_promotion_consents',
-  'profile_promotion_consents_expiry_valid',
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid =
+      'public.profile_promotion_consents'::regclass
+      and contype = 'c'
+      and conname = 'profile_promotion_consents_expiry_valid'
+      and convalidated
+  ),
   'contrainte expiration présente'
 );
 
 -- 20
-select has_check(
-  'public',
-  'profile_promotion_consents',
-  'profile_promotion_consents_withdrawal_coherence',
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid =
+      'public.profile_promotion_consents'::regclass
+      and contype = 'c'
+      and conname = 'profile_promotion_consents_withdrawal_coherence'
+      and convalidated
+  ),
   'contrainte retrait présente'
 );
 

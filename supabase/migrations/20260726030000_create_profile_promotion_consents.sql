@@ -165,6 +165,9 @@ declare
   v_text constant text :=
     'J’autorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.';
 
+  v_reason_expired constant text := 'expired';
+  v_reason_replaced constant text := 'replaced';
+
   v_channels text[];
   v_now timestamptz := now();
   v_expiry timestamptz;
@@ -236,17 +239,17 @@ begin
   set
     withdrawn_at = v_now,
     withdrawn_by = v_uid,
-    withdrawal_reason = 'expired'
+    withdrawal_reason = v_reason_expired
   where profile_id = v_uid
     and withdrawn_at is null
-    and expires_at <= v_now;
+    and profile_promotion_consents.expires_at <= v_now;
 
   -- Une modification conserve l’ancienne ligne comme historique.
   update public.profile_promotion_consents
   set
     withdrawn_at = v_now,
     withdrawn_by = v_uid,
-    withdrawal_reason = 'replaced'
+    withdrawal_reason = v_reason_replaced
   where profile_id = v_uid
     and withdrawn_at is null;
 
