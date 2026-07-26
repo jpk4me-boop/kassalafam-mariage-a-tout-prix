@@ -196,8 +196,8 @@ export function PremiumExperience({
   const copy = getPremiumHeroCopy({ firstName, gender, religion });
 
   return (
-    <div className="space-y-8 pb-12">
-      <section className="relative overflow-hidden rounded-[2.25rem] border border-champagne-500/35 bg-gradient-to-br from-choco-800 via-choco-700 to-choco-900 px-6 py-10 text-cream-50 shadow-[0_30px_90px_-40px_rgba(43,26,18,0.95)] sm:px-10 sm:py-14 lg:px-14">
+    <div className="mx-auto grid w-full max-w-[900px] gap-6 pb-12">
+      <section className="relative overflow-hidden rounded-3xl border border-champagne-500/35 bg-gradient-to-br from-choco-800 via-choco-700 to-choco-900 px-6 py-10 text-cream-50 shadow-[0_30px_90px_-40px_rgba(43,26,18,0.95)] sm:px-10 sm:py-14 lg:px-14">
         <div
           aria-hidden="true"
           className="absolute -right-20 -top-24 h-80 w-80 rounded-full bg-champagne-400/20 blur-3xl"
@@ -296,7 +296,7 @@ export function PremiumExperience({
 
       <section
         id="avantages-premium"
-        className="scroll-mt-36 overflow-hidden rounded-[2rem] border border-champagne-500/30 bg-cream-50/70 shadow-card"
+        className="scroll-mt-36 overflow-hidden rounded-3xl border border-champagne-500/30 bg-cream-50/70 shadow-card"
       >
         <div className="border-b border-champagne-500/25 bg-gradient-to-r from-champagne-300/20 via-cream-50 to-champagne-300/10 px-6 py-7 sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
@@ -314,10 +314,10 @@ export function PremiumExperience({
           </p>
         </div>
 
-        <div className="hidden grid-cols-[minmax(0,1fr)_110px_110px] border-b border-champagne-500/20 bg-cream-100/45 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-700/55 md:grid sm:px-8">
+        <div className="hidden grid-cols-[minmax(0,1fr)_124px_124px] border-b border-champagne-500/20 bg-cream-100/45 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-700/55 md:grid sm:px-8">
           <span>Avantage</span>
           <span className="text-center">Standard</span>
-          <span className="text-center text-champagne-700">Premium</span>
+          <span className="mx-auto rounded-full bg-champagne-400/15 px-4 py-1.5 text-center text-champagne-700">Premium</span>
         </div>
 
         <div className="divide-y divide-champagne-500/18">
@@ -327,7 +327,7 @@ export function PremiumExperience({
             return (
               <article
                 key={benefit.title}
-                className="grid gap-4 px-6 py-5 transition-colors hover:bg-champagne-300/7 md:grid-cols-[minmax(0,1fr)_110px_110px] md:items-center sm:px-8"
+                className="grid gap-4 px-6 py-4 transition-colors hover:bg-champagne-300/7 md:grid-cols-[minmax(0,1fr)_124px_124px] md:items-center sm:px-8"
               >
                 <div className="flex gap-4">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-champagne-400/18 text-champagne-700">
@@ -346,12 +346,12 @@ export function PremiumExperience({
                 </div>
 
                 <div className="flex items-center justify-between gap-3 md:contents">
-                  <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 md:mx-auto">
+                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 md:mx-auto">
                     <EyeOff size={13} />
                     {benefit.standard}
                   </span>
 
-                  <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
+                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
                     <Check size={13} strokeWidth={3} />
                     {benefit.premium}
                   </span>
@@ -387,7 +387,7 @@ export function PremiumExperience({
         })}
       </section>
 
-      <section className="rounded-[2rem] border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
+      <section className="rounded-3xl border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
             Formules Premium
@@ -436,7 +436,7 @@ export function PremiumExperience({
       </section>
 
       <section className="grid gap-5 lg:grid-cols-2">
-        <article className="rounded-[2rem] border border-champagne-500/30 bg-gradient-to-br from-choco-800 to-choco-700 p-6 text-cream-50 shadow-card sm:p-8">
+        <article className="rounded-3xl border border-champagne-500/30 bg-gradient-to-br from-choco-800 to-choco-700 p-6 text-cream-50 shadow-card sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-300">
             Paiement Mobile Money
           </p>
@@ -486,7 +486,7 @@ export function PremiumExperience({
           </div>
         </article>
 
-        <article className="rounded-[2rem] border border-champagne-500/30 bg-cream-100/45 p-6 shadow-card sm:p-8">
+        <article className="rounded-3xl border border-champagne-500/30 bg-cream-100/45 p-6 shadow-card sm:p-8">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-champagne-400/20 text-champagne-700">
             <Infinity size={22} />
           </span>
@@ -525,7 +525,7 @@ export function PremiumExperience({
         </article>
       </section>
 
-      <section className="rounded-[2rem] border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
+      <section className="rounded-3xl border border-champagne-500/30 bg-cream-50/70 p-6 shadow-card sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-700">
           Questions fréquentes
         </p>
@@ -557,7 +557,7 @@ export function PremiumExperience({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[2.25rem] border border-champagne-400/35 bg-gradient-to-br from-emerald-950 via-emerald-900 to-choco-900 p-7 text-cream-50 shadow-[0_30px_80px_-42px_rgba(6,78,59,0.9)] sm:p-10">
+      <section className="overflow-hidden rounded-3xl border border-champagne-400/35 bg-gradient-to-br from-emerald-950 via-emerald-900 to-choco-900 p-7 text-cream-50 shadow-[0_30px_80px_-42px_rgba(6,78,59,0.9)] sm:p-10">
         <div className="max-w-3xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-champagne-300/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-champagne-200">
             <Crown size={14} />
