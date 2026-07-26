@@ -18,6 +18,7 @@ import { PageBackNav } from "@/components/member/page-back-nav";
 import { CountryCityFields } from "@/components/profile/country-city-fields";
 import { ProfilePhotos } from "@/components/member/profile-photos";
 import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
+import { ProfilePromotionConsentCard } from "@/components/member/profile-promotion-consent-card";
 import {
   FormError,
   FormSuccess,
@@ -508,6 +509,9 @@ export default function ProfilePage() {
 
       {/* Consentement au partage public limité (PR1 partage de profils) */}
       <ProfileShareConsentCard />
+
+      {/* Consentement distinct pour la promotion sur les réseaux sociaux */}
+      <ProfilePromotionConsentCard />
     </div>
   );
 }
