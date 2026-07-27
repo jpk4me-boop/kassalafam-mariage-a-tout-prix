@@ -142,6 +142,9 @@ insert into public.profiles(
   partner_expectations,
   discovery_universe,
   account_status,
+  suspended_at,
+  suspended_by,
+  suspension_reason,
   onboarding_completed_at
 ) values
   (
@@ -158,6 +161,9 @@ insert into public.profiles(
     'Attentes matrimoniales fictives et suffisamment complètes.',
     'christian_marriage',
     'active',
+    null,
+    null,
+    null,
     now()
   ),
   (
@@ -174,6 +180,9 @@ insert into public.profiles(
     'Attentes matrimoniales fictives et suffisamment complètes.',
     'open_marriage',
     'active',
+    null,
+    null,
+    null,
     now()
   ),
   (
@@ -190,6 +199,9 @@ insert into public.profiles(
     'Attentes matrimoniales fictives et suffisamment complètes.',
     'open_marriage',
     'suspended',
+    now(),
+    '00000000-0000-0000-aa00-000000000001',
+    'Suspension de test valide.',
     now()
   ),
   (
@@ -206,6 +218,9 @@ insert into public.profiles(
     'Attentes matrimoniales fictives et suffisamment complètes.',
     'open_marriage',
     'active',
+    null,
+    null,
+    null,
     now()
   );
 
@@ -295,7 +310,7 @@ insert into public.profile_promotion_consents(
     now() + interval '10 days'
   );
 
-select plan(60);
+select plan(61);
 
 -- -----------------------------------------------------------------------------
 -- Structure, RLS, privilèges.
@@ -371,6 +386,18 @@ select ok(
       and conname = 'profile_promotion_share_links_channel_valid'
   ),
   'T7 canaux contraints'
+);
+
+select ok(
+  exists(
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'profile_promotion_share_links'
+      and indexname = 'profile_promotion_share_links_photo_idx'
+      and indexdef like '%(photo_id)%'
+  ),
+  'T7b index photo_id présent'
 );
 
 select is(

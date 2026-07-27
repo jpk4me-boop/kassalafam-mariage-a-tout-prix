@@ -88,6 +88,9 @@ create index if not exists profile_promotion_share_links_profile_history_idx
 create index if not exists profile_promotion_share_links_consent_idx
   on public.profile_promotion_share_links(consent_id, created_at desc);
 
+create index if not exists profile_promotion_share_links_photo_idx
+  on public.profile_promotion_share_links(photo_id);
+
 create index if not exists profile_promotion_share_links_channel_active_idx
   on public.profile_promotion_share_links(profile_id, channel, expires_at desc)
   where revoked_at is null;
