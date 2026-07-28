@@ -5,6 +5,7 @@ import {
   Camera,
   Flag,
   Heart,
+  Megaphone,
   Sparkles,
   UserRound,
   Users,
@@ -15,6 +16,11 @@ import { ageFromBirthDate } from "@/lib/admin/analytics";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { ACCOUNT_STATUS_BADGE } from "@/lib/admin/account-moderation";
 import type { PresenceInfo } from "@/lib/admin/presence";
+import type { AdminProfilePromotionShareStatus } from "@/lib/server/profile-promotion-share-links";
+import {
+  PROMOTION_CHANNEL_SHORT_LABELS,
+  promotionSummary,
+} from "@/lib/admin/profile-promotion";
 
 /**
  * Liste des membres (présentation SEULE, rendue côté serveur). N'affiche que des
@@ -111,6 +117,46 @@ function Stat({
   );
 }
 
+const PROMOTION_TONE_CLASSES = {
+  ok: "border-emerald-600/25 bg-emerald-600/5 text-emerald-700",
+  muted: "border-champagne-500/30 bg-champagne-400/10 text-ink-700/60",
+  warn: "border-amber-600/30 bg-amber-500/10 text-amber-800",
+} as const;
+
+/**
+ * Résumé promotionnel compact (PR #82) : état du consentement, nombre de liens
+ * actifs et réseaux autorisés abrégés. Absent (null) quand la lecture groupée
+ * a échoué — la liste reste pleinement utilisable.
+ */
+function PromotionChip({
+  status,
+}: {
+  status: AdminProfilePromotionShareStatus | undefined;
+}) {
+  if (!status) return null;
+  const summary = promotionSummary(status);
+  const channels = status.channels
+    .map((c) => PROMOTION_CHANNEL_SHORT_LABELS[c])
+    .join(" ");
+  return (
+    <span
+      title="Promotion du profil"
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${PROMOTION_TONE_CLASSES[summary.tone]}`}
+    >
+      <Megaphone size={11} aria-hidden />
+      {summary.label}
+      {summary.tone === "ok" ? (
+        <>
+          {" "}
+          · {status.active_link_count} lien
+          {status.active_link_count > 1 ? "s" : ""}
+          {channels ? ` · ${channels}` : ""}
+        </>
+      ) : null}
+    </span>
+  );
+}
+
 /** Pastille compacte de présence (« En ligne » vert, sinon date relative). */
 function PresenceChip({ presence }: { presence: PresenceInfo | undefined }) {
   if (!presence) {
@@ -138,11 +184,13 @@ export function MembersList({
   items,
   avatarById,
   presenceById,
+  promotionById,
   now,
 }: {
   items: AdminMemberListItem[];
   avatarById: Map<string, string | null>;
   presenceById: Map<string, PresenceInfo>;
+  promotionById: Map<string, AdminProfilePromotionShareStatus>;
   now: Date;
 }) {
   if (items.length === 0) {
@@ -198,9 +246,10 @@ export function MembersList({
                             {m.email}
                           </p>
                         ) : null}
-                        <div className="mt-1 flex items-center gap-2">
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
                           {completenessBadge(m.is_complete)}
                           <PresenceChip presence={presenceById.get(m.id)} />
+                          <PromotionChip status={promotionById.get(m.id)} />
                         </div>
                       </div>
                     </div>
@@ -290,6 +339,7 @@ export function MembersList({
                   <AdminStatusBadge status={m.verification_status} />
                   {completenessBadge(m.is_complete)}
                   <PresenceChip presence={presenceById.get(m.id)} />
+                  <PromotionChip status={promotionById.get(m.id)} />
                 </div>
 
                 <div className="flex items-center gap-4 border-t border-champagne-500/15 pt-2">

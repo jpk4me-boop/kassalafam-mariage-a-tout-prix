@@ -41,6 +41,7 @@ import { ACCOUNT_STATUS_BADGE } from "@/lib/admin/account-moderation";
 import { presenceInfo } from "@/lib/admin/presence";
 import { ProfileActions } from "@/components/admin/profile-actions";
 import { MemberAccountActions } from "@/components/admin/member-account-actions";
+import { MemberPromotionSection } from "@/components/admin/member-promotion-section";
 
 export const dynamic = "force-dynamic";
 
@@ -573,6 +574,9 @@ export default async function AdminMemberDetailPage({
           />
         </div>
       </Section>
+
+      {/* Promotion du profil (PR #82) : consentement, lien limité, historique */}
+      <MemberPromotionSection profileId={profile.id} />
 
       {/* Relations : intérêts & matchs */}
       <Section title="Intérêts & matchs" Icon={Heart}>

@@ -11,7 +11,8 @@
     "test:analytics": "node --test scripts/analytics.test.mjs",
     "test:premium-copy": "node --test scripts/premium-hero-copy.test.mjs",
     "test:sebpay-foundation": "node --conditions=react-server --test scripts/sebpay-foundation.test.mjs",
-    "test:promo-route": "node --test scripts/public-profile-promotion.test.mjs"
+    "test:promo-route": "node --test scripts/public-profile-promotion.test.mjs",
+    "test:admin-profile-promotion-ui": "node --test scripts/admin-profile-promotion-ui.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
