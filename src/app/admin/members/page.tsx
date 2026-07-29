@@ -10,6 +10,10 @@ import {
   MEMBERS_PAGE_SIZE,
 } from "@/lib/admin/members";
 import { presenceInfo, type PresenceInfo } from "@/lib/admin/presence";
+import {
+  getProfilePromotionShareStatuses,
+  type AdminProfilePromotionShareStatus,
+} from "@/lib/server/profile-promotion-share-links";
 import { MembersFilters } from "@/components/admin/members-filters";
 import { MembersList } from "@/components/admin/members-list";
 
@@ -124,6 +128,23 @@ export default async function AdminMembersPage({
       // Migration analytics pas encore appliquée : la liste reste utilisable.
     }
   }
+  // 5. Promotion : UN SEUL appel groupé (RPC via helper) pour les IDs de la
+  //    page — jamais un appel par membre. Échec NON bloquant : la liste reste
+  //    utilisable sans le résumé promotionnel.
+  const promotionById = new Map<string, AdminProfilePromotionShareStatus>();
+  if (items.length > 0) {
+    try {
+      const promo = await getProfilePromotionShareStatuses({
+        profileIds: items.map((m) => m.id),
+      });
+      if (promo.ok) {
+        for (const row of promo.data) promotionById.set(row.profile_id, row);
+      }
+    } catch {
+      // Migration promotion pas encore appliquée : résumé simplement absent.
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / MEMBERS_PAGE_SIZE));
   const currentPage = Math.min(filters.page, totalPages);
   const rangeStart = total === 0 ? 0 : offset + 1;
@@ -177,6 +198,7 @@ export default async function AdminMembersPage({
             items={items}
             avatarById={avatarById}
             presenceById={presenceById}
+            promotionById={promotionById}
             now={now}
           />
 

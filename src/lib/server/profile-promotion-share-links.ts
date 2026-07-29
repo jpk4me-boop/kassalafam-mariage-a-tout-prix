@@ -151,7 +151,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   REASON_LENGTH_INVALID: "Le motif ne peut pas dépasser 500 caractères.",
 };
 
-const ELIGIBILITY_MESSAGES: Record<string, string> = {
+export const ELIGIBILITY_MESSAGES: Record<string, string> = {
   profile_not_found: "Ce profil n’existe plus.",
   account_suspended: "Le compte de ce membre est suspendu.",
   verification_required: "Le profil doit d’abord être approuvé.",
