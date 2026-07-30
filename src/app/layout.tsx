@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
@@ -57,6 +57,24 @@ export const metadata: Metadata = {
     description:
       "La plateforme de mariage vérifiée, confidentielle et orientée foyer pour les Africains.",
   },
+  // Icônes PWA générées par `npm run generate:icons` (voir public/brand/).
+  // Le manifeste est exposé automatiquement par src/app/manifest.ts.
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "KASSALAFAM",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6b3f2a",
 };
 
 export default function RootLayout({
