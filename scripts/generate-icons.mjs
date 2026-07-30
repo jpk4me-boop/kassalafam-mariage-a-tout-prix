@@ -51,9 +51,10 @@ function pngSize(buffer) {
   };
 }
 
-function renderPng(svg, size, fontFile) {
+function renderPng(svg, size, fontFile, background) {
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: size },
+    ...(background ? { background } : {}),
     font: {
       fontFiles: [fontFile],
       loadSystemFonts: false,
@@ -81,9 +82,14 @@ async function main() {
     ["public/icon-512.png", renderPng(iconSvg, 512, ttf), 512],
     ["public/icon-maskable-192.png", renderPng(maskableSvg, 192, ttf), 192],
     ["public/icon-maskable-512.png", renderPng(maskableSvg, 512, ttf), 512],
-    // Apple touch : iOS applique lui-même son masque arrondi — on part du
-    // dessin pleine surface (fond opaque, marges sûres), rendu en 180×180.
-    ["public/apple-touch-icon.png", renderPng(maskableSvg, 180, ttf), 180],
+    // Apple touch : dessin normal (icon-source) aplati sur fond opaque — iOS
+    // applique son propre squircle et ne rogne que ~10 %, le « K » garde donc
+    // sa taille normale (contrairement au rognage circulaire Android).
+    [
+      "public/apple-touch-icon.png",
+      renderPng(iconSvg, 180, ttf, "#6b3f2a"),
+      180,
+    ],
   ];
 
   for (const [relPath, buffer, expected] of outputs) {
