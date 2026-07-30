@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!--
+    KASSALAFAM — source vectorielle de l'icône maskable.
+    Même dessin que icon-source.svg mais fond chocolat pleine surface
+    (sans coins arrondis ni anneau) et « K » réduit pour tenir dans la
+    zone de sécurité des 66 % centraux (≈ 338 px).
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b3f2a"/>
+      <stop offset="1" stop-color="#45291b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecd4a2"/>
+      <stop offset="1" stop-color="#d6a85a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fond pleine surface, sans arrondi -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- « K » Playfair Display SemiBold — hauteur de capitale ≈ 210 px,
+       boîte du glyphe contenue dans les 66 % centraux -->
+  <text x="256" y="361" text-anchor="middle"
+        font-family="Playfair Display" font-weight="600" font-size="300"
+        fill="url(#gold)">K</text>
+</svg>

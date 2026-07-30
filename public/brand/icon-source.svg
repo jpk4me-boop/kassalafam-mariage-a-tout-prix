@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!--
+    KASSALAFAM — source vectorielle de l'icône PWA.
+    Géométrie reprise du composant Logo (src/components/landing/logo.tsx) :
+    pavé arrondi en dégradé choco-600 → choco-800, anneau champagne-400,
+    « K » Playfair Display en dégradé or champagne.
+    Le rendu PNG est produit par scripts/generate-icons.mjs, qui embarque la
+    police depuis node_modules (le texte reste éditable ici).
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b3f2a"/>
+      <stop offset="1" stop-color="#45291b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecd4a2"/>
+      <stop offset="1" stop-color="#d6a85a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fond : carré 512, coins arrondis rayon 96 -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Anneau champagne : 8 px d'épaisseur, bord extérieur à 32 px du bord -->
+  <rect x="36" y="36" width="440" height="440" rx="60" fill="none"
+        stroke="#e1bf7b" stroke-width="8"/>
+
+  <!-- « K » Playfair Display SemiBold — hauteur de capitale ≈ 280 px (55 %) -->
+  <text x="256" y="396" text-anchor="middle"
+        font-family="Playfair Display" font-weight="600" font-size="400"
+        fill="url(#gold)">K</text>
+</svg>

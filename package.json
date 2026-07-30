@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "generate:icons": "node scripts/generate-icons.mjs",
     "test:geo": "node --test scripts/geo.test.mjs",
     "test:analytics": "node --test scripts/analytics.test.mjs",
     "test:premium-copy": "node --test scripts/premium-hero-copy.test.mjs",
@@ -27,13 +28,17 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@fontsource/playfair-display": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "png-to-ico": "^3.0.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wawoff2": "^2.0.1"
   }
 }

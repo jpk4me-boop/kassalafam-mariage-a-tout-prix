@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Outillage local hors projet, déjà exclu de Git (.gitignore) — la flat
+    // config ESLint ne lit pas .gitignore, l'exclusion doit être répétée ici.
+    ".claude/**",
+    "scratchpad/**",
   ]),
 ]);
 
