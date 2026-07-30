@@ -45,3 +45,6 @@ next-env.d.ts
 .claude/
 
 scratchpad/
+
+# graphify (cache d'analyse local, jamais versionné)
+graphify-out/
