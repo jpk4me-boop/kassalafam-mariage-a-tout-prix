@@ -135,7 +135,7 @@ const FAQS = [
   {
     question: "Quels moyens de paiement sont prévus ?",
     answer:
-      "MTN Mobile Money et Orange Money sont les moyens actuellement envisagés pour le Cameroun. Leur disponibilité définitive sera confirmée avant l’ouverture.",
+      "Les paiements s’appuieront sur SebPay et plusieurs passerelles selon votre pays : Mobile Money (MTN, Orange) là où il est disponible, et d’autres moyens pour les membres du reste du monde. La disponibilité définitive de chaque moyen sera confirmée avant l’ouverture.",
   },
   {
     question: "Quels seront les tarifs ?",
@@ -438,11 +438,11 @@ export function PremiumExperience({
       <section className="grid gap-5 lg:grid-cols-2">
         <article className="rounded-3xl border border-champagne-500/30 bg-gradient-to-br from-choco-800 to-choco-700 p-6 text-cream-50 shadow-card sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne-300">
-            Paiement Mobile Money
+            Moyens de paiement
           </p>
 
           <h2 className="mt-2 font-serif text-3xl font-semibold">
-            Des moyens adaptés au Cameroun
+            Des moyens adaptés, où que vous soyez
           </h2>
 
           <div className="mt-6 space-y-3">
@@ -464,6 +464,19 @@ export function PremiumExperience({
                 <p className="font-semibold">Orange Money</p>
                 <p className="mt-1 text-xs text-cream-100/60">
                   Intégration prévue
+                </p>
+              </div>
+
+              <span className="rounded-full bg-champagne-300/15 px-3 py-1 text-xs font-semibold text-champagne-200">
+                Bientôt disponible
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl border border-cream-50/12 bg-cream-50/8 p-4">
+              <div>
+                <p className="font-semibold">Autres passerelles internationales</p>
+                <p className="mt-1 text-xs text-cream-100/60">
+                  Via SebPay, selon votre pays
                 </p>
               </div>
 
