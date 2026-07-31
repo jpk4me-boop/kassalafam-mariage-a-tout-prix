@@ -14,7 +14,8 @@
     "test:sebpay-foundation": "node --conditions=react-server --test scripts/sebpay-foundation.test.mjs",
     "test:promo-route": "node --test scripts/public-profile-promotion.test.mjs",
     "test:admin-profile-promotion-ui": "node --test scripts/admin-profile-promotion-ui.test.mjs",
-    "test:pwa-offline": "node --test scripts/pwa-offline.test.mjs"
+    "test:pwa-offline": "node --test scripts/pwa-offline.test.mjs",
+    "test:navigation-quick-access": "node --test scripts/navigation-quick-access.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

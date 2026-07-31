@@ -10,6 +10,7 @@ import {
   Eye,
   Heart,
   Home,
+  LayoutDashboard,
   LogOut,
   MessageCircle,
   Rocket,
@@ -33,8 +34,13 @@ type MemberHeaderProps = Readonly<{
 const PRIMARY_LINKS = [
   {
     label: "Accueil",
-    href: "/dashboard",
+    href: "/",
     icon: Home,
+  },
+  {
+    label: "Tableau de bord",
+    href: "/dashboard",
+    icon: LayoutDashboard,
   },
   {
     label: "Découverte",
@@ -117,7 +123,7 @@ export function MemberHeader({
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <Link
           href="/dashboard"
-          aria-label="Accueil de l’espace membre KASSALAFAM"
+          aria-label="Tableau de bord KASSALAFAM"
           className="shrink-0"
         >
           <Logo className="[&_span]:text-base" />
