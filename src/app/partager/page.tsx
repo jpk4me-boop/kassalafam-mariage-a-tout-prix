@@ -8,6 +8,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { getSiteUrl } from "@/lib/site-url";
 import { Logo } from "@/components/landing/logo";
 import { MemberDashboardLink } from "@/components/navigation/member-dashboard-link";
+import { InstallAppCard } from "@/components/pwa/install-app-button";
 import { ShareActions } from "@/components/share/share-actions";
 
 const APP_SHARE_TEXT =
@@ -120,6 +121,11 @@ export default function PartagerPage() {
           />
         </div>
       </section>
+
+      {/* Bloc 3 — Installer l'application (PWA). Rendu uniquement si le
+          navigateur propose l'installation (beforeinstallprompt) et que
+          l'app n'est pas déjà installée — sinon, rien ne s'affiche. */}
+      <InstallAppCard className="mt-6" />
 
       <p className="mt-8 text-center text-xs leading-relaxed text-ink-700/55">
         Le lien de partage pointe toujours vers la version publique de
