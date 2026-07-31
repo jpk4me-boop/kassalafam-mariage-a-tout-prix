@@ -24,8 +24,11 @@ const PLANS = [
   {
     name: "Premium",
     icon: Crown,
-    price: "À venir",
-    period: "paiement Mobile Money",
+    price: "2 500 FCFA",
+    period: "pour 1 mois",
+    /* Tarifs officiels de lancement — catalogue premium seedé en production
+       le 31/07/2026 (premium_1_mois / premium_3_mois / premium_6_mois). */
+    tiers: "Formules : 1 mois 2 500 · 3 mois 6 000 · 6 mois 10 000 FCFA",
     description:
       "Pour mettre toutes les chances de votre côté dans votre recherche.",
     cta: "Être informé du lancement",
@@ -114,6 +117,19 @@ export function Pricing() {
                   </span>
                 </div>
 
+                {"tiers" in plan && plan.tiers ? (
+                  <p
+                    className={cn(
+                      "mt-2 text-xs",
+                      plan.highlighted
+                        ? "text-champagne-200/85"
+                        : "text-ink-700/60",
+                    )}
+                  >
+                    {plan.tiers}
+                  </p>
+                ) : null}
+
                 <ul className="mt-6 flex flex-1 flex-col gap-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3 text-sm">
@@ -158,8 +174,9 @@ export function Pricing() {
 
         <Reveal delay={0.2}>
           <p className="mx-auto mt-8 max-w-xl text-center text-xs text-ink-700/60">
-            Les paiements Mobile Money seront disponibles prochainement. Aucune
-            information de paiement n&apos;est demandée pour le moment.
+            L&apos;ouverture des paiements sera annoncée prochainement — via
+            SebPay : Mobile Money et autres passerelles selon votre pays.
+            Aucune information de paiement n&apos;est demandée pour le moment.
           </p>
         </Reveal>
       </div>
