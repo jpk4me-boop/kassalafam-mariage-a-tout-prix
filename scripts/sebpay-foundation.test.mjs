@@ -57,12 +57,22 @@ test("SebPay is disabled by default without reading secrets", () => {
   assert.equal(config.enabled, false);
   assert.equal(config.pilotMode, true);
   assert.equal(config.environment, "test");
-  assert.equal(config.contractConfirmed, false);
-  assert.deepEqual(config.allowedApiOrigins, []);
+  assert.equal(config.contractConfirmed, true);
+  assert.deepEqual(config.allowedApiOrigins, ["https://newapi.sebpay.bj"]);
 });
 
-test("SebPay cannot be enabled while the merchant contract is unconfirmed", () => {
-  const secretValue = "must-never-appear";
+test("enabling SebPay stays credential-free at the config level", () => {
+  // Contract verified on 2026-07-31: enabling no longer throws, but the
+  // foundation config loader must still read nothing beyond safety flags.
+  const secretNames = new Set([
+    "SEBPAY_API_BASE_URL",
+    "SEBPAY_CALLBACK_URL",
+    "SEBPAY_PUBLIC_KEY",
+    "SEBPAY_SECRET_KEY",
+    "SEBPAY_PILOT_MTN_PHONE",
+    "SEBPAY_PILOT_ORANGE_PHONE",
+  ]);
+
   const environment = new Proxy(
     {
       SEBPAY_PAYMENTS_ENABLED: "true",
@@ -71,11 +81,8 @@ test("SebPay cannot be enabled while the merchant contract is unconfirmed", () =
     },
     {
       get(target, property, receiver) {
-        if (
-          property === "SEBPAY_PUBLIC_KEY" ||
-          property === "SEBPAY_SECRET_KEY"
-        ) {
-          return secretValue;
+        if (secretNames.has(String(property))) {
+          throw new Error(`Secret access attempted: ${String(property)}`);
         }
 
         return Reflect.get(target, property, receiver);
@@ -83,17 +90,11 @@ test("SebPay cannot be enabled while the merchant contract is unconfirmed", () =
     },
   );
 
-  assert.throws(
-    () => loadSebPayFoundationConfig(environment),
-    (error) => {
-      assertFoundationError(
-        error,
-        "PAYMENT_PROVIDER_CONTRACT_UNCONFIRMED",
-      );
-      assert.equal(error.message.includes(secretValue), false);
-      return true;
-    },
-  );
+  const config = loadSebPayFoundationConfig(environment);
+
+  assert.equal(config.enabled, true);
+  assert.equal(config.pilotMode, true);
+  assert.equal(config.contractConfirmed, true);
 });
 
 test("invalid safety flags fail closed", () => {
@@ -114,8 +115,8 @@ test("invalid safety flags fail closed", () => {
   );
 });
 
-test("confirmed SebPay API origin allowlist is intentionally empty", () => {
-  assert.deepEqual(CONFIRMED_SEBPAY_API_ORIGINS, []);
+test("confirmed SebPay API origin allowlist holds the single verified origin", () => {
+  assert.deepEqual(CONFIRMED_SEBPAY_API_ORIGINS, ["https://newapi.sebpay.bj"]);
   assert.equal(Object.isFrozen(CONFIRMED_SEBPAY_API_ORIGINS), true);
 });
 
