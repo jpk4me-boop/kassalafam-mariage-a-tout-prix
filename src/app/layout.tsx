@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 import { FirstPartyAnalytics } from "@/components/analytics/first-party-analytics";
+import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -91,6 +92,8 @@ export default function RootLayout({
         {children}
         {/* Mesure d'audience interne first-party (aucun service tiers). */}
         <FirstPartyAnalytics />
+        {/* Service worker PWA : page hors-ligne + cache des assets immuables. */}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
