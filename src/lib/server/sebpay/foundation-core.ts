@@ -1,22 +1,31 @@
 import "server-only";
 
 /**
- * Provider-neutral payment foundation with a locked SebPay adapter.
+ * Provider-neutral payment foundation.
  *
- * This file intentionally contains no SebPay endpoint, authentication header,
- * provider payload, webhook shape, or status mapping. Those details remain
- * blocked until the official merchant contract is independently verified.
+ * This file still contains no SebPay endpoint, authentication header, provider
+ * payload, webhook shape, or status mapping: those verified contract details
+ * live exclusively in `adapter.ts`. The merchant contract was independently
+ * verified on 2026-07-31 (official docs + authenticated read-only API calls).
  */
 
 export const SEBPAY_PROVIDER_CODE = "sebpay" as const;
-export const SEBPAY_CONTRACT_STATE = "unconfirmed" as const;
 
 /**
- * Deliberately empty. An origin may be added only after official verification.
- * Environment variables cannot expand this allowlist on their own.
+ * Contract verified on 2026-07-31 against the official merchant documentation
+ * (new.sebpay.bj/fr/docs) and authenticated read-only API calls
+ * (GET /api/v1/operators?country=CM, GET /api/v1/countries).
+ * Reference: project sheet "SebPay — Activation KASSALAFAM : Phase 1".
  */
-export const CONFIRMED_SEBPAY_API_ORIGINS: readonly string[] =
-  Object.freeze([]);
+export const SEBPAY_CONTRACT_STATE = "confirmed" as const;
+
+/**
+ * Single origin verified from the official documentation. Environment
+ * variables still cannot expand this allowlist on their own.
+ */
+export const CONFIRMED_SEBPAY_API_ORIGINS: readonly string[] = Object.freeze([
+  "https://newapi.sebpay.bj",
+]);
 
 export type PaymentCurrency = "XAF";
 
@@ -80,10 +89,10 @@ export type SebPayEnvironment = "test" | "live";
 
 export interface SebPayFoundationConfig {
   readonly provider: typeof SEBPAY_PROVIDER_CODE;
-  readonly enabled: false;
+  readonly enabled: boolean;
   readonly pilotMode: boolean;
   readonly environment: SebPayEnvironment;
-  readonly contractConfirmed: false;
+  readonly contractConfirmed: true;
   readonly allowedApiOrigins: readonly string[];
 }
 
@@ -152,19 +161,12 @@ export function loadSebPayFoundationConfig(
   );
   const sebPayEnvironment = parseEnvironment(environment.SEBPAY_ENVIRONMENT);
 
-  if (enabled) {
-    throw new PaymentFoundationError(
-      "PAYMENT_PROVIDER_CONTRACT_UNCONFIRMED",
-      "SebPay cannot be enabled until its official merchant contract is verified and committed.",
-    );
-  }
-
   return Object.freeze({
     provider: SEBPAY_PROVIDER_CODE,
-    enabled: false,
+    enabled,
     pilotMode,
     environment: sebPayEnvironment,
-    contractConfirmed: false,
+    contractConfirmed: true,
     allowedApiOrigins: CONFIRMED_SEBPAY_API_ORIGINS,
   });
 }
