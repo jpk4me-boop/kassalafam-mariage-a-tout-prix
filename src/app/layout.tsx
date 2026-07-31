@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { FirstPartyAnalytics } from "@/components/analytics/first-party-analytics";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
+import { ScrollButtons } from "@/components/navigation/scroll-buttons";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -94,6 +95,8 @@ export default function RootLayout({
         <FirstPartyAnalytics />
         {/* Service worker PWA : page hors-ligne + cache des assets immuables. */}
         <ServiceWorkerRegistration />
+        {/* Boutons flottants « Vers le haut » / « Vers le bas » (toutes pages). */}
+        <ScrollButtons />
       </body>
     </html>
   );

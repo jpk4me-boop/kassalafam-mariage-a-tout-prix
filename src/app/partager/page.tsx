@@ -7,6 +7,7 @@ import { ArrowLeft, Download } from "lucide-react";
 
 import { getSiteUrl } from "@/lib/site-url";
 import { Logo } from "@/components/landing/logo";
+import { MemberDashboardLink } from "@/components/navigation/member-dashboard-link";
 import { ShareActions } from "@/components/share/share-actions";
 
 const APP_SHARE_TEXT =
@@ -31,18 +32,22 @@ export default function PartagerPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 py-8 sm:px-6 sm:py-12">
-      {/* En-tête */}
-      <div className="flex items-center justify-between gap-4">
+      {/* En-tête : Accueil + Tableau de bord (membres connectés uniquement,
+          détection client — la page reste statique). */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href="/" aria-label="Retour à l'accueil KASSALAFAM">
           <Logo className="[&_span]:text-base" />
         </Link>
-        <Link
-          href="/"
-          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-champagne-500/30 bg-cream-100/60 px-4 py-2 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-        >
-          <ArrowLeft size={16} />
-          <span className="hidden sm:inline">Accueil</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-champagne-500/30 bg-cream-100/60 px-4 py-2 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+          >
+            <ArrowLeft size={16} />
+            <span className="hidden sm:inline">Accueil</span>
+          </Link>
+          <MemberDashboardLink />
+        </div>
       </div>
 
       <header className="mt-8 text-center sm:mt-10">

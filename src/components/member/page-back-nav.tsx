@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Home, LayoutDashboard } from "lucide-react";
 
 /**
  * Navigation de retour pour les pages membres secondaires (L3C-B).
@@ -10,7 +10,8 @@ import { ArrowLeft, LayoutDashboard } from "lucide-react";
  * - « Retour » s'appuie sur l'historique du navigateur (router.back()), avec un
  *   repli sobre vers /dashboard lorsqu'il n'y a pas de page précédente dans
  *   l'onglet (accès direct par URL).
- * - « Dashboard » renvoie explicitement vers /dashboard.
+ * - « Accueil » renvoie vers la page d'accueil publique (/).
+ * - « Tableau de bord » renvoie explicitement vers /dashboard.
  *
  * Purement présentationnel : aucune logique d'auth, aucune requête.
  */
@@ -38,13 +39,22 @@ export function PageBackNav() {
         <ArrowLeft size={16} />
         Retour
       </button>
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 rounded-full border border-champagne-500/40 bg-cream-50/60 px-3.5 py-1.5 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15"
-      >
-        <LayoutDashboard size={15} />
-        Dashboard
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-champagne-500/40 bg-cream-50/60 px-3.5 py-1.5 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15"
+        >
+          <Home size={15} />
+          <span className="hidden sm:inline">Accueil</span>
+        </Link>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 rounded-full border border-champagne-500/40 bg-cream-50/60 px-3.5 py-1.5 text-sm font-medium text-choco-700 transition-colors hover:bg-champagne-400/15"
+        >
+          <LayoutDashboard size={15} />
+          <span className="hidden sm:inline">Tableau de bord</span>
+        </Link>
+      </div>
     </nav>
   );
 }
