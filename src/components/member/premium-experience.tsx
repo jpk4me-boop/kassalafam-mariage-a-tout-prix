@@ -107,21 +107,26 @@ const BENEFITS = [
   },
 ] as const;
 
+/*
+ * Formules alignées sur le catalogue premium seedé en production le
+ * 31/07/2026 (premium_1_mois / premium_3_mois / premium_6_mois).
+ * Toute évolution des prix passe par une migration du catalogue, puis
+ * une mise à jour ici et sur la landing (pricing.tsx).
+ */
 const DURATIONS = [
   {
-    name: "15 jours",
-    description: "Pour découvrir l’expérience Premium sur une courte période.",
-  },
-  {
     name: "1 mois",
+    price: "2 500 FCFA",
     description: "Une durée souple pour renforcer activement ta recherche.",
   },
   {
     name: "3 mois",
+    price: "6 000 FCFA",
     description: "Plus de temps pour construire des échanges sérieux.",
   },
   {
     name: "6 mois",
+    price: "10 000 FCFA",
     description: "Une démarche suivie pour avancer avec constance.",
   },
 ] as const;
@@ -140,7 +145,7 @@ const FAQS = [
   {
     question: "Quels seront les tarifs ?",
     answer:
-      "Les tarifs KASSALAFAM ne sont pas encore confirmés. Aucun montant affiché sur une autre plateforme ne constitue un tarif officiel KASSALAFAM.",
+      "Les tarifs officiels de lancement sont de 2 500 FCFA pour 1 mois, 6 000 FCFA pour 3 mois et 10 000 FCFA pour 6 mois. Aucun montant affiché sur une autre plateforme ne constitue un tarif officiel KASSALAFAM.",
   },
   {
     question: "L’abonnement sera-t-il renouvelé automatiquement ?",
@@ -398,12 +403,12 @@ export function PremiumExperience({
           </h2>
 
           <p className="mt-3 text-sm leading-6 text-ink-700/65">
-            Les durées sont présentées pour préparer l’interface. Les prix
-            officiels seront ajoutés uniquement après validation.
+            Trois formules officielles, sans renouvellement automatique.
+            L’ouverture des paiements sera annoncée avant toute souscription.
           </p>
         </div>
 
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {DURATIONS.map((duration) => (
             <article
               key={duration.name}
@@ -427,8 +432,8 @@ export function PremiumExperience({
                 {duration.description}
               </p>
 
-              <p className="relative mt-5 border-t border-champagne-500/20 pt-4 text-sm font-semibold text-champagne-700">
-                Tarif à confirmer
+              <p className="relative mt-5 border-t border-champagne-500/20 pt-4 text-lg font-semibold text-champagne-700">
+                {duration.price}
               </p>
             </article>
           ))}
