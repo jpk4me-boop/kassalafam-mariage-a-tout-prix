@@ -14,6 +14,7 @@
     "test:sebpay-foundation": "node --conditions=react-server --test scripts/sebpay-foundation.test.mjs",
     "test:sebpay-adapter": "node --conditions=react-server --test scripts/sebpay-adapter.test.mjs",
     "test:sebpay-webhook": "node --conditions=react-server --test scripts/sebpay-webhook.test.mjs",
+    "test:sebpay-checkout": "node --conditions=react-server --test scripts/sebpay-checkout.test.mjs",
     "test:promo-route": "node --test scripts/public-profile-promotion.test.mjs",
     "test:admin-profile-promotion-ui": "node --test scripts/admin-profile-promotion-ui.test.mjs",
     "test:pwa-offline": "node --test scripts/pwa-offline.test.mjs",

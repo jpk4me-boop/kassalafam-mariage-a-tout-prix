@@ -1,6 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
+import { loadSebPayFoundationConfig } from "@/lib/server/sebpay";
 import { PremiumExperience } from "@/components/member/premium-experience";
 import styles from "./premium-page.module.css";
+
+/**
+ * Phase 4 : le flag `paymentsOpen` est calculé côté serveur uniquement
+ * (drapeaux non secrets de la fondation SebPay). Configuration absente ou
+ * invalide = fermé — la page reste identique à l'existant.
+ */
+function arePaymentsOpen(): boolean {
+  try {
+    return loadSebPayFoundationConfig().enabled;
+  } catch {
+    return false;
+  }
+}
 
 export default async function PremiumPage() {
   const supabase = await createClient();
@@ -35,6 +49,7 @@ export default async function PremiumPage() {
         religion={
           religion as Parameters<typeof PremiumExperience>[0]["religion"]
         }
+        paymentsOpen={arePaymentsOpen()}
       />
     </div>
   );

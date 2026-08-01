@@ -58,6 +58,39 @@ documentation (new.sebpay.bj/fr/docs) and authenticated read-only API calls
   plan that allows it.
 - Tests: `npm run test:sebpay-webhook` (zero network access).
 
+## Phase 4 — member checkout on /premium
+
+- The checkout section renders ONLY when the server reports payments open
+  (`SEBPAY_PAYMENTS_ENABLED`); with payments closed (the default), `/premium`
+  is strictly unchanged. Public "payments open" copy remains a Phase 5 task.
+- Flow (Cameroon, no OTP screen): plan → operator (MTN/Orange) → number
+  `237XXXXXXXXX` → summary → "confirm on your phone" wait state with status
+  polling → result. The payer number is sent once to the collection call and
+  never persisted by KASSALAFAM.
+- `POST /api/premium/subscribe` (logic in
+  `src/lib/server/sebpay/checkout.ts`, fully unit-testable): authenticated
+  session required, 503 while payments are disabled (no secret read), 400 on
+  invalid input, 403 pilot restriction (checked BEFORE any write or network
+  call) or ineligible account, 409 active Premium / payment already in
+  flight, 502 provider failure.
+- `initiate_sebpay_payment_transaction` (SECURITY DEFINER, service_role
+  only) creates the `initiated` transaction BEFORE any SebPay call: active
+  account required, expired periods settled, one in-flight sebpay collection
+  per member, plan resolved by code (DB price is authoritative),
+  `external_reference` = `idempotency_key` = initial `provider_reference`.
+  Stale `initiated` rows (>15 min — they never reached SebPay, otherwise the
+  POST response would have moved them to `pending`) are auto-cancelled.
+- After `POST /collections`, the response status is linked through
+  `apply_sebpay_payment_update` (Phase 3), which also swaps
+  `provider_reference` to the SebPay `transaction_id`. On provider failure
+  the transaction is NEVER speculatively marked failed (a webhook may still
+  confirm the payment): webhook / reconciliation / auto-cancellation settle
+  it.
+- `GET /api/premium/transactions/[id]` polls `get_my_sebpay_transaction`
+  (authenticated, own transactions only) — no provider data, no phone number
+  exposed.
+- Tests: `npm run test:sebpay-checkout` (zero network access).
+
 ## Security invariants
 
 1. Environment variables cannot expand the API-origin allowlist by themselves.
