@@ -862,6 +862,29 @@ export type PaymentTransactionRow = {
   updated_at: string;
 };
 
+// SebPay Phase 3 — journal append-only des webhooks de paiement.
+export type PaymentWebhookEventRow = {
+  id: string;
+  provider: string;
+  provider_reference: string;
+  external_reference: string | null;
+  raw_status: string;
+  mapped_status: PaymentTransactionStatus;
+  amount_xaf: number | null;
+  currency: string | null;
+  processing_result: string;
+  transaction_id: string | null;
+  transaction_id_snapshot: string | null;
+  received_at: string;
+};
+
+// SebPay Phase 3 — résultat de la RPC apply_sebpay_payment_update.
+export type ApplySebPayPaymentUpdateResult = {
+  processing_result: string;
+  transaction_id: string | null;
+  subscription_id: string | null;
+};
+
 export type PremiumSubscriptionActionRow = {
   id: string;
   subscription_id: string | null;
@@ -1027,6 +1050,14 @@ export interface Database {
       };
       premium_subscription_actions: {
         Row: PremiumSubscriptionActionRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      // SebPay Phase 3 — journal append-only des webhooks (dédoublonnage des
+      // rejeux). Écritures exclusivement via apply_sebpay_payment_update.
+      payment_webhook_events: {
+        Row: PaymentWebhookEventRow;
         Insert: never;
         Update: never;
         Relationships: [];
@@ -1207,6 +1238,21 @@ export interface Database {
           p_actor_id: string;
         };
         Returns: PremiumSubscriptionRow;
+      };
+      // SebPay Phase 3 — transition autoritative d'une transaction annoncée
+      // par webhook signé ou réconciliation. Journal idempotent, états
+      // terminaux immuables ; active Premium via premium_subscriptions (la
+      // source de vérité), jamais is_premium direct. service_role uniquement.
+      apply_sebpay_payment_update: {
+        Args: {
+          p_provider_reference: string;
+          p_external_reference: string | null;
+          p_raw_status: string;
+          p_mapped_status: string;
+          p_amount_xaf: number | null;
+          p_currency: string | null;
+        };
+        Returns: ApplySebPayPaymentUpdateResult[];
       };
 
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).

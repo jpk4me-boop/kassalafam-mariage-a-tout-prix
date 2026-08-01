@@ -24,11 +24,39 @@ documentation (new.sebpay.bj/fr/docs) and authenticated read-only API calls
   the configured pilot numbers (`SEBPAY_PILOT_MTN_PHONE`,
   `SEBPAY_PILOT_ORANGE_PHONE`) — with no configured number, every payment is
   refused before any network call.
-- No webhook route is implemented yet (next phase): the documented signature
-  is `X-SebPay-Signature`, an HMAC-SHA256 of the JSON body computed with the
-  secret key; replays are possible and must be deduplicated by
-  `transaction_id`, and the endpoint must answer HTTP 200 within 5 seconds.
-- No Premium activation path is implemented yet (next phases).
+- Phase 3 delivered the webhook + activation machinery (see below). The
+  member-facing checkout flow on `/premium` remains for Phase 4.
+
+## Phase 3 — webhook, idempotent journal, Premium activation
+
+- `POST /api/webhooks/sebpay` (logic in `src/lib/server/sebpay/webhook.ts`,
+  fully unit-testable): 503 while payments are disabled (no secret read),
+  constant-time verification of `X-SebPay-Signature` (HMAC-SHA256 of the raw
+  body with the secret key; hex and base64 digest encodings both accepted —
+  the exact encoding is confirmed on the first pilot transaction), 401 on bad
+  signature, 400 on non-contractual payloads (unknown statuses fail closed),
+  200 within one SQL round-trip (well under the required 5 s), 500 on
+  persistence failure so SebPay retries.
+- `apply_sebpay_payment_update` (SECURITY DEFINER, service_role only) is the
+  single authoritative transition path: terminal transaction statuses are
+  immutable, `pending` only moves forward, `succeeded` requires an exact
+  amount/currency match, and every event is recorded in the append-only
+  `payment_webhook_events` journal (deduplicated per provider reference and
+  announced status; `customer_phone` is never persisted).
+- A successful payment activates Premium exclusively through
+  `premium_subscriptions` (source `payment`, provider ref = SebPay
+  `transaction_id`) plus a `payment_activated` action log entry —
+  `profiles.is_premium` is still only written by the sync trigger. Blocked
+  activations (missing/suspended profile, already-active Premium) mark the
+  transaction `succeeded` but create no subscription; the journal records the
+  blocked result for admin resolution.
+- `GET /api/cron/reconcile-sebpay` (Bearer `CRON_SECRET`, daily via
+  `vercel.json`) is the fallback path: it polls
+  `GET /collections/{external_reference}` for stale `initiated`/`pending`
+  transactions and applies the same RPC. It is a no-op while payments are
+  disabled. The schedule can be tightened (e.g. `*/15 * * * *`) on a Vercel
+  plan that allows it.
+- Tests: `npm run test:sebpay-webhook` (zero network access).
 
 ## Security invariants
 
