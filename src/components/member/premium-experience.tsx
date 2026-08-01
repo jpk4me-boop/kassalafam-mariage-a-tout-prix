@@ -23,6 +23,7 @@ import {
 
 import type { Gender, Religion } from "@/lib/types/database";
 import { getPremiumHeroCopy } from "@/lib/premium/hero-copy";
+import { PremiumCheckout } from "@/components/member/premium-checkout";
 
 const BENEFITS = [
   {
@@ -115,16 +116,19 @@ const BENEFITS = [
  */
 const DURATIONS = [
   {
+    code: "premium_1_mois",
     name: "1 mois",
     price: "2 500 FCFA",
     description: "Une durée souple pour renforcer activement ta recherche.",
   },
   {
+    code: "premium_3_mois",
     name: "3 mois",
     price: "6 000 FCFA",
     description: "Plus de temps pour construire des échanges sérieux.",
   },
   {
+    code: "premium_6_mois",
     name: "6 mois",
     price: "10 000 FCFA",
     description: "Une démarche suivie pour avancer avec constance.",
@@ -191,12 +195,19 @@ type PremiumExperienceProps = {
   firstName?: string | null;
   gender?: Gender | null;
   religion?: Religion | null;
+  /**
+   * Phase 4 : le parcours de souscription n'est rendu que lorsque le serveur
+   * annonce les paiements ouverts (SEBPAY_PAYMENTS_ENABLED). Par défaut
+   * false : la page reste strictement identique tant que SebPay est fermé.
+   */
+  paymentsOpen?: boolean;
 };
 
 export function PremiumExperience({
   firstName,
   gender,
   religion,
+  paymentsOpen = false,
 }: PremiumExperienceProps) {
   const copy = getPremiumHeroCopy({ firstName, gender, religion });
 
@@ -439,6 +450,8 @@ export function PremiumExperience({
           ))}
         </div>
       </section>
+
+      {paymentsOpen && <PremiumCheckout plans={DURATIONS} />}
 
       <section className="grid gap-5 lg:grid-cols-2">
         <article className="rounded-3xl border border-champagne-500/30 bg-gradient-to-br from-choco-800 to-choco-700 p-6 text-cream-50 shadow-card sm:p-8">

@@ -885,6 +885,27 @@ export type ApplySebPayPaymentUpdateResult = {
   subscription_id: string | null;
 };
 
+// SebPay Phase 4 — résultat de la RPC initiate_sebpay_payment_transaction.
+export type InitiateSebPayPaymentTransactionResult = {
+  transaction_id: string;
+  idempotency_key: string;
+  amount_xaf: number;
+  plan_code: string;
+  plan_display_name: string;
+  duration_days: number;
+};
+
+// SebPay Phase 4 — résultat de la RPC get_my_sebpay_transaction.
+export type GetMySebPayTransactionResult = {
+  status: PaymentTransactionStatus;
+  failure_code: string | null;
+  subscription_id: string | null;
+  amount_xaf: number;
+  plan_code: string;
+  requested_at: string;
+  completed_at: string | null;
+};
+
 export type PremiumSubscriptionActionRow = {
   id: string;
   subscription_id: string | null;
@@ -1253,6 +1274,25 @@ export interface Database {
           p_currency: string | null;
         };
         Returns: ApplySebPayPaymentUpdateResult[];
+      };
+      // SebPay Phase 4 — création autoritative d'une transaction `initiated`
+      // AVANT l'appel SebPay (compte actif, plan disponible, pas de premium
+      // actif, une seule collecte en vol). service_role uniquement, appelée
+      // par la route serveur après authentification.
+      initiate_sebpay_payment_transaction: {
+        Args: {
+          p_profile_id: string;
+          p_plan_code: string;
+        };
+        Returns: InitiateSebPayPaymentTransactionResult[];
+      };
+      // SebPay Phase 4 — statut de SA transaction pour le membre connecté
+      // (polling du parcours). Identité via auth.uid() côté serveur.
+      get_my_sebpay_transaction: {
+        Args: {
+          p_transaction_id: string;
+        };
+        Returns: GetMySebPayTransactionResult[];
       };
 
       // L3E-PR1 — envoi contrôlé d'un message (seul chemin d'écriture ; match accepté).
