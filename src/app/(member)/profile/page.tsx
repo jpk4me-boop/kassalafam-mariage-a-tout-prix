@@ -5,20 +5,40 @@ import { Loader2, ShieldCheck } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import type {
+  ChildrenIntent,
+  EducationLevel,
   Gender,
   MaritalStatus,
+  MarriageGoal,
+  PartnerTrait,
+  PolygamyPreference,
   ProfileInsert,
   ProfileRow,
   ProfileVerificationStatus,
   Religion,
 } from "@/lib/types/database";
-import { RELIGION_OPTIONS } from "@/lib/onboarding/options";
+import {
+  CHILDREN_INTENT_OPTIONS,
+  CHOICE_SET_MAX,
+  CHOICE_SET_MIN,
+  EDUCATION_LEVEL_OPTIONS,
+  HEIGHT_MAX_CM,
+  HEIGHT_MIN_CM,
+  MARRIAGE_GOAL_OPTIONS,
+  PARTNER_TRAIT_OPTIONS,
+  POLYGAMY_PREFERENCE_OPTIONS,
+  PROFESSION_MAX,
+  REGION_MAX,
+  RELIGION_OPTIONS,
+} from "@/lib/onboarding/options";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
 import { CountryCityFields } from "@/components/profile/country-city-fields";
 import { ProfilePhotos } from "@/components/member/profile-photos";
 import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
 import { ProfilePromotionConsentCard } from "@/components/member/profile-promotion-consent-card";
+import { ChoiceCard } from "@/components/onboarding/choice-card";
+import { MultiChoiceChips } from "@/components/onboarding/multi-choice-chips";
 import {
   FormError,
   FormSuccess,
@@ -48,6 +68,14 @@ function getAdultBirthDateMax(): string {
 
 const ADULT_BIRTH_DATE_MAX = getAdultBirthDateMax();
 
+/**
+ * Le formulaire restitue TOUTES les informations recueillies pendant les
+ * 8 étapes de l'inscription — y compris celles qui n'étaient jusqu'ici
+ * visibles nulle part après coup (profession, études, taille, région,
+ * objectifs de mariage, qualités recherchées, polygamie, projet d'enfants).
+ * Mêmes libellés, mêmes composants et mêmes bornes que le wizard : les
+ * options viennent de `@/lib/onboarding/options`, miroir des CHECK en base.
+ */
 type FormState = {
   first_name: string;
   gender: "" | Gender;
@@ -56,8 +84,16 @@ type FormState = {
   origin_city: string;
   country: string;
   city: string;
+  region: string;
   marital_status: "" | MaritalStatus;
   religion: "" | Religion;
+  profession: string;
+  education_level: "" | EducationLevel;
+  height_cm: string;
+  marriage_goals: MarriageGoal[];
+  desired_partner_traits: PartnerTrait[];
+  polygamy_preference: "" | PolygamyPreference;
+  children_intent: "" | ChildrenIntent;
   bio: string;
   partner_expectations: string;
   blur_photos: boolean;
@@ -71,12 +107,26 @@ const EMPTY_FORM: FormState = {
   origin_city: "",
   country: "",
   city: "",
+  region: "",
   marital_status: "",
   religion: "",
+  profession: "",
+  education_level: "",
+  height_cm: "",
+  marriage_goals: [],
+  desired_partner_traits: [],
+  polygamy_preference: "",
+  children_intent: "",
   bio: "",
   partner_expectations: "",
   blur_photos: true,
 };
+
+/** Miroir de `profiles_valid_choice_set(..., 2, 3)` : vide OU 2 à 3 valeurs. */
+function isChoiceSetAcceptable(values: readonly string[]): boolean {
+  if (values.length === 0) return true;
+  return values.length >= CHOICE_SET_MIN && values.length <= CHOICE_SET_MAX;
+}
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -120,8 +170,17 @@ export default function ProfilePage() {
           origin_city: profile.origin_city ?? "",
           country: profile.country ?? "",
           city: profile.city ?? "",
+          region: profile.region ?? "",
           marital_status: profile.marital_status ?? "",
           religion: profile.religion ?? "",
+          profession: profile.profession ?? "",
+          education_level: profile.education_level ?? "",
+          height_cm:
+            profile.height_cm != null ? String(profile.height_cm) : "",
+          marriage_goals: profile.marriage_goals ?? [],
+          desired_partner_traits: profile.desired_partner_traits ?? [],
+          polygamy_preference: profile.polygamy_preference ?? "",
+          children_intent: profile.children_intent ?? "",
           bio: profile.bio ?? "",
           partner_expectations: profile.partner_expectations ?? "",
           blur_photos: profile.blur_photos ?? true,
@@ -176,6 +235,53 @@ export default function ProfilePage() {
       return;
     }
 
+    // Taille : miroir du CHECK `profiles_height_cm_chk` (120..230). Le champ
+    // vide reste accepté pour les profils historiques.
+    const heightRaw = form.height_cm.trim();
+    let heightValue: number | null = null;
+
+    if (heightRaw !== "") {
+      const parsed = Number(heightRaw);
+
+      if (
+        !Number.isInteger(parsed) ||
+        parsed < HEIGHT_MIN_CM ||
+        parsed > HEIGHT_MAX_CM
+      ) {
+        setError(
+          `Merci d’indiquer une taille comprise entre ${HEIGHT_MIN_CM} et ${HEIGHT_MAX_CM} cm.`,
+        );
+        return;
+      }
+
+      heightValue = parsed;
+    }
+
+    // Listes de choix : miroir du CHECK base (vide, ou 2 à 3 valeurs uniques).
+    if (!isChoiceSetAcceptable(form.marriage_goals)) {
+      setError(
+        `Merci de sélectionner ${CHOICE_SET_MIN} à ${CHOICE_SET_MAX} objectifs de mariage.`,
+      );
+      return;
+    }
+    if (!isChoiceSetAcceptable(form.desired_partner_traits)) {
+      setError(
+        `Merci de sélectionner ${CHOICE_SET_MIN} à ${CHOICE_SET_MAX} qualités recherchées.`,
+      );
+      return;
+    }
+
+    // Après finalisation, le projet matrimonial ne peut plus redevenir
+    // silencieusement incomplet — même esprit que la garde pays / ville.
+    if (onboardingDone && form.marriage_goals.length === 0) {
+      setError("Merci d’indiquer vos objectifs de mariage.");
+      return;
+    }
+    if (onboardingDone && form.desired_partner_traits.length === 0) {
+      setError("Merci d’indiquer les qualités recherchées.");
+      return;
+    }
+
     setSaving(true);
     const supabase = createClient();
     const {
@@ -201,7 +307,22 @@ export default function ProfilePage() {
       // ci-dessus). Parcours non finalisé : comportement historique.
       country: form.country.trim() || null,
       city: form.city.trim() || null,
+      region: form.region.trim() || null,
       marital_status: form.marital_status || null,
+      // Étapes 5 et 7 de l'inscription, désormais restituées et modifiables.
+      // Compatibilité douce : jamais de chaîne vide ni de liste vide — NULL
+      // tant qu'un profil historique ne les a pas renseignées.
+      profession: form.profession.trim() || null,
+      education_level: form.education_level || null,
+      height_cm: heightValue,
+      marriage_goals:
+        form.marriage_goals.length > 0 ? form.marriage_goals : null,
+      desired_partner_traits:
+        form.desired_partner_traits.length > 0
+          ? form.desired_partner_traits
+          : null,
+      polygamy_preference: form.polygamy_preference || null,
+      children_intent: form.children_intent || null,
       // Compatibilité douce (PR B religion) : jamais de chaîne vide — NULL
       // tant qu'un profil historique ne l'a pas renseignée. Une fois choisie,
       // la valeur appartient forcément aux quatre autorisées (CHECK en base).
@@ -371,6 +492,91 @@ export default function ProfilePage() {
             disabled={saving}
             idPrefix="profile-geo"
           />
+
+          {/* Région / zone : champ libre de l'étape 6, rattaché à la
+              résidence — jusqu'ici saisi à l'inscription mais invisible
+              ensuite. */}
+          <div>
+            <Label htmlFor="region">Région / zone</Label>
+            <Input
+              id="region"
+              name="region"
+              type="text"
+              maxLength={REGION_MAX}
+              placeholder="Par exemple : Littoral, Ouest, Île-de-France…"
+              value={form.region}
+              onChange={(e) => update("region", e.target.value)}
+              disabled={saving}
+            />
+          </div>
+        </fieldset>
+
+        {/* PROFESSION ET PARCOURS — étape 5 de l'inscription. */}
+        <fieldset className="flex flex-col gap-5">
+          <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
+            Profession et parcours
+          </legend>
+
+          <div>
+            <Label htmlFor="profession">Profession</Label>
+            <Input
+              id="profession"
+              name="profession"
+              type="text"
+              maxLength={PROFESSION_MAX}
+              placeholder="Par exemple : enseignante, ingénieur, commerçant…"
+              value={form.profession}
+              onChange={(e) => update("profession", e.target.value)}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="education_level">Niveau d’études</Label>
+              <Select
+                id="education_level"
+                name="education_level"
+                value={form.education_level}
+                onChange={(e) =>
+                  update(
+                    "education_level",
+                    e.target.value as "" | EducationLevel,
+                  )
+                }
+                disabled={saving}
+              >
+                <option value="" disabled>
+                  Sélectionner…
+                </option>
+                {EDUCATION_LEVEL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="height_cm">Taille (cm)</Label>
+              <Input
+                id="height_cm"
+                name="height_cm"
+                type="number"
+                inputMode="numeric"
+                min={HEIGHT_MIN_CM}
+                max={HEIGHT_MAX_CM}
+                step={1}
+                placeholder="Par exemple : 172"
+                value={form.height_cm}
+                onChange={(e) => update("height_cm", e.target.value)}
+                disabled={saving}
+              />
+              <p className="mt-1.5 text-xs text-ink-700/55">
+                Entre {HEIGHT_MIN_CM} et {HEIGHT_MAX_CM} cm.
+              </p>
+            </div>
+          </div>
         </fieldset>
 
         <div>
@@ -438,6 +644,70 @@ export default function ProfilePage() {
             La plateforme est dédiée aux projets de mariage sincères.
           </p>
         </div>
+
+        {/* PROJET MATRIMONIAL — étape 7 de l'inscription : objectifs,
+            qualités recherchées, polygamie et projet d'enfants, désormais
+            restitués et modifiables. Mêmes composants et mêmes bornes que le
+            wizard (2 à 3 choix par liste). */}
+        <fieldset className="flex flex-col gap-5">
+          <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
+            Projet matrimonial
+          </legend>
+
+          <MultiChoiceChips
+            legend="Vos objectifs de mariage"
+            options={MARRIAGE_GOAL_OPTIONS}
+            values={form.marriage_goals}
+            onChange={(next) => update("marriage_goals", next)}
+            disabled={saving}
+          />
+
+          <MultiChoiceChips
+            legend="Qualités recherchées"
+            options={PARTNER_TRAIT_OPTIONS}
+            values={form.desired_partner_traits}
+            onChange={(next) => update("desired_partner_traits", next)}
+            disabled={saving}
+          />
+
+          <div>
+            <Label>Positionnement sur la polygamie</Label>
+            <div
+              role="radiogroup"
+              aria-label="Positionnement sur la polygamie"
+              className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"
+            >
+              {POLYGAMY_PREFERENCE_OPTIONS.map((option) => (
+                <ChoiceCard
+                  key={option.value}
+                  selected={form.polygamy_preference === option.value}
+                  onSelect={() => update("polygamy_preference", option.value)}
+                  disabled={saving}
+                  title={option.label}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label>Projet d’enfants</Label>
+            <div
+              role="radiogroup"
+              aria-label="Projet d'enfants"
+              className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+            >
+              {CHILDREN_INTENT_OPTIONS.map((option) => (
+                <ChoiceCard
+                  key={option.value}
+                  selected={form.children_intent === option.value}
+                  onSelect={() => update("children_intent", option.value)}
+                  disabled={saving}
+                  title={option.label}
+                />
+              ))}
+            </div>
+          </div>
+        </fieldset>
 
         <div>
           <Label htmlFor="bio">Présentation</Label>
