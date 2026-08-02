@@ -14,6 +14,8 @@ const [
   sharePhotoRoute,
   promoPhotoRoute,
   showcaseCard,
+  promoPage,
+  promoConsentCard,
 ] = await Promise.all([
   readFile("src/app/candidats/[slug]/photo/route.ts", "utf8"),
   readFile("src/app/candidats/[slug]/page.tsx", "utf8"),
@@ -21,9 +23,11 @@ const [
   readFile("src/app/p/[token]/photo/route.ts", "utf8"),
   readFile("src/app/promo/[token]/photo/route.ts", "utf8"),
   readFile("src/components/member/candidate-showcase-card.tsx", "utf8"),
+  readFile("src/app/promo/[token]/page.tsx", "utf8"),
+  readFile("src/components/member/profile-promotion-consent-card.tsx", "utf8"),
 ]);
 
-/** Extrait le corps d'un objet d'en-têtes, hors commentaires alentour. */
+/** Extrait le corps d'un objet d'en-têtes. */
 function headersBlock(source, constName) {
   const start = source.indexOf(`const ${constName}`);
   assert.notEqual(start, -1, `bloc introuvable : ${constName}`);
@@ -32,15 +36,24 @@ function headersBlock(source, constName) {
   return source.slice(start, end);
 }
 
+/**
+ * Valeur EXACTE d'un en-tête, commentaires ignorés.
+ *
+ * Vérifier la présence d'un mot dans tout le bloc est un piège : un
+ * commentaire expliquant « `noarchive` retiré » ferait échouer l'assertion.
+ * On lit donc la valeur déclarée, jamais le texte alentour.
+ */
+function headerValue(block, name) {
+  return block.match(new RegExp(`"${name}": "([^"]*)"`))?.[1] ?? null;
+}
+
 test("la photo de vitrine est récupérable par les robots sociaux", () => {
   const base = headersBlock(showcasePhotoRoute, "BASE_HEADERS");
 
-  assert.match(base, /"Cache-Control": "public/);
-  assert.match(base, /"Cross-Origin-Resource-Policy": "cross-origin"/);
-  // Aucun X-Robots-Tag sur la réponse 200 : c'est `noarchive` qui empêchait
-  // les plateformes sociales de constituer l'aperçu.
-  assert.doesNotMatch(base, /X-Robots-Tag/);
-  assert.doesNotMatch(base, /no-store/);
+  assert.match(headerValue(base, "Cache-Control") ?? "", /^public/);
+  assert.equal(headerValue(base, "Cross-Origin-Resource-Policy"), "cross-origin");
+  // La vitrine est indexable : aucune directive robots ne restreint sa photo.
+  assert.equal(headerValue(base, "X-Robots-Tag"), null);
 });
 
 test("les 404 de vitrine restent non cachables et non archivables", () => {
@@ -49,24 +62,52 @@ test("les 404 de vitrine restent non cachables et non archivables", () => {
   assert.match(showcasePhotoRoute, /headers: NOT_FOUND_HEADERS/);
 });
 
-test("les partages PRIVÉS gardent leur verrouillage : jamais de cache, jamais d'archive", () => {
-  for (const [name, source] of [
-    ["/p/[token]/photo", sharePhotoRoute],
-    ["/promo/[token]/photo", promoPhotoRoute],
-  ]) {
-    const base = headersBlock(source, "BASE_HEADERS");
+test("le partage DISCRET /p garde son verrouillage intégral", () => {
+  // Ce lien n'est PAS destiné aux réseaux sociaux : il se transmet de la main
+  // à la main. Ni cache, ni archive, ni chargement depuis une autre origine.
+  const base = headersBlock(sharePhotoRoute, "BASE_HEADERS");
 
-    assert.match(base, /no-store/, `${name} : cache privé perdu`);
-    assert.match(base, /noarchive/, `${name} : noarchive perdu`);
-    assert.match(base, /noindex/, `${name} : noindex perdu`);
-  }
+  assert.match(base, /no-store/);
+  assert.match(base, /noarchive/);
+  assert.match(base, /noindex/);
+  assert.match(base, /"Cross-Origin-Resource-Policy": "same-origin"/);
 });
 
-test("le lien privé /p reste inutilisable depuis une autre origine", () => {
-  // Contrairement à /promo (destiné aux réseaux sociaux) et à la vitrine,
-  // le lien de partage discret /p ne doit jamais être embarquable ailleurs.
-  const base = headersBlock(sharePhotoRoute, "BASE_HEADERS");
-  assert.match(base, /"Cross-Origin-Resource-Policy": "same-origin"/);
+test("la promotion est partageable sur les réseaux mais reste hors des moteurs", () => {
+  const base = headersBlock(promoPhotoRoute, "BASE_HEADERS");
+
+  // Partageable : cache public court et chargement cross-origin autorisé.
+  assert.match(headerValue(base, "Cache-Control") ?? "", /^public/);
+  assert.equal(headerValue(base, "Cross-Origin-Resource-Policy"), "cross-origin");
+  // Jamais référencée, mais plus de `noarchive` : c'est lui qui empêchait
+  // les plateformes sociales de constituer l'aperçu.
+  assert.equal(headerValue(base, "X-Robots-Tag"), "noindex");
+});
+
+test("les 404 de promotion restent non cachables et non archivables", () => {
+  const notFound = headersBlock(promoPhotoRoute, "NOT_FOUND_HEADERS");
+
+  assert.match(notFound, /no-store/);
+  assert.match(notFound, /noarchive/);
+  assert.match(notFound, /"Cross-Origin-Resource-Policy": "same-origin"/);
+  assert.match(promoPhotoRoute, /headers: NOT_FOUND_HEADERS/);
+});
+
+test("la page de promotion reste invisible des moteurs de recherche", () => {
+  assert.match(
+    promoPage,
+    /robots: \{ index: false, follow: false, noarchive: true \}/,
+  );
+});
+
+test("la promotion déclare les dimensions de son aperçu", () => {
+  assert.match(promoPage, /width: 1200/);
+  assert.match(promoPage, /height: 630/);
+});
+
+test("le consentement promotionnel annonce la persistance des caches sociaux", () => {
+  assert.match(promoConsentCard, /cache de ce réseau/);
+  assert.match(promoConsentCard, /cesse immédiatement de fonctionner/);
 });
 
 test("la page profil déclare les dimensions de l'aperçu", () => {

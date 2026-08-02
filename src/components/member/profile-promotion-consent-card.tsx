@@ -22,7 +22,7 @@ const BUCKET = "profile-photos";
 const SIGNED_URL_TTL = 3600;
 
 const CONSENT_TEXT =
-  "J’autorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications.";
+  "J’autorise KASSALAFAM à utiliser la photo que je sélectionne et une présentation limitée de mon profil à des fins de promotion de la plateforme sur les réseaux sociaux que je choisis, pendant la durée indiquée. Je peux retirer cette autorisation à tout moment pour les nouvelles publications. Je comprends qu’une publication déjà partagée, ainsi que l’image qu’un réseau social a déjà récupérée, peuvent subsister quelques jours dans le cache de ce réseau après l’expiration ou le retrait — le lien, lui, cesse immédiatement de fonctionner.";
 
 const CHANNEL_OPTIONS: {
   value: ProfilePromotionChannel;

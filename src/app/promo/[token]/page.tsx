@@ -60,10 +60,14 @@ export async function generateMetadata({
       siteName: "KASSALAFAM — Mariage à Tout Prix",
       locale: "fr_FR",
       type: "website",
+      // Dimensions déclarées : sans elles, le robot social doit télécharger
+      // puis mesurer l'image et renonce fréquemment, laissant une URL nue.
       images: profile
         ? [
             {
               url: photoUrl,
+              width: 1200,
+              height: 630,
               alt: `Photo de ${profile.firstName ?? "membre KASSALAFAM"}`,
             },
           ]
