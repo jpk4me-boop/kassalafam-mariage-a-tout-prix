@@ -104,78 +104,84 @@ type CardState =
   | { kind: "loading" }
   | { kind: "ready"; status: ShowcaseStatus };
 
-export function CandidateShowcaseCard() {
-  const [state, setState] = useState<CardState>({ kind: "loading" });
-  const [photos, setPhotos] = useState<PhotoOption[]>([]);
-  const [selectedPhotoId, setSelectedPhotoId] = useState("");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+/** Résultat d'un chargement : données brutes, AUCUN état React touché. */
+type LoadedShowcase = {
+  photos: PhotoOption[];
+  status: ShowcaseStatus;
+  error: string | null;
+};
 
-  const load = useCallback(async () => {
-    const supabase = createClient();
+/**
+ * Récupération PURE de l'état de vitrine — volontairement définie hors du
+ * composant et sans aucun `setState` : l'effet se contente d'appliquer le
+ * résultat dans un callback de promesse, jamais dans son corps synchrone
+ * (règle `react-hooks/set-state-in-effect`, qui protège des rendus en
+ * cascade).
+ */
+async function fetchShowcaseState(): Promise<LoadedShowcase> {
+  const supabase = createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      setState({ kind: "ready", status: emptyStatus() });
-      setError("Votre session a expiré. Veuillez vous reconnecter.");
-      return;
-    }
+  if (!user) {
+    return {
+      photos: [],
+      status: emptyStatus(),
+      error: "Votre session a expiré. Veuillez vous reconnecter.",
+    };
+  }
 
-    const [photosResult, statusResult] = await Promise.all([
-      supabase
-        .from("photos")
-        .select("id, storage_path, is_primary")
-        .eq("profile_id", user.id)
-        .order("is_primary", { ascending: false })
-        .order("created_at", { ascending: true }),
-      supabase.rpc("get_my_candidate_showcase_status"),
-    ]);
+  const [photosResult, statusResult] = await Promise.all([
+    supabase
+      .from("photos")
+      .select("id, storage_path, is_primary")
+      .eq("profile_id", user.id)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: true }),
+    supabase.rpc("get_my_candidate_showcase_status"),
+  ]);
 
-    if (photosResult.error) {
-      setError("Impossible de charger vos photos. Réessayez.");
-    }
+  const photoRows = photosResult.data ?? [];
+  const urlByPath = new Map<string, string>();
 
-    const photoRows = photosResult.data ?? [];
-    const urlByPath = new Map<string, string>();
+  if (photoRows.length > 0) {
+    const { data: signedRows } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrls(
+        photoRows.map((photo) => photo.storage_path),
+        SIGNED_URL_TTL,
+      );
 
-    if (photoRows.length > 0) {
-      const { data: signedRows } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrls(
-          photoRows.map((photo) => photo.storage_path),
-          SIGNED_URL_TTL,
-        );
-
-      for (const signed of signedRows ?? []) {
-        if (signed.path && signed.signedUrl) {
-          urlByPath.set(signed.path, signed.signedUrl);
-        }
+    for (const signed of signedRows ?? []) {
+      if (signed.path && signed.signedUrl) {
+        urlByPath.set(signed.path, signed.signedUrl);
       }
     }
+  }
 
-    const loadedPhotos: PhotoOption[] = photoRows.map((photo) => ({
-      id: photo.id,
-      signedUrl: urlByPath.get(photo.storage_path) ?? null,
-      isPrimary: photo.is_primary,
-    }));
+  const photos: PhotoOption[] = photoRows.map((photo) => ({
+    id: photo.id,
+    signedUrl: urlByPath.get(photo.storage_path) ?? null,
+    isPrimary: photo.is_primary,
+  }));
 
-    setPhotos(loadedPhotos);
+  if (statusResult.error) {
+    return {
+      photos,
+      status: emptyStatus(),
+      error: "Impossible de charger votre statut de vitrine.",
+    };
+  }
 
-    if (statusResult.error) {
-      setState({ kind: "ready", status: emptyStatus() });
-      setError("Impossible de charger votre statut de vitrine.");
-      return;
-    }
+  const row = Array.isArray(statusResult.data)
+    ? statusResult.data[0]
+    : statusResult.data;
 
-    const row = Array.isArray(statusResult.data)
-      ? statusResult.data[0]
-      : statusResult.data;
-
-    const status: ShowcaseStatus = row
+  return {
+    photos,
+    status: row
       ? {
           consentActive: Boolean(row.consent_active),
           publicSlug: row.public_slug ?? null,
@@ -184,21 +190,46 @@ export function CandidateShowcaseCard() {
           publishedAt: row.published_at ?? null,
           eligibilityReason: row.eligibility_reason ?? null,
         }
-      : emptyStatus();
+      : emptyStatus(),
+    error: photosResult.error
+      ? "Impossible de charger vos photos. Réessayez."
+      : null,
+  };
+}
 
+export function CandidateShowcaseCard() {
+  const [state, setState] = useState<CardState>({ kind: "loading" });
+  const [photos, setPhotos] = useState<PhotoOption[]>([]);
+  const [selectedPhotoId, setSelectedPhotoId] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  /** Application du résultat à l'état React — jamais appelée dans le corps
+   *  synchrone d'un effet. */
+  const applyLoaded = useCallback((loaded: LoadedShowcase) => {
+    setPhotos(loaded.photos);
     setSelectedPhotoId(
-      status.selectedPhotoId ??
-        loadedPhotos.find((photo) => photo.isPrimary)?.id ??
-        loadedPhotos[0]?.id ??
+      loaded.status.selectedPhotoId ??
+        loaded.photos.find((photo) => photo.isPrimary)?.id ??
+        loaded.photos[0]?.id ??
         "",
     );
-
-    setState({ kind: "ready", status });
+    setError(loaded.error);
+    setState({ kind: "ready", status: loaded.status });
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let mounted = true;
+
+    void fetchShowcaseState().then((loaded) => {
+      if (mounted) applyLoaded(loaded);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [applyLoaded]);
 
   async function runRpc(
     action: "grant" | "withdraw" | "publish" | "unpublish",
@@ -230,19 +261,22 @@ export function CandidateShowcaseCard() {
     }
 
     if (rpcError) {
+      // Le statut peut avoir changé côté base : on le relit dans tous les cas,
+      // puis on réaffiche le message d'échec (applyLoaded remet `error` à jour).
+      const loaded = await fetchShowcaseState();
+      applyLoaded(loaded);
       setPending(false);
       setError(
         action === "publish"
           ? "La publication n’a pas abouti. Vérifiez les conditions ci-dessus et réessayez."
           : "L’opération n’a pas abouti. Réessayez.",
       );
-      // Le statut peut avoir changé côté base : on le relit dans tous les cas.
-      await load();
       return;
     }
 
     // La base reste l'autorité : on relit le statut plutôt que de le deviner.
-    await load();
+    const loaded = await fetchShowcaseState();
+    applyLoaded(loaded);
     setPending(false);
 
     setNotice(

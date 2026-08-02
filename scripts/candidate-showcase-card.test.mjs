@@ -81,8 +81,22 @@ test("le frein du floutage est expliqué avec l'action à faire", () => {
 test("la base reste l'autorité : le statut est relu après chaque action", () => {
   // Aucun état deviné côté client après une RPC.
   assert.match(card, /\/\/ La base reste l'autorité/);
-  const reloads = card.match(/await load\(\);/g) ?? [];
+  const reloads = card.match(/await fetchShowcaseState\(\);/g) ?? [];
   assert.ok(reloads.length >= 2, "le statut doit être relu après chaque RPC");
+});
+
+test("aucun setState n'est appelé dans le corps d'un effet", () => {
+  // La récupération est PURE et définie hors du composant ; l'effet applique
+  // le résultat dans un callback de promesse (react-hooks/set-state-in-effect).
+  assert.match(card, /async function fetchShowcaseState\(\): Promise<LoadedShowcase>/);
+  assert.match(card, /\.then\(\(loaded\) => \{/);
+  assert.match(card, /if \(mounted\) applyLoaded\(loaded\)/);
+  // fetchShowcaseState ne doit toucher aucun état React.
+  const fetcher = card.slice(
+    card.indexOf("async function fetchShowcaseState"),
+    card.indexOf("export function CandidateShowcaseCard"),
+  );
+  assert.doesNotMatch(fetcher, /setState|setPhotos|setError|setSelectedPhotoId/);
 });
 
 test("le publier est verrouillé tant que la base ne dit pas éligible", () => {

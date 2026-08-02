@@ -83,6 +83,19 @@ test("la page liste a enfin une image d'aperçu, générique", () => {
   assert.doesNotMatch(showcaseListPage, /\/photo"/);
 });
 
+test("le titre et la description reprennent la formulation validée sur Facebook", () => {
+  // Même patron que les liens de promotion, dont l'aperçu a fait ses preuves.
+  assert.match(showcaseProfilePage, /profil mariage sérieux — KASSALAFAM/);
+  assert.match(showcaseProfilePage, /Découvrez \$\{candidate\.firstName\}/);
+  assert.match(showcaseProfilePage, /présenté avec son autorisation/);
+  assert.match(
+    showcaseProfilePage,
+    /plateforme de mariage sérieuse et confidentielle/,
+  );
+  // La ville citée est la RÉSIDENCE, seule donnée géographique publique.
+  assert.match(showcaseProfilePage, /ans à \$\{candidate\.city\}/);
+});
+
 test("le consentement annonce la contrepartie du cache externe", () => {
   assert.match(showcaseCard, /moteurs de recherche/);
   assert.match(showcaseCard, /leur propre cache/);

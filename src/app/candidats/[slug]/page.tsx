@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 
 import { Logo } from "@/components/landing/logo";
 import { PublicCandidateProfile } from "@/components/showcase/public-candidate-profile";
-import { candidateUniverseLabel } from "@/lib/showcase/labels";
 import {
   getPublicCandidateShowcase,
   isPublicCandidateSlug,
@@ -38,8 +37,13 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${candidate.firstName}, ${candidate.age} ans — Profil vérifié | KASSALAFAM`;
-  const description = `${candidate.firstName}, ${candidate.age} ans, à ${candidate.city}. ${candidateUniverseLabel(candidate.universe)} et projet de mariage sérieux sur KASSALAFAM.`;
+  // Formulation alignée sur celle des liens de promotion `/promo/[token]`,
+  // validée en publication réelle sur Facebook : le prénom porte le titre, et
+  // la description rappelle le consentement et le positionnement de la
+  // plateforme. La ville citée est celle de RÉSIDENCE, la seule exposée
+  // publiquement — afin que l'aperçu et la page disent la même chose.
+  const title = `${candidate.firstName}, profil mariage sérieux — KASSALAFAM`;
+  const description = `Découvrez ${candidate.firstName}, ${candidate.age} ans à ${candidate.city}, présenté avec son autorisation sur KASSALAFAM, la plateforme de mariage sérieuse et confidentielle. Trouvez la personne avec qui construire votre foyer.`;
   const canonical = `/candidats/${candidate.slug}`;
   const photo = `${canonical}/photo`;
 
