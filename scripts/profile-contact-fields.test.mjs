@@ -96,3 +96,14 @@ test("le back-office affiche les deux champs pour le suivi des membres", () => {
   assert.match(adminMemberPage, /label="Nom" value=\{profile\.last_name/);
   assert.match(adminMemberPage, /label="WhatsApp"/);
 });
+
+test("l'email du compte est affiché en lecture seule, sans duplication en base", () => {
+  // Valeur lue depuis la session Auth, jamais depuis `profiles`.
+  assert.match(profilePage, /setAccountEmail\(user\.email \?\? null\)/);
+  assert.match(profilePage, /value=\{accountEmail \?\? ""\}/);
+  assert.match(profilePage, /id="account_email"/);
+  assert.match(profilePage, /readOnly/);
+  // Aucune colonne email ajoutée au profil, aucun envoi dans l'upsert.
+  assert.doesNotMatch(profilePage, /account_email:/);
+  assert.doesNotMatch(types, /^\s*email\??: string \| null;/m);
+});

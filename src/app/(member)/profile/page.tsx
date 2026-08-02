@@ -157,6 +157,10 @@ export default function ProfilePage() {
   const [verificationStatus, setVerificationStatus] =
     useState<ProfileVerificationStatus>("pending");
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  // Adresse de connexion (auth.users) — LECTURE SEULE. Affichée pour que le
+  // membre sache quelle adresse est rattachée à son compte ; jamais envoyée
+  // dans l'upsert et jamais dupliquée dans `profiles`.
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   // Onboarding terminé (marqueur write-once) : pays et ville de résidence
   // deviennent OBLIGATOIRES à l'enregistrement — un profil complet ne peut
   // plus redevenir silencieusement incomplet depuis cette page.
@@ -171,6 +175,8 @@ export default function ProfilePage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return; // Le middleware redirige normalement déjà.
+
+      if (active) setAccountEmail(user.email ?? null);
 
       const { data } = await supabase
         .from("profiles")
@@ -502,6 +508,28 @@ export default function ProfilePage() {
             Facultatif, au format international. Ce numéro reste confidentiel :
             il n’est jamais transmis aux autres membres et sert uniquement à
             vous joindre au sujet de votre compte.
+          </p>
+        </div>
+
+        {/* Adresse de connexion — lecture seule, lue depuis la session.
+            Modifier un identifiant de connexion exige une vérification par
+            courriel : cela ne peut pas se faire par simple enregistrement du
+            formulaire. */}
+        <div>
+          <Label htmlFor="account_email">Email</Label>
+          <Input
+            id="account_email"
+            name="account_email"
+            type="email"
+            value={accountEmail ?? ""}
+            placeholder="—"
+            readOnly
+            disabled
+            className="cursor-default"
+          />
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            Adresse rattachée à votre compte, jamais affichée publiquement.
+            Pour la modifier, contactez l’assistance.
           </p>
         </div>
 
