@@ -28,12 +28,12 @@ import {
   PARTNER_TRAIT_OPTIONS,
   POLYGAMY_PREFERENCE_OPTIONS,
   PROFESSION_MAX,
-  REGION_MAX,
   RELIGION_OPTIONS,
 } from "@/lib/onboarding/options";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
 import { CountryCityFields } from "@/components/profile/country-city-fields";
+import { RegionField } from "@/components/profile/region-field";
 import { ProfilePhotos } from "@/components/member/profile-photos";
 import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
 import { ProfilePromotionConsentCard } from "@/components/member/profile-promotion-consent-card";
@@ -493,22 +493,15 @@ export default function ProfilePage() {
             idPrefix="profile-geo"
           />
 
-          {/* Région / zone : champ libre de l'étape 6, rattaché à la
-              résidence — jusqu'ici saisi à l'inscription mais invisible
-              ensuite. */}
-          <div>
-            <Label htmlFor="region">Région / zone</Label>
-            <Input
-              id="region"
-              name="region"
-              type="text"
-              maxLength={REGION_MAX}
-              placeholder="Par exemple : Littoral, Ouest, Île-de-France…"
-              value={form.region}
-              onChange={(e) => update("region", e.target.value)}
-              disabled={saving}
-            />
-          </div>
+          {/* Région / zone : rattachée à la résidence — liste déroulante
+              pour les pays référencés, saisie libre partout ailleurs. */}
+          <RegionField
+            country={form.country}
+            region={form.region}
+            onRegionChange={(v) => update("region", v)}
+            disabled={saving}
+            id="region"
+          />
         </fieldset>
 
         {/* PROFESSION ET PARCOURS — étape 5 de l'inscription. */}
@@ -629,46 +622,32 @@ export default function ProfilePage() {
           </p>
         </div>
 
+        {/* INTENTION — étape 7 de l'inscription. Le cadre de la plateforme
+            (« mariage sérieux ») reste invariant côté base et côté affichage
+            public ; ces cases précisent l'intention personnelle du membre. */}
         <div>
-          <Label htmlFor="intention">Intention</Label>
-          <Input
-            id="intention"
-            name="intention"
-            type="text"
-            value="Mariage sérieux"
-            readOnly
-            disabled
-            className="cursor-default"
-          />
-          <p className="mt-1.5 text-xs text-ink-700/55">
-            La plateforme est dédiée aux projets de mariage sincères.
-          </p>
-        </div>
-
-        {/* PROJET MATRIMONIAL — étape 7 de l'inscription : objectifs,
-            qualités recherchées, polygamie et projet d'enfants, désormais
-            restitués et modifiables. Mêmes composants et mêmes bornes que le
-            wizard (2 à 3 choix par liste). */}
-        <fieldset className="flex flex-col gap-5">
-          <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
-            Projet matrimonial
-          </legend>
-
           <MultiChoiceChips
-            legend="Vos objectifs de mariage"
+            legend="Intention"
             options={MARRIAGE_GOAL_OPTIONS}
             values={form.marriage_goals}
             onChange={(next) => update("marriage_goals", next)}
             disabled={saving}
           />
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            La plateforme est dédiée aux projets de mariage sincères : précisez
+            ce que vous recherchez dans cette démarche.
+          </p>
+        </div>
 
-          <MultiChoiceChips
-            legend="Qualités recherchées"
-            options={PARTNER_TRAIT_OPTIONS}
-            values={form.desired_partner_traits}
-            onChange={(next) => update("desired_partner_traits", next)}
-            disabled={saving}
-          />
+        {/* PROJET MATRIMONIAL — étape 7 de l'inscription : positionnement sur
+            la polygamie et projet d'enfants, désormais restitués et
+            modifiables. Les deux listes à cocher de cette étape sont
+            présentées plus haut (Intention) et plus bas (Attentes), au plus
+            près des textes libres qu'elles complètent. */}
+        <fieldset className="flex flex-col gap-5">
+          <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
+            Projet matrimonial
+          </legend>
 
           <div>
             <Label>Positionnement sur la polygamie</Label>
@@ -722,9 +701,21 @@ export default function ProfilePage() {
           />
         </div>
 
+        {/* ATTENTES ENVERS LE FUTUR CONJOINT — les qualités recherchées de
+            l'étape 7 (2 à 3 choix), puis la précision en texte libre. */}
+        <div>
+          <MultiChoiceChips
+            legend="Attentes envers le futur conjoint"
+            options={PARTNER_TRAIT_OPTIONS}
+            values={form.desired_partner_traits}
+            onChange={(next) => update("desired_partner_traits", next)}
+            disabled={saving}
+          />
+        </div>
+
         <div>
           <Label htmlFor="partner_expectations">
-            Attentes envers le futur conjoint
+            Précisez vos attentes
           </Label>
           <Textarea
             id="partner_expectations"

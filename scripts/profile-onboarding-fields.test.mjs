@@ -8,13 +8,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [profilePage, options, matrimonialStep, professionalStep] =
-  await Promise.all([
-    readFile("src/app/(member)/profile/page.tsx", "utf8"),
-    readFile("src/lib/onboarding/options.ts", "utf8"),
-    readFile("src/components/onboarding/steps/matrimonial-step.tsx", "utf8"),
-    readFile("src/components/onboarding/steps/professional-step.tsx", "utf8"),
-  ]);
+const [
+  profilePage,
+  options,
+  matrimonialStep,
+  professionalStep,
+  regionField,
+  regionsCatalogue,
+] = await Promise.all([
+  readFile("src/app/(member)/profile/page.tsx", "utf8"),
+  readFile("src/lib/onboarding/options.ts", "utf8"),
+  readFile("src/components/onboarding/steps/matrimonial-step.tsx", "utf8"),
+  readFile("src/components/onboarding/steps/professional-step.tsx", "utf8"),
+  readFile("src/components/profile/region-field.tsx", "utf8"),
+  readFile("src/lib/geo/regions-fr.ts", "utf8"),
+]);
 
 test("les champs des étapes 5, 6 et 7 sont présents dans l'état du formulaire", () => {
   for (const field of [
@@ -94,14 +102,55 @@ test("les bornes de saisie sont celles de la base, importées et non recopiées"
   assert.match(profilePage, /HEIGHT_MIN_CM/);
   assert.match(profilePage, /HEIGHT_MAX_CM/);
   assert.match(profilePage, /PROFESSION_MAX/);
-  assert.match(profilePage, /REGION_MAX/);
   assert.match(profilePage, /CHOICE_SET_MIN/);
   assert.match(profilePage, /CHOICE_SET_MAX/);
   assert.match(professionalStep, /HEIGHT_MIN_CM/);
+  assert.match(regionField, /REGION_MAX/);
 
   // Aucune borne numérique en dur dans la page.
   assert.doesNotMatch(profilePage, /min=\{120\}/);
   assert.doesNotMatch(profilePage, /max=\{230\}/);
+});
+
+test("les deux listes portent le vocabulaire du membre", () => {
+  assert.match(profilePage, /legend="Intention"/);
+  assert.match(profilePage, /legend="Attentes envers le futur conjoint"/);
+  // L'ancien champ Intention en lecture seule a disparu.
+  assert.doesNotMatch(profilePage, /value="Mariage sérieux"/);
+});
+
+test("le cadre invariant de la plateforme reste écrit en base", () => {
+  // La colonne publique `intention` garde sa valeur constante : les cases à
+  // cocher alimentent marriage_goals, jamais l'affichage public.
+  assert.match(profilePage, /const INTENTION_VALUE = "mariage_serieux"/);
+  assert.match(profilePage, /intention: INTENTION_VALUE/);
+});
+
+test("la région est une liste dépendante du pays, avec repli en saisie libre", () => {
+  assert.match(profilePage, /RegionField/);
+  assert.match(regionField, /findCountryByName/);
+  assert.match(regionField, /REGIONS_FR/);
+  assert.match(regionField, /OTHER_REGION_LABEL/);
+  // Une valeur héritée hors liste bascule en saisie libre sans être effacée.
+  assert.match(regionField, /region\.trim\(\) && matched == null \? "other" : "list"/);
+});
+
+test("le catalogue des régions couvre le Cameroun sans prétendre à l'exhaustivité", () => {
+  assert.match(regionsCatalogue, /CM: \[/);
+  for (const region of [
+    "Adamaoua",
+    "Centre",
+    "Est",
+    "Extrême-Nord",
+    "Littoral",
+    "Nord",
+    "Nord-Ouest",
+    "Ouest",
+    "Sud",
+    "Sud-Ouest",
+  ]) {
+    assert.match(regionsCatalogue, new RegExp(`"${region}"`));
+  }
 });
 
 test("la validation reflète les CHECK base avant tout appel Supabase", () => {
