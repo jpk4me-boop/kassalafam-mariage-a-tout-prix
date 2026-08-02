@@ -144,6 +144,11 @@ export type ProfileRow = {
   desired_partner_traits: PartnerTrait[] | null;
   polygamy_preference: PolygamyPreference | null;
   children_intent: ChildrenIntent | null;
+  // Contact privé (migration 20260802090000) — JAMAIS affichés publiquement :
+  // ni vitrine, ni liens de partage, ni promotion, ni découverte. Facultatifs.
+  // CHECK en base : nom 2..100 après trim ; WhatsApp `^\+?[0-9]{8,15}$`.
+  last_name: string | null;
+  whatsapp_phone: string | null;
   blur_photos: boolean;
   // Statut Premium — LECTURE SEULE côté membre (C1a). Écrit UNIQUEMENT par les
   // futurs flux serveur (service_role) ; protégé en base par la garde
@@ -212,6 +217,9 @@ export type ProfileInsert = {
   desired_partner_traits?: PartnerTrait[] | null;
   polygamy_preference?: PolygamyPreference | null;
   children_intent?: ChildrenIntent | null;
+  // Contact privé — écrivables par le membre, jamais exposés publiquement.
+  last_name?: string | null;
+  whatsapp_phone?: string | null;
   blur_photos?: boolean;
   // NB : is_premium est VOLONTAIREMENT absent de Insert (et donc de Update) —
   // C1a : champ administratif en lecture seule pour le membre, rejeté en
