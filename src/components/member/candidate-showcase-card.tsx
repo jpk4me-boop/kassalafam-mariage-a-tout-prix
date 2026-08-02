@@ -34,7 +34,7 @@ const BUCKET = "profile-photos";
 const SIGNED_URL_TTL = 3600;
 
 const CONSENT_TEXT =
-  "J’autorise KASSALAFAM à présenter publiquement une version limitée de mon profil (prénom, âge, ville, pays, intention, courte présentation et la photo que je choisis) sur la vitrine des candidats, accessible sans compte. Je peux retirer cette autorisation à tout moment : mon profil est alors retiré de la vitrine.";
+  "J’autorise KASSALAFAM à présenter publiquement une version limitée de mon profil (prénom, âge, ville, pays, intention, courte présentation et la photo que je choisis) sur la vitrine des candidats, accessible sans compte et référençable par les moteurs de recherche. Je peux retirer cette autorisation à tout moment : ma présentation disparaît alors immédiatement du site. Je comprends qu’une page ou une image déjà récupérée par un moteur de recherche ou un réseau social peut subsister quelques jours dans leur propre cache, hors du contrôle de KASSALAFAM.";
 
 /**
  * Motifs renvoyés par `candidate_showcase_eligibility_reason`, traduits en
