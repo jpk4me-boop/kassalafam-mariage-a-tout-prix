@@ -55,9 +55,16 @@ export async function generateMetadata({
       url: canonical,
       siteName: "KASSALAFAM",
       locale: "fr_FR",
+      // Dimensions OBLIGATOIRES pour les aperçus sociaux : sans elles,
+      // le robot de Facebook doit télécharger puis mesurer l'image, et
+      // renonce fréquemment — la publication n'affiche alors qu'une URL nue.
+      // Valeurs déclaratives alignées sur le format d'aperçu 1200×630 ;
+      // l'image réelle est recadrée par la plateforme.
       images: [
         {
           url: photo,
+          width: 1200,
+          height: 630,
           alt: `Photo publique choisie par ${candidate.firstName}`,
         },
       ],

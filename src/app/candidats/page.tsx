@@ -22,12 +22,25 @@ export const metadata: Metadata = {
     url: "/candidats",
     siteName: "KASSALAFAM",
     locale: "fr_FR",
+    // Sans image déclarée ici, la page ne reprend PAS l'image racine et
+    // Facebook n'affiche qu'une URL nue. Image de marque générique : la
+    // page liste plusieurs membres, aucune photo individuelle ne doit la
+    // représenter.
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "KASSALAFAM — Candidats au mariage vérifiés",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Candidats au mariage vérifiés | KASSALAFAM",
     description:
       "Parcourez gratuitement des profils publics et vérifiés orientés vers un mariage sérieux.",
+    images: ["/twitter-image"],
   },
 };
 

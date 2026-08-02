@@ -16,6 +16,7 @@
     "test:sebpay-webhook": "node --conditions=react-server --test scripts/sebpay-webhook.test.mjs",
     "test:sebpay-checkout": "node --conditions=react-server --test scripts/sebpay-checkout.test.mjs",
     "test:candidate-showcase-card": "node --test scripts/candidate-showcase-card.test.mjs",
+    "test:showcase-social-preview": "node --test scripts/showcase-social-preview.test.mjs",
     "test:profile-contact-fields": "node --test scripts/profile-contact-fields.test.mjs",
     "test:profile-onboarding-fields": "node --test scripts/profile-onboarding-fields.test.mjs",
     "test:promo-route": "node --test scripts/public-profile-promotion.test.mjs",
