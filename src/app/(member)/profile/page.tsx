@@ -76,8 +76,25 @@ const ADULT_BIRTH_DATE_MAX = getAdultBirthDateMax();
  * Mêmes libellés, mêmes composants et mêmes bornes que le wizard : les
  * options viennent de `@/lib/onboarding/options`, miroir des CHECK en base.
  */
+/** Nom de famille — miroir du CHECK `profiles_last_name_len` (2..100). */
+const LAST_NAME_MIN = 2;
+const LAST_NAME_MAX = 100;
+
+/**
+ * WhatsApp — miroir du CHECK `profiles_whatsapp_phone_format` :
+ * chiffres, « + » initial facultatif, 8 à 15 chiffres. Les séparateurs de
+ * saisie (espaces, points, tirets, parenthèses) sont retirés avant envoi.
+ */
+const WHATSAPP_PATTERN = /^\+?[0-9]{8,15}$/;
+
+function normalizeWhatsApp(value: string): string {
+  return value.replace(/[\s.\-()]/g, "");
+}
+
 type FormState = {
   first_name: string;
+  last_name: string;
+  whatsapp_phone: string;
   gender: "" | Gender;
   birth_date: string;
   origin_country: string;
@@ -101,6 +118,8 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   first_name: "",
+  last_name: "",
+  whatsapp_phone: "",
   gender: "",
   birth_date: "",
   origin_country: "",
@@ -164,6 +183,8 @@ export default function ProfilePage() {
       if (profile) {
         setForm({
           first_name: profile.first_name ?? "",
+          last_name: profile.last_name ?? "",
+          whatsapp_phone: profile.whatsapp_phone ?? "",
           gender: profile.gender ?? "",
           birth_date: profile.birth_date ?? "",
           origin_country: profile.origin_country ?? "",
@@ -235,6 +256,31 @@ export default function ProfilePage() {
       return;
     }
 
+    // Nom de famille : facultatif, mais s'il est renseigné il doit respecter
+    // le CHECK base (2 à 100 caractères après trim).
+    const lastName = form.last_name.trim();
+
+    if (
+      lastName !== "" &&
+      (lastName.length < LAST_NAME_MIN || lastName.length > LAST_NAME_MAX)
+    ) {
+      setError(
+        `Le nom doit comporter entre ${LAST_NAME_MIN} et ${LAST_NAME_MAX} caractères.`,
+      );
+      return;
+    }
+
+    // WhatsApp : facultatif, normalisé puis validé sur le même motif que la
+    // contrainte base.
+    const whatsapp = normalizeWhatsApp(form.whatsapp_phone.trim());
+
+    if (whatsapp !== "" && !WHATSAPP_PATTERN.test(whatsapp)) {
+      setError(
+        "Merci d’indiquer un numéro WhatsApp valide, au format international (par exemple : +237670000000).",
+      );
+      return;
+    }
+
     // Taille : miroir du CHECK `profiles_height_cm_chk` (120..230). Le champ
     // vide reste accepté pour les profils historiques.
     const heightRaw = form.height_cm.trim();
@@ -297,6 +343,10 @@ export default function ProfilePage() {
     const profilePayload: ProfileInsert = {
       id: user.id,
       first_name: form.first_name.trim() || null,
+      // Contact privé : jamais affiché publiquement (aucune fonction de
+      // partage ne sélectionne ces colonnes).
+      last_name: lastName || null,
+      whatsapp_phone: whatsapp || null,
       // Origine (PR Origine/Résidence) : compatibilité DOUCE — jamais de
       // chaîne vide (NULL tant que non renseignée, CHECK en base sinon).
       // Pas de garde stricte ici : un profil historique finalisé doit
@@ -399,18 +449,60 @@ export default function ProfilePage() {
         {error ? <FormError message={error} /> : null}
         {success ? <FormSuccess message={success} /> : null}
 
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="first_name">Prénom</Label>
+            <Input
+              id="first_name"
+              name="first_name"
+              type="text"
+              autoComplete="given-name"
+              placeholder="Votre prénom"
+              value={form.first_name}
+              onChange={(e) => update("first_name", e.target.value)}
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="last_name">Nom</Label>
+            <Input
+              id="last_name"
+              name="last_name"
+              type="text"
+              autoComplete="family-name"
+              maxLength={LAST_NAME_MAX}
+              placeholder="Votre nom de famille"
+              value={form.last_name}
+              onChange={(e) => update("last_name", e.target.value)}
+              disabled={saving}
+            />
+            <p className="mt-1.5 text-xs text-ink-700/55">
+              Jamais affiché publiquement : seul votre prénom est visible par
+              les autres membres.
+            </p>
+          </div>
+        </div>
+
         <div>
-          <Label htmlFor="first_name">Prénom</Label>
+          <Label htmlFor="whatsapp_phone">Téléphone (WhatsApp)</Label>
           <Input
-            id="first_name"
-            name="first_name"
-            type="text"
-            autoComplete="given-name"
-            placeholder="Votre prénom"
-            value={form.first_name}
-            onChange={(e) => update("first_name", e.target.value)}
+            id="whatsapp_phone"
+            name="whatsapp_phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            maxLength={20}
+            placeholder="+237670000000"
+            value={form.whatsapp_phone}
+            onChange={(e) => update("whatsapp_phone", e.target.value)}
             disabled={saving}
           />
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            Facultatif, au format international. Ce numéro reste confidentiel :
+            il n’est jamais transmis aux autres membres et sert uniquement à
+            vous joindre au sujet de votre compte.
+          </p>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">

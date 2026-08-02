@@ -405,6 +405,14 @@ export default async function AdminMemberDetailPage({
               )
             }
           />
+          {/* Contact privé (migration 20260802090000) : visible UNIQUEMENT
+              ici, en back-office. Ces données ne sont exposées par aucune
+              projection publique ni transmises à un autre membre. */}
+          <Field label="Nom" value={profile.last_name?.trim() || "—"} />
+          <Field
+            label="WhatsApp"
+            value={profile.whatsapp_phone?.trim() || "—"}
+          />
           <Field
             label="Genre"
             value={profile.gender ? GENDER_LABELS[profile.gender] : "—"}
