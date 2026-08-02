@@ -930,6 +930,46 @@ export type PremiumSubscriptionActionRow = {
   created_at: string;
 };
 
+// Vitrine publique des candidats — statut vu par le membre.
+// `eligibility_reason` reprend les motifs de
+// candidate_showcase_eligibility_reason : 'eligible', 'consent_required',
+// 'photo_privacy_enabled', 'profile_incomplete', 'onboarding_incomplete',
+// 'verification_required', 'account_suspended', 'photo_required',
+// 'photo_invalid', 'profile_not_found'.
+export type CandidateShowcaseStatusRow = {
+  consent_active: boolean;
+  consent_policy_version: string | null;
+  consented_at: string | null;
+  publication_id: string | null;
+  public_slug: string | null;
+  selected_photo_id: string | null;
+  listing_enabled: boolean | null;
+  effectively_public: boolean;
+  published_at: string | null;
+  unpublished_at: string | null;
+  eligibility_reason: string | null;
+};
+
+export type GrantCandidateShowcaseConsentResult = {
+  consent_id: string;
+  policy_version: string;
+  consented_at: string;
+  was_already_active: boolean;
+};
+
+export type WithdrawCandidateShowcaseConsentResult = {
+  consent_withdrawn: boolean;
+  listing_unpublished: boolean;
+};
+
+export type PublishCandidateShowcaseResult = {
+  publication_id: string;
+  public_slug: string;
+  photo_id: string;
+  published_at: string;
+  was_already_published: boolean;
+};
+
 export type PremiumStatusRow = {
   is_premium: boolean;
   subscription_id: string | null;
@@ -1165,6 +1205,30 @@ export interface Database {
       };
       // Retrait idempotent du consentement promotionnel actif.
       withdraw_my_profile_promotion_consent: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      // Vitrine publique des candidats — pilotage par le MEMBRE.
+      // L'identité vient exclusivement de auth.uid() ; toutes les conditions
+      // d'éligibilité restent décidées en base (voir
+      // candidate_showcase_eligibility_reason, interne).
+      get_my_candidate_showcase_status: {
+        Args: Record<string, never>;
+        Returns: CandidateShowcaseStatusRow[];
+      };
+      grant_my_candidate_showcase_consent: {
+        Args: Record<string, never>;
+        Returns: GrantCandidateShowcaseConsentResult[];
+      };
+      withdraw_my_candidate_showcase_consent: {
+        Args: Record<string, never>;
+        Returns: WithdrawCandidateShowcaseConsentResult[];
+      };
+      publish_my_candidate_showcase: {
+        Args: { p_photo_id: string };
+        Returns: PublishCandidateShowcaseResult[];
+      };
+      unpublish_my_candidate_showcase: {
         Args: Record<string, never>;
         Returns: boolean;
       };

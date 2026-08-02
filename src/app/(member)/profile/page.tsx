@@ -37,6 +37,7 @@ import { RegionField } from "@/components/profile/region-field";
 import { ProfilePhotos } from "@/components/member/profile-photos";
 import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
 import { ProfilePromotionConsentCard } from "@/components/member/profile-promotion-consent-card";
+import { CandidateShowcaseCard } from "@/components/member/candidate-showcase-card";
 import { ChoiceCard } from "@/components/onboarding/choice-card";
 import { MultiChoiceChips } from "@/components/onboarding/multi-choice-chips";
 import {
@@ -887,6 +888,10 @@ export default function ProfilePage() {
 
       {/* Photos de profil — gestion privée du membre connecté (L3D-A) */}
       <ProfilePhotos />
+
+      {/* Vitrine publique /candidats — consentement puis publication, deux
+          gestes explicites et séparés, retrait à tout moment. */}
+      <CandidateShowcaseCard />
 
       {/* Consentement au partage public limité (PR1 partage de profils) */}
       <ProfileShareConsentCard />
