@@ -24,6 +24,7 @@
     "test:admin-profile-promotion-ui": "node --test scripts/admin-profile-promotion-ui.test.mjs",
     "test:admin-relance": "node --test scripts/admin-relance.test.mjs",
     "test:admin-whatsapp-quick-send": "node --test scripts/admin-whatsapp-quick-send.test.mjs",
+    "test:admin-showcase-todo": "node --test scripts/admin-showcase-todo.test.mjs",
     "test:onboarding-resume": "node --test scripts/onboarding-resume.test.mjs",
     "test:whatsapp-notifications": "node --test scripts/whatsapp-notifications.test.mjs",
     "test:whatsapp-mandatory": "node --test scripts/whatsapp-mandatory.test.mjs",
