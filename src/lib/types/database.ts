@@ -806,6 +806,18 @@ export type MemberActivitySummaryRow = {
 };
 
 // ---------------------------------------------------------------------------
+// Notifications WhatsApp (PR A — fondation, migration 54) : consentement
+// EXPLICITE par canal + file de livraison. member_notifications reste la
+// source de vérité ; la file est service_role uniquement (aucun type Row
+// membre exposé pour notification_deliveries).
+// ---------------------------------------------------------------------------
+/** Ligne renvoyée par `get_my_whatsapp_notifications_status`. */
+export type WhatsappNotificationsStatusRow = {
+  has_phone: boolean;
+  consent_active: boolean;
+};
+
+// ---------------------------------------------------------------------------
 // C1b — Premium autoritatif fournisseur-neutre.
 // ---------------------------------------------------------------------------
 
@@ -1238,6 +1250,20 @@ export interface Database {
       unpublish_my_candidate_showcase: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      // Notifications WhatsApp (PR A) — consentement dédié par canal ; la
+      // base reste l'autorité (statut relu après chaque action).
+      get_my_whatsapp_notifications_status: {
+        Args: Record<string, never>;
+        Returns: WhatsappNotificationsStatusRow[];
+      };
+      grant_my_whatsapp_notifications: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
+      withdraw_my_whatsapp_notifications: {
+        Args: Record<string, never>;
+        Returns: undefined;
       };
       // Partage PR2 — création d'un lien (service_role uniquement, jamais
       // authenticated). p_actor_id vient d'une session admin validée serveur.
