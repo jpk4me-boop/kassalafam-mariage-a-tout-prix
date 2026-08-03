@@ -19,6 +19,7 @@ import type { OnboardingProfileData } from "@/lib/onboarding/completion";
 export type WizardForm = {
   first_name: string;
   pseudo: string;
+  whatsapp_phone: string;
   gender: "" | Gender;
   birth_date: string;
   marital_status: "" | MaritalStatus;
@@ -51,6 +52,7 @@ export function formFromProfile(
   return {
     first_name: p.first_name ?? firstNameSuggestion ?? "",
     pseudo: p.pseudo ?? "",
+    whatsapp_phone: p.whatsapp_phone ?? "",
     gender: p.gender ?? "",
     birth_date: p.birth_date ?? "",
     marital_status: p.marital_status ?? "",

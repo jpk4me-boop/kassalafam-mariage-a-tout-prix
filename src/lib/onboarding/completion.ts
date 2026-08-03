@@ -20,7 +20,7 @@
  *
  * Les 8 étapes du parcours (voir le wizard) :
  *   1. Acquisition          → acquisition_source_recorded_at
- *   2. Identité             → first_name + gender
+ *   2. Identité             → first_name + gender + whatsapp_phone
  *   3. Date de naissance    → birth_date (≥ 18 ans, cf. `isAdultBirthDate`)
  *   4. Situation            → marital_status + religion
  *   5. Profession / études  → profession + education_level + height_cm
@@ -48,7 +48,7 @@ export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
  */
 export const ONBOARDING_STEP_LABELS: Record<OnboardingStep, string> = {
   1: "Source d’inscription",
-  2: "Identité",
+  2: "Identité & WhatsApp",
   3: "Date de naissance",
   4: "Situation & religion",
   5: "Profession & études",
@@ -85,11 +85,14 @@ export type OnboardingProfileData = Pick<
   // Pseudo affiché (migration 53) : COLLECTÉ à l'étape 2 (facultatif), jamais
   // exigé par la complétude — aucune règle ne le lit dans ce module.
   | "pseudo"
+  // Numéro WhatsApp (migration 55) : REQUIS à l'étape 2 — canal de
+  // notification du service. Miroir de profile_meets_onboarding_requirements.
+  | "whatsapp_phone"
 >;
 
 /** Colonnes à sélectionner côté serveur pour alimenter le wizard en UN seul SELECT. */
 export const ONBOARDING_PROFILE_COLUMNS =
-  "first_name, gender, birth_date, marital_status, religion, country, city, profession, education_level, height_cm, origin_country, origin_city, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at, pseudo";
+  "first_name, gender, birth_date, marital_status, religion, country, city, profession, education_level, height_cm, origin_country, origin_city, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at, pseudo, whatsapp_phone";
 
 function isFilled(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
@@ -137,7 +140,12 @@ export function computeStepCompletion(
 ): StepCompletion {
   return {
     1: profile.acquisition_source_recorded_at != null,
-    2: isFilled(profile.first_name) && profile.gender != null,
+    2:
+      isFilled(profile.first_name) &&
+      profile.gender != null &&
+      // Numéro WhatsApp requis (migration 55) : canal de notification du
+      // service, miroir du prédicat serveur.
+      isFilled(profile.whatsapp_phone),
     3: isAdultBirthDate(profile.birth_date),
     4: profile.marital_status != null && profile.religion != null,
     5:

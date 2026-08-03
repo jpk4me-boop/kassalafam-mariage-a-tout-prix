@@ -7,14 +7,19 @@ import { createClient } from "@/lib/supabase/client";
 import type { WhatsappNotificationsStatusRow } from "@/lib/types/database";
 
 /**
- * Notifications WhatsApp (PR A — fondation, fiche validée le 03/08).
+ * Notifications WhatsApp — ACTIVES PAR DÉFAUT (migration 55).
  *
- * Consentement EXPLICITE et dédié : avoir renseigné son numéro (migration 52)
- * ne vaut pas accord. Ce composant ne fait QUE lire le statut et appeler les
- * RPC grant/withdraw — la base reste l'autorité (le statut est relu après
- * chaque action, aucun état deviné). Aucun envoi n'a lieu tant que la phase
- * d'expédition (PR B + pilote) n'est pas ouverte : le consentement enregistré
- * prend effet à ce moment-là.
+ * Le numéro WhatsApp est requis à l'inscription et son enregistrement pose
+ * automatiquement le consentement en base : les notifications font partie du
+ * service, le membre n'a AUCUN geste à faire pour en bénéficier.
+ *
+ * Cette carte est donc informative avant tout. Elle conserve un moyen discret
+ * de couper les notifications : c'est une exigence des opérateurs de
+ * messagerie (un membre qui ne peut pas arrêter signale les messages comme
+ * indésirables, ce qui ferait bloquer le numéro émetteur pour TOUS les
+ * membres). La réactivation reste possible au même endroit.
+ *
+ * La base reste l'autorité : le statut est relu après chaque action.
  */
 
 type LoadedState = {
@@ -64,7 +69,7 @@ export function WhatsappNotificationsCard() {
     if (rpcError) {
       setError(
         action === "grant"
-          ? "Activation impossible pour le moment. Vérifiez que votre numéro WhatsApp est bien enregistré, puis réessayez."
+          ? "Réactivation impossible pour le moment. Vérifiez que votre numéro WhatsApp est bien enregistré, puis réessayez."
           : "Désactivation impossible pour le moment. Réessayez.",
       );
     }
@@ -86,11 +91,10 @@ export function WhatsappNotificationsCard() {
       </div>
 
       <p className="mt-3 text-sm text-ink-700/75">
-        Recevez un message WhatsApp quand il se passe quelque chose pour vous
-        sur KASSALAFAM : nouveau message, nouvel intérêt, intérêt accepté,
-        vérification de votre profil ou sécurité de votre compte. Jamais le
-        contenu de vos conversations, jamais de publicité. Vous pouvez retirer
-        votre accord à tout moment.
+        Nous vous prévenons sur WhatsApp dès qu’il se passe quelque chose pour
+        vous : nouveau message, nouvel intérêt, intérêt accepté, vérification de
+        votre profil ou sécurité de votre compte. Jamais le contenu de vos
+        conversations, jamais de publicité.
       </p>
 
       {error ? (
@@ -104,40 +108,45 @@ export function WhatsappNotificationsCard() {
         {!state.hasPhone ? (
           <p className="flex items-start gap-2 text-sm text-ink-700/60">
             <MessageCircle size={15} className="mt-0.5 shrink-0" aria-hidden />
-            Renseignez d’abord votre numéro WhatsApp ci-dessus (champ
-            « Téléphone ») pour pouvoir activer ces notifications.
+            Renseignez votre numéro WhatsApp ci-dessus (champ « Téléphone »)
+            pour être prévenu.
           </p>
         ) : state.consentActive ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600/25 bg-emerald-600/10 px-3 py-1.5 text-sm font-medium text-emerald-700">
               <Check size={15} aria-hidden />
-              Notifications activées
+              Vous êtes prévenu sur WhatsApp
             </span>
             <button
               type="button"
               onClick={() => void run("withdraw")}
               disabled={pending}
-              className="rounded-full border border-champagne-500/40 px-4 py-2 text-sm font-semibold text-choco-700 transition-colors hover:bg-cream-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="text-xs font-medium text-ink-700/50 underline underline-offset-2 transition-colors hover:text-ink-700/80 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Retirer mon accord
+              Ne plus recevoir ces messages
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => void run("grant")}
-            disabled={pending}
-            className="rounded-full bg-choco-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-choco-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            J’autorise les notifications WhatsApp
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne-500/30 bg-champagne-400/10 px-3 py-1.5 text-sm font-medium text-ink-700/65">
+              Notifications désactivées
+            </span>
+            <button
+              type="button"
+              onClick={() => void run("grant")}
+              disabled={pending}
+              className="rounded-full bg-choco-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-colors hover:bg-choco-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Les réactiver
+            </button>
+          </div>
         )}
       </div>
 
       <p className="mt-3 text-xs text-ink-700/55">
-        Les messages sont acheminés par WhatsApp (Meta) vers votre numéro.
-        Seuls votre numéro et votre prénom leur sont transmis — jamais vos
-        conversations ni votre profil.
+        Les messages sont acheminés par WhatsApp vers votre numéro. Seuls votre
+        numéro et votre prénom sont utilisés — jamais vos conversations ni votre
+        profil.
       </p>
     </section>
   );

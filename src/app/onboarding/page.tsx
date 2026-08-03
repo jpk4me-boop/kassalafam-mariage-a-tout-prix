@@ -55,6 +55,7 @@ const EMPTY_PROFILE: OnboardingProfileData = {
   acquisition_source_recorded_at: null,
   onboarding_completed_at: null,
   pseudo: null,
+  whatsapp_phone: null,
 };
 
 /**

@@ -109,3 +109,16 @@ export const PROFILE_TEXT_MAX = 2000;
  *  migration 20260803210000). Facultatif : vide accepté, enregistré en NULL. */
 export const PSEUDO_MIN = 2;
 export const PSEUDO_MAX = 30;
+
+/**
+ * whatsapp_phone — MIROIR du CHECK `profiles_whatsapp_phone_format`
+ * (migration 20260802090000) : « + » initial facultatif, 8 à 15 chiffres.
+ * REQUIS pour finaliser l'inscription depuis la migration 20260803230000 :
+ * c'est le canal par lequel le membre est prévenu (nouveau message, intérêt…).
+ */
+export const WHATSAPP_PATTERN = /^\+?[0-9]{8,15}$/;
+
+/** Retire les séparateurs de saisie avant validation et enregistrement. */
+export function normalizeWhatsApp(value: string): string {
+  return value.replace(/[\s.\-()]/g, "");
+}
