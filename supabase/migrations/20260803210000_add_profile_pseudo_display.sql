@@ -95,6 +95,7 @@ AS $function$
     c.country,
     c.marital_status,
     c.intention,
+    c.discovery_universe,
     exists (
       select 1
       from public.photos ph
