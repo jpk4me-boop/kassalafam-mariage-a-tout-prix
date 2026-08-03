@@ -16,6 +16,7 @@ import {
   type OnboardingProfileData,
 } from "@/lib/onboarding/completion";
 import { relanceContact, relanceProgress } from "@/lib/admin/relance";
+import { CopyEmailButton } from "@/components/admin/copy-email-button";
 
 // Rendu dynamique : dépend de la session (cookies) et d'env serveur.
 export const dynamic = "force-dynamic";
@@ -236,13 +237,16 @@ export default async function AdminRelancePage() {
                         WhatsApp : {contact.value}
                       </a>
                     ) : contact.channel === "email" ? (
-                      <a
-                        href={contact.href}
-                        className="inline-flex items-center gap-1.5 font-medium text-choco-700 hover:text-choco-800"
-                      >
-                        <Mail size={15} aria-hidden />
-                        {contact.value}
-                      </a>
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        <a
+                          href={contact.href}
+                          className="inline-flex items-center gap-1.5 font-medium text-choco-700 hover:text-choco-800"
+                        >
+                          <Mail size={15} aria-hidden />
+                          {contact.value}
+                        </a>
+                        <CopyEmailButton email={contact.value} />
+                      </span>
                     ) : (
                       <span className="text-ink-700/50">
                         Aucun canal de contact disponible.

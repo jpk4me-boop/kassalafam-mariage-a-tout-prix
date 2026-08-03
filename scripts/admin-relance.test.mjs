@@ -83,6 +83,25 @@ test("la navigation back-office expose l'entrée Relance", () => {
   assert.match(nav, /label: "Relance"/);
 });
 
+test("le bouton Copier l'email est câblé sur le canal email", () => {
+  assert.match(
+    page,
+    /import \{ CopyEmailButton \} from "@\/components\/admin\/copy-email-button"/,
+  );
+  assert.match(page, /<CopyEmailButton email=\{contact\.value\} \/>/);
+});
+
+test("le bouton Copier reste un îlot client minimal", async () => {
+  const btn = await readFile(
+    "src/components/admin/copy-email-button.tsx",
+    "utf8",
+  );
+  assert.match(btn, /"use client"/);
+  assert.match(btn, /navigator\.clipboard\.writeText\(email\)/);
+  // Aucune donnée au-delà de l'adresse déjà affichée, aucun accès DB/secret.
+  assert.doesNotMatch(btn, /supabase|createAdminClient|service_role/i);
+});
+
 test("le script de test est déclaré dans package.json", () => {
   assert.match(
     pkg,
