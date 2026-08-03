@@ -54,6 +54,7 @@ const EMPTY_PROFILE: OnboardingProfileData = {
   partner_expectations: null,
   acquisition_source_recorded_at: null,
   onboarding_completed_at: null,
+  pseudo: null,
 };
 
 /**

@@ -28,6 +28,8 @@ import {
   PARTNER_TRAIT_OPTIONS,
   POLYGAMY_PREFERENCE_OPTIONS,
   PROFESSION_MAX,
+  PSEUDO_MAX,
+  PSEUDO_MIN,
   RELIGION_OPTIONS,
 } from "@/lib/onboarding/options";
 import { VerificationBadge } from "@/components/member/verification-badge";
@@ -81,9 +83,9 @@ const ADULT_BIRTH_DATE_MAX = getAdultBirthDateMax();
 const LAST_NAME_MIN = 2;
 const LAST_NAME_MAX = 100;
 
-/** Pseudo affiché — miroir du CHECK `profiles_pseudo_len` (2..30). */
-const PSEUDO_MIN = 2;
-const PSEUDO_MAX = 30;
+// Pseudo affiché : bornes importées du catalogue partagé de l'onboarding
+// (PSEUDO_MIN / PSEUDO_MAX — miroir du CHECK `profiles_pseudo_len`, 2..30),
+// depuis sa collecte à l'étape 2 du wizard.
 
 /**
  * WhatsApp — miroir du CHECK `profiles_whatsapp_phone_format` :

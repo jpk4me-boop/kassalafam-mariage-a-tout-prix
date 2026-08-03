@@ -8,18 +8,32 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [migration, types, profilePage, shareLib, promoLib, adminDetail] =
-  await Promise.all([
-    readFile(
-      "supabase/migrations/20260803210000_add_profile_pseudo_display.sql",
-      "utf8",
-    ),
-    readFile("src/lib/types/database.ts", "utf8"),
-    readFile("src/app/(member)/profile/page.tsx", "utf8"),
-    readFile("src/lib/server/public-profile-share.ts", "utf8"),
-    readFile("src/lib/server/public-profile-promotion.ts", "utf8"),
-    readFile("src/app/admin/members/[profileId]/page.tsx", "utf8"),
-  ]);
+const [
+  migration,
+  types,
+  profilePage,
+  shareLib,
+  promoLib,
+  adminDetail,
+  options,
+  wizard,
+  genderStep,
+  form,
+] = await Promise.all([
+  readFile(
+    "supabase/migrations/20260803210000_add_profile_pseudo_display.sql",
+    "utf8",
+  ),
+  readFile("src/lib/types/database.ts", "utf8"),
+  readFile("src/app/(member)/profile/page.tsx", "utf8"),
+  readFile("src/lib/server/public-profile-share.ts", "utf8"),
+  readFile("src/lib/server/public-profile-promotion.ts", "utf8"),
+  readFile("src/app/admin/members/[profileId]/page.tsx", "utf8"),
+  readFile("src/lib/onboarding/options.ts", "utf8"),
+  readFile("src/components/onboarding/onboarding-wizard.tsx", "utf8"),
+  readFile("src/components/onboarding/steps/gender-step.tsx", "utf8"),
+  readFile("src/lib/onboarding/form.ts", "utf8"),
+]);
 
 test("la migration ajoute la colonne avec son CHECK 2..30, sans toucher aux ACL", () => {
   assert.match(migration, /add column if not exists pseudo text/);
@@ -64,11 +78,36 @@ test("/profile collecte le pseudo comme last_name : état, relecture, payload", 
   assert.match(profilePage, /pseudo: string;/);
   assert.match(profilePage, /pseudo: profile\.pseudo \?\? ""/);
   assert.match(profilePage, /pseudo: pseudo \|\| null/);
-  assert.match(profilePage, /const PSEUDO_MIN = 2/);
-  assert.match(profilePage, /const PSEUDO_MAX = 30/);
   assert.match(profilePage, /id="pseudo"/);
   // Le membre est informé de l'effet du pseudo.
   assert.match(profilePage, /remplace votre\s*\n?\s*prénom/);
+});
+
+test("les bornes du pseudo vivent dans options.ts, importées partout", () => {
+  assert.match(options, /export const PSEUDO_MIN = 2/);
+  assert.match(options, /export const PSEUDO_MAX = 30/);
+  // /profile et le wizard IMPORTENT les bornes — aucune redéfinition locale.
+  assert.match(profilePage, /PSEUDO_MAX,\s*\n\s*PSEUDO_MIN/);
+  assert.doesNotMatch(profilePage, /const PSEUDO_MIN/);
+  assert.doesNotMatch(wizard, /const PSEUDO_MIN =/);
+  assert.match(wizard, /PSEUDO_MAX,\s*\n\s*PSEUDO_MIN/);
+});
+
+test("le pseudo est proposé dès l'étape 2 de l'inscription, facultatif", () => {
+  // État du wizard + relecture depuis la ligne profil.
+  assert.match(form, /pseudo: string;/);
+  assert.match(form, /pseudo: p\.pseudo \?\? ""/);
+  // Champ à l'étape Identité, borné, avec explication de l'effet.
+  assert.match(genderStep, /id="onboarding_pseudo"/);
+  assert.match(genderStep, /maxLength=\{PSEUDO_MAX\}/);
+  assert.match(genderStep, /facultatif/i);
+  assert.match(genderStep, /remplace votre prénom/);
+  // Validation : vide accepté, sinon bornes du CHECK ; enregistré en NULL si vide.
+  assert.match(wizard, /pseudo === "" \|\|/);
+  assert.match(wizard, /pseudo: form\.pseudo\.trim\(\) \|\| null/);
+  // JAMAIS exigé par la complétude : les règles de completion ne lisent pas
+  // le pseudo (vérifié par l'absence de toute règle dans computeStepCompletion).
+  assert.doesNotMatch(wizard, /pseudo !== ""/);
 });
 
 test("les projections serveur /p et /promo replient pseudo → prénom", () => {
