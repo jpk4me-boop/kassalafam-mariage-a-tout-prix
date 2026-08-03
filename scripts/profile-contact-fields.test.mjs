@@ -15,6 +15,7 @@ const [
   publicShare,
   publicPromotion,
   publicShowcase,
+  options,
 ] = await Promise.all([
   readFile(
     "supabase/migrations/20260802090000_add_profile_last_name_and_whatsapp.sql",
@@ -26,6 +27,7 @@ const [
   readFile("src/lib/server/public-profile-share.ts", "utf8"),
   readFile("src/lib/server/public-profile-promotion.ts", "utf8"),
   readFile("src/lib/server/public-candidate-showcase.ts", "utf8"),
+  readFile("src/lib/onboarding/options.ts", "utf8"),
 ]);
 
 test("la migration est additive et n'écrit aucune donnée", () => {
@@ -60,8 +62,12 @@ test("les types exposent les deux champs en lecture et en écriture membre", () 
 test("le formulaire valide avant tout appel Supabase, sur les mêmes bornes", () => {
   assert.match(profilePage, /const LAST_NAME_MIN = 2/);
   assert.match(profilePage, /const LAST_NAME_MAX = 100/);
-  assert.match(profilePage, /const WHATSAPP_PATTERN = \/\^\\\+\?\[0-9\]\{8,15\}\$\//);
-  assert.match(profilePage, /function normalizeWhatsApp/);
+  // Motif et normalisation vivent désormais dans le catalogue partagé de
+  // l'onboarding (migration 55 : le numéro est requis à l'inscription) ;
+  // /profile les IMPORTE au lieu de les redéfinir.
+  assert.match(options, /export const WHATSAPP_PATTERN = \/\^\\\+\?\[0-9\]\{8,15\}\$\//);
+  assert.match(options, /export function normalizeWhatsApp/);
+  assert.match(profilePage, /normalizeWhatsApp,/);
   assert.match(profilePage, /!WHATSAPP_PATTERN\.test\(whatsapp\)/);
   // Facultatifs : une valeur vide reste acceptée et enregistrée en NULL.
   assert.match(profilePage, /last_name: lastName \|\| null/);

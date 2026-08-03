@@ -26,11 +26,13 @@ import {
   HEIGHT_MIN_CM,
   MARRIAGE_GOAL_OPTIONS,
   PARTNER_TRAIT_OPTIONS,
+  normalizeWhatsApp,
   POLYGAMY_PREFERENCE_OPTIONS,
   PROFESSION_MAX,
   PSEUDO_MAX,
   PSEUDO_MIN,
   RELIGION_OPTIONS,
+  WHATSAPP_PATTERN,
 } from "@/lib/onboarding/options";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
@@ -88,16 +90,10 @@ const LAST_NAME_MAX = 100;
 // (PSEUDO_MIN / PSEUDO_MAX — miroir du CHECK `profiles_pseudo_len`, 2..30),
 // depuis sa collecte à l'étape 2 du wizard.
 
-/**
- * WhatsApp — miroir du CHECK `profiles_whatsapp_phone_format` :
- * chiffres, « + » initial facultatif, 8 à 15 chiffres. Les séparateurs de
- * saisie (espaces, points, tirets, parenthèses) sont retirés avant envoi.
- */
-const WHATSAPP_PATTERN = /^\+?[0-9]{8,15}$/;
-
-function normalizeWhatsApp(value: string): string {
-  return value.replace(/[\s.\-()]/g, "");
-}
+// WhatsApp : motif et normalisation importés du catalogue partagé de
+// l'onboarding (WHATSAPP_PATTERN / normalizeWhatsApp — miroir du CHECK
+// `profiles_whatsapp_phone_format`), depuis que le numéro est requis à
+// l'inscription (migration 20260803230000).
 
 type FormState = {
   first_name: string;
@@ -302,9 +298,18 @@ export default function ProfilePage() {
       return;
     }
 
-    // WhatsApp : facultatif, normalisé puis validé sur le même motif que la
-    // contrainte base.
+    // WhatsApp : normalisé puis validé sur le même motif que la contrainte
+    // base. Requis dès lors que le parcours a été finalisé — c'est le canal
+    // par lequel le membre est prévenu (migration 20260803230000) ; un profil
+    // historique peut encore l'avoir vide et le renseignera ici.
     const whatsapp = normalizeWhatsApp(form.whatsapp_phone.trim());
+
+    if (onboardingDone && whatsapp === "") {
+      setError(
+        "Merci d’indiquer votre numéro WhatsApp : c’est par là que nous vous prévenons (nouveau message, nouvel intérêt…).",
+      );
+      return;
+    }
 
     if (whatsapp !== "" && !WHATSAPP_PATTERN.test(whatsapp)) {
       setError(
@@ -554,9 +559,10 @@ export default function ProfilePage() {
             disabled={saving}
           />
           <p className="mt-1.5 text-xs text-ink-700/55">
-            Facultatif, au format international. Ce numéro reste confidentiel :
-            il n’est jamais transmis aux autres membres et sert uniquement à
-            vous joindre au sujet de votre compte.
+            Au format international. C’est par là que nous vous prévenons
+            (nouveau message, nouvel intérêt, avancement de votre profil). Ce
+            numéro reste confidentiel : il n’est jamais transmis aux autres
+            membres.
           </p>
         </div>
 

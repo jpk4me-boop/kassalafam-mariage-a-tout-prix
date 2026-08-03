@@ -71,7 +71,7 @@ test("les triggers source ne divulguent JAMAIS le contenu ni l'identité", () =>
   assert.match(migration, /read_at is null/);
 });
 
-test("la carte opt-in est un îlot client fidèle à la base", () => {
+test("la carte est un îlot client fidèle à la base", () => {
   assert.match(card, /"use client"/);
   for (const rpc of [
     "get_my_whatsapp_notifications_status",
@@ -82,10 +82,11 @@ test("la carte opt-in est un îlot client fidèle à la base", () => {
   }
   // La base reste l'autorité : le statut est relu après chaque action.
   assert.match(card, /const fresh = await fetchWhatsappState\(\)/);
-  // Le membre est informé : contenu jamais transmis, retrait à tout moment.
-  assert.match(card, /Jamais le\s*\n?\s*contenu/);
-  assert.match(card, /retirer\s*\n?\s*votre accord à tout moment/i);
-  assert.match(card, /Retirer mon accord/);
+  // Le membre est informé : contenu jamais transmis, et il garde un moyen
+  // d'arrêter (depuis la migration 55, les notifications sont actives par
+  // défaut — voir test:whatsapp-mandatory pour le détail de la carte).
+  assert.match(card, /Jamais le contenu de vos\s*\n?\s*conversations/);
+  assert.match(card, /Ne plus recevoir ces messages/);
   // Aucun accès privilégié côté client.
   assert.doesNotMatch(card, /createAdminClient|service_role/i);
 });

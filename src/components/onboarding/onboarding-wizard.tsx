@@ -38,10 +38,12 @@ import {
   ORIGIN_COUNTRY_MAX,
   PROFESSION_MAX,
   PROFESSION_MIN,
+  normalizeWhatsApp,
   PROFILE_TEXT_MAX,
   PSEUDO_MAX,
   PSEUDO_MIN,
   REGION_MAX,
+  WHATSAPP_PATTERN,
 } from "@/lib/onboarding/options";
 import { FormError } from "@/components/ui/field";
 import type { ProfilePhotosState } from "@/components/member/profile-photos";
@@ -201,9 +203,12 @@ export function OnboardingWizard({
       case 2: {
         // Pseudo FACULTATIF : vide accepté ; sinon mêmes bornes que le CHECK.
         const pseudo = form.pseudo.trim();
+        // Numéro WhatsApp REQUIS (migration 55) : miroir du CHECK base.
+        const whatsapp = normalizeWhatsApp(form.whatsapp_phone.trim());
         return (
           form.first_name.trim().length > 0 &&
           form.gender !== "" &&
+          WHATSAPP_PATTERN.test(whatsapp) &&
           (pseudo === "" ||
             (pseudo.length >= PSEUDO_MIN && pseudo.length <= PSEUDO_MAX))
         );
@@ -278,6 +283,10 @@ export function OnboardingWizard({
           first_name: form.first_name.trim(),
           // Pseudo facultatif (migration 53) : vide → NULL, repli sur le prénom.
           pseudo: form.pseudo.trim() || null,
+          // Numéro WhatsApp requis (migration 55) : normalisé avant écriture.
+          // Son enregistrement déclenche en base le consentement automatique
+          // aux notifications — le membre n'a aucun geste à faire.
+          whatsapp_phone: normalizeWhatsApp(form.whatsapp_phone.trim()),
           gender: form.gender as Gender,
         };
         break;
@@ -484,9 +493,11 @@ export function OnboardingWizard({
               <GenderStep
                 firstName={form.first_name}
                 pseudo={form.pseudo}
+                whatsappPhone={form.whatsapp_phone}
                 value={form.gender}
                 onFirstNameChange={(v) => update("first_name", v)}
                 onPseudoChange={(v) => update("pseudo", v)}
+                onWhatsappPhoneChange={(v) => update("whatsapp_phone", v)}
                 onChange={(v) => update("gender", v)}
                 disabled={busy}
               />
