@@ -7,6 +7,7 @@ import {
   BarChart3,
   BadgeCheck,
   Flag,
+  Megaphone,
   Users,
   ScrollText,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const ADMIN_LINKS: AdminNavLink[] = [
   { label: "Vue d’ensemble", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Statistiques", href: "/admin/analytics", icon: BarChart3 },
   { label: "Membres", href: "/admin/members", icon: Users },
+  { label: "Relance", href: "/admin/relance", icon: Megaphone },
   { label: "Vérification", href: "/admin/verification", icon: BadgeCheck },
   { label: "Signalements", href: "/admin/reports", icon: Flag },
   { label: "Journal", href: "/admin/audit", icon: ScrollText },
