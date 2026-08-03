@@ -149,6 +149,11 @@ export type ProfileRow = {
   // CHECK en base : nom 2..100 après trim ; WhatsApp `^\+?[0-9]{8,15}$`.
   last_name: string | null;
   whatsapp_phone: string | null;
+  // Pseudo affiché (migration 20260803210000) — remplace le prénom PARTOUT où
+  // un autre membre ou le public le voit (repli sur le prénom tant qu'il est
+  // NULL). Facultatif, non unique, CHECK 2..30 après trim. L'administration
+  // continue de voir le vrai prénom et le vrai nom.
+  pseudo: string | null;
   blur_photos: boolean;
   // Statut Premium — LECTURE SEULE côté membre (C1a). Écrit UNIQUEMENT par les
   // futurs flux serveur (service_role) ; protégé en base par la garde
@@ -220,6 +225,8 @@ export type ProfileInsert = {
   // Contact privé — écrivables par le membre, jamais exposés publiquement.
   last_name?: string | null;
   whatsapp_phone?: string | null;
+  // Pseudo affiché — écrivable par le membre, librement modifiable.
+  pseudo?: string | null;
   blur_photos?: boolean;
   // NB : is_premium est VOLONTAIREMENT absent de Insert (et donc de Update) —
   // C1a : champ administratif en lecture seule pour le membre, rejeté en

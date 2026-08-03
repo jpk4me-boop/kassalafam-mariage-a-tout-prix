@@ -84,9 +84,13 @@ test("AUCUNE projection publique ne sélectionne ces colonnes", () => {
       /last_name/,
       `fuite du nom dans ${name}`,
     );
+    // La donnée sensible est la COLONNE whatsapp_phone (le numéro du membre).
+    // Le mot « whatsapp » seul est légitime ailleurs : canal de diffusion des
+    // liens de promotion (PR #101) — l'ancienne assertion /whatsapp/i était
+    // rouge à tort depuis cette PR.
     assert.doesNotMatch(
       source,
-      /whatsapp/i,
+      /whatsapp_phone/i,
       `fuite du numéro dans ${name}`,
     );
   }
@@ -103,7 +107,15 @@ test("l'email du compte est affiché en lecture seule, sans duplication en base"
   assert.match(profilePage, /value=\{accountEmail \?\? ""\}/);
   assert.match(profilePage, /id="account_email"/);
   assert.match(profilePage, /readOnly/);
-  // Aucune colonne email ajoutée au profil, aucun envoi dans l'upsert.
+  // Aucune colonne email ajoutée au PROFIL, aucun envoi dans l'upsert.
+  // L'assertion est bornée aux types du profil : les types admin portent
+  // légitimement l'email joint côté serveur (AdminMemberListItem — RPC
+  // admin_list_members, service_role). L'ancienne version balayait tout le
+  // fichier et était rouge à tort.
   assert.doesNotMatch(profilePage, /account_email:/);
-  assert.doesNotMatch(types, /^\s*email\??: string \| null;/m);
+  const profileTypes = types.slice(
+    types.indexOf("export type ProfileRow"),
+    types.indexOf("export type PhotoRow"),
+  );
+  assert.doesNotMatch(profileTypes, /^\s*email\??: string \| null;/m);
 });

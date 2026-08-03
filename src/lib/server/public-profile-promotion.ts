@@ -84,7 +84,9 @@ async function loadPublicPromotedProfile(
   const [profileResult, photoResult] = await Promise.all([
     admin
       .from("profiles")
-      .select("first_name, birth_date, city, country, intention, bio, blur_photos")
+      .select(
+        "pseudo, first_name, birth_date, city, country, intention, bio, blur_photos",
+      )
       .eq("id", resolved.profile_id)
       .maybeSingle(),
     admin
@@ -112,7 +114,9 @@ async function loadPublicPromotedProfile(
   if (age == null) return null;
 
   return {
-    firstName: profile.first_name?.trim() || null,
+    // Pseudo affiché (migration 20260803210000) : remplace le prénom dès
+    // qu'il est renseigné — même repli que les fonctions SQL de projection.
+    firstName: profile.pseudo?.trim() || profile.first_name?.trim() || null,
     age,
     city: profile.city,
     country: profile.country,
