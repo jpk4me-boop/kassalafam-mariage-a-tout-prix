@@ -19,6 +19,7 @@
     "test:showcase-social-preview": "node --test scripts/showcase-social-preview.test.mjs",
     "test:profile-contact-fields": "node --test scripts/profile-contact-fields.test.mjs",
     "test:profile-onboarding-fields": "node --test scripts/profile-onboarding-fields.test.mjs",
+    "test:profile-pseudo": "node --test scripts/profile-pseudo.test.mjs",
     "test:promo-route": "node --test scripts/public-profile-promotion.test.mjs",
     "test:admin-profile-promotion-ui": "node --test scripts/admin-profile-promotion-ui.test.mjs",
     "test:admin-relance": "node --test scripts/admin-relance.test.mjs",

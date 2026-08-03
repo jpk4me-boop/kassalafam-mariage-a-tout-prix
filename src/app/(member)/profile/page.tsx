@@ -81,6 +81,10 @@ const ADULT_BIRTH_DATE_MAX = getAdultBirthDateMax();
 const LAST_NAME_MIN = 2;
 const LAST_NAME_MAX = 100;
 
+/** Pseudo affiché — miroir du CHECK `profiles_pseudo_len` (2..30). */
+const PSEUDO_MIN = 2;
+const PSEUDO_MAX = 30;
+
 /**
  * WhatsApp — miroir du CHECK `profiles_whatsapp_phone_format` :
  * chiffres, « + » initial facultatif, 8 à 15 chiffres. Les séparateurs de
@@ -94,6 +98,7 @@ function normalizeWhatsApp(value: string): string {
 
 type FormState = {
   first_name: string;
+  pseudo: string;
   last_name: string;
   whatsapp_phone: string;
   gender: "" | Gender;
@@ -119,6 +124,7 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   first_name: "",
+  pseudo: "",
   last_name: "",
   whatsapp_phone: "",
   gender: "",
@@ -190,6 +196,7 @@ export default function ProfilePage() {
       if (profile) {
         setForm({
           first_name: profile.first_name ?? "",
+          pseudo: profile.pseudo ?? "",
           last_name: profile.last_name ?? "",
           whatsapp_phone: profile.whatsapp_phone ?? "",
           gender: profile.gender ?? "",
@@ -260,6 +267,21 @@ export default function ProfilePage() {
     }
     if (onboardingDone && !form.city.trim()) {
       setError("Merci d’indiquer votre ville de résidence.");
+      return;
+    }
+
+    // Pseudo affiché : facultatif, mais s'il est renseigné il doit respecter
+    // le CHECK base (2 à 30 caractères après trim). Tant qu'il est vide, les
+    // autres membres voient le prénom (repli en base).
+    const pseudo = form.pseudo.trim();
+
+    if (
+      pseudo !== "" &&
+      (pseudo.length < PSEUDO_MIN || pseudo.length > PSEUDO_MAX)
+    ) {
+      setError(
+        `Le pseudo doit comporter entre ${PSEUDO_MIN} et ${PSEUDO_MAX} caractères.`,
+      );
       return;
     }
 
@@ -350,6 +372,9 @@ export default function ProfilePage() {
     const profilePayload: ProfileInsert = {
       id: user.id,
       first_name: form.first_name.trim() || null,
+      // Pseudo affiché : remplace le prénom pour les autres membres et le
+      // public dès qu'il est renseigné (repli sur le prénom en base sinon).
+      pseudo: pseudo || null,
       // Contact privé : jamais affiché publiquement (aucune fonction de
       // partage ne sélectionne ces colonnes).
       last_name: lastName || null,
@@ -485,10 +510,30 @@ export default function ProfilePage() {
               disabled={saving}
             />
             <p className="mt-1.5 text-xs text-ink-700/55">
-              Jamais affiché publiquement : seul votre prénom est visible par
-              les autres membres.
+              Jamais affiché publiquement : les autres membres voient votre
+              pseudo, ou à défaut votre prénom.
             </p>
           </div>
+        </div>
+
+        <div>
+          <Label htmlFor="pseudo">Pseudo affiché</Label>
+          <Input
+            id="pseudo"
+            name="pseudo"
+            type="text"
+            autoComplete="nickname"
+            maxLength={PSEUDO_MAX}
+            placeholder="Par exemple : Perle237"
+            value={form.pseudo}
+            onChange={(e) => update("pseudo", e.target.value)}
+            disabled={saving}
+          />
+          <p className="mt-1.5 text-xs text-ink-700/55">
+            Facultatif. Dès qu’il est renseigné, ce pseudo remplace votre
+            prénom partout où les autres membres et le public voient votre
+            profil (découverte, messagerie, vitrine, liens de partage).
+          </p>
         </div>
 
         <div>
