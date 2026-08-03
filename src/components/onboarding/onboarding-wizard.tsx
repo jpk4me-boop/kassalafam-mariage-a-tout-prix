@@ -19,6 +19,7 @@ import {
   computeStepCompletion,
   firstIncompleteStep,
   isAdultBirthDate,
+  ONBOARDING_STEP_LABELS,
   ONBOARDING_TOTAL_STEPS,
   type OnboardingProfileData,
   type OnboardingStep,
@@ -46,6 +47,7 @@ import { AcquisitionStep } from "@/components/onboarding/acquisition-source-form
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
 import { OnboardingNavigation } from "@/components/onboarding/onboarding-navigation";
 import { OnboardingIntro } from "@/components/onboarding/onboarding-intro";
+import { OnboardingResume } from "@/components/onboarding/onboarding-resume";
 import { OnboardingConfirmation } from "@/components/onboarding/onboarding-confirmation";
 import { GenderStep } from "@/components/onboarding/steps/gender-step";
 import { BirthDateStep } from "@/components/onboarding/steps/birth-date-step";
@@ -66,7 +68,7 @@ import { PhotosStep } from "@/components/onboarding/steps/photos-step";
  * RPC write-once, les autres par upsert de la ligne du membre (RLS owner-only).
  */
 
-type Phase = "intro" | "steps" | "confirm";
+type Phase = "intro" | "resume" | "steps" | "confirm";
 
 export function OnboardingWizard({
   mode,
@@ -97,17 +99,41 @@ export function OnboardingWizard({
     hasPrimary: hasPrimaryPhoto,
   }));
 
-  // Étape de reprise + affichage de l'intro, calculés une seule fois au montage
+  // Étape de reprise + écran d'accueil, calculés une seule fois au montage
   // depuis la complétude serveur (source de vérité unique). Toutes les données
   // présentes mais marqueur absent (sinon le Server Component aurait redirigé)
   // → reprise à l'étape 8 pour le clic final explicite « Envoyer mon profil ».
-  const [{ initialStep, showIntro }] = useState(() => {
-    const completion = computeStepCompletion(initialProfile, hasPrimaryPhoto);
-    const first = firstIncompleteStep(completion) ?? ONBOARDING_TOTAL_STEPS;
-    return { initialStep: first, showIntro: first === 1 };
-  });
+  //   - profil neuf (première étape incomplète = 1)  → introduction ;
+  //   - parcours entamé (reprise au-delà de l'étape 1) → écran de reprise
+  //     (volet B) : progression + étapes restantes, dérivées de la même
+  //     complétude — aucune règle recalculée ailleurs.
+  const [{ initialStep, showIntro, completedSteps, missingLabels }] = useState(
+    () => {
+      const completion = computeStepCompletion(initialProfile, hasPrimaryPhoto);
+      const first = firstIncompleteStep(completion) ?? ONBOARDING_TOTAL_STEPS;
 
-  const [phase, setPhase] = useState<Phase>(showIntro ? "intro" : "steps");
+      let completed = 0;
+      const missing: string[] = [];
+      for (let step = 1; step <= ONBOARDING_TOTAL_STEPS; step++) {
+        if (completion[step as OnboardingStep]) {
+          completed += 1;
+        } else {
+          missing.push(ONBOARDING_STEP_LABELS[step as OnboardingStep]);
+        }
+      }
+
+      return {
+        initialStep: first,
+        showIntro: first === 1,
+        completedSteps: completed,
+        missingLabels: missing,
+      };
+    },
+  );
+
+  const [phase, setPhase] = useState<Phase>(
+    showIntro ? "intro" : initialStep > 1 ? "resume" : "steps",
+  );
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(initialStep);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -374,6 +400,21 @@ export function OnboardingWizard({
         <OnboardingIntro
           firstName={initialProfile.first_name ?? firstNameSuggestion ?? null}
           onStart={() => setPhase("steps")}
+        />
+      </OnboardingShell>
+    );
+  }
+
+  // ---- Mode A : écran de reprise (volet B — parcours entamé) ----------------
+  if (phase === "resume") {
+    return (
+      <OnboardingShell>
+        <OnboardingResume
+          firstName={initialProfile.first_name ?? firstNameSuggestion ?? null}
+          completedSteps={completedSteps}
+          totalSteps={ONBOARDING_TOTAL_STEPS}
+          missingLabels={missingLabels}
+          onResume={() => setPhase("steps")}
         />
       </OnboardingShell>
     );

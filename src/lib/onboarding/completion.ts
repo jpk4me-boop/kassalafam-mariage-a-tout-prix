@@ -41,6 +41,22 @@ export const ONBOARDING_MIN_AGE = 18;
 
 export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+/**
+ * Libellés des 8 étapes — SOURCE UNIQUE, partagée par l'écran de reprise du
+ * wizard (membre) et la vue « Relance » (back-office). Même ordre que le
+ * parcours ; toute évolution des étapes se répercute ici une seule fois.
+ */
+export const ONBOARDING_STEP_LABELS: Record<OnboardingStep, string> = {
+  1: "Source d’inscription",
+  2: "Identité",
+  3: "Date de naissance",
+  4: "Situation & religion",
+  5: "Profession & études",
+  6: "Localisation",
+  7: "Projet matrimonial",
+  8: "Photos",
+};
+
 /** Sous-ensemble des colonnes profil réellement lues par l'onboarding. Évite de
  *  trimballer (et d'exposer côté client) la ligne profil entière. */
 export type OnboardingProfileData = Pick<
