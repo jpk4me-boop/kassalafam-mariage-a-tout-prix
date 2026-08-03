@@ -104,3 +104,8 @@ export const REGION_MAX = 120;
 /** bio / partner_expectations — MIROIR des CHECK `profiles_bio_len` et
  *  `profiles_partner_expectations_len` (≤ 2000), même règle que /profile. */
 export const PROFILE_TEXT_MAX = 2000;
+
+/** pseudo — MIROIR du CHECK `profiles_pseudo_len` (2..30 après trim,
+ *  migration 20260803210000). Facultatif : vide accepté, enregistré en NULL. */
+export const PSEUDO_MIN = 2;
+export const PSEUDO_MAX = 30;

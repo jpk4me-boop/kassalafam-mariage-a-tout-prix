@@ -82,11 +82,14 @@ export type OnboardingProfileData = Pick<
   | "partner_expectations"
   | "acquisition_source_recorded_at"
   | "onboarding_completed_at"
+  // Pseudo affiché (migration 53) : COLLECTÉ à l'étape 2 (facultatif), jamais
+  // exigé par la complétude — aucune règle ne le lit dans ce module.
+  | "pseudo"
 >;
 
 /** Colonnes à sélectionner côté serveur pour alimenter le wizard en UN seul SELECT. */
 export const ONBOARDING_PROFILE_COLUMNS =
-  "first_name, gender, birth_date, marital_status, religion, country, city, profession, education_level, height_cm, origin_country, origin_city, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at";
+  "first_name, gender, birth_date, marital_status, religion, country, city, profession, education_level, height_cm, origin_country, origin_city, region, marriage_goals, desired_partner_traits, polygamy_preference, children_intent, bio, partner_expectations, acquisition_source_recorded_at, onboarding_completed_at, pseudo";
 
 function isFilled(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;

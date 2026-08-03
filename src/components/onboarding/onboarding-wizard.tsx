@@ -39,6 +39,8 @@ import {
   PROFESSION_MAX,
   PROFESSION_MIN,
   PROFILE_TEXT_MAX,
+  PSEUDO_MAX,
+  PSEUDO_MIN,
   REGION_MAX,
 } from "@/lib/onboarding/options";
 import { FormError } from "@/components/ui/field";
@@ -196,8 +198,16 @@ export function OnboardingWizard({
     switch (step) {
       case 1:
         return true; // gérée par AcquisitionStep (RPC).
-      case 2:
-        return form.first_name.trim().length > 0 && form.gender !== "";
+      case 2: {
+        // Pseudo FACULTATIF : vide accepté ; sinon mêmes bornes que le CHECK.
+        const pseudo = form.pseudo.trim();
+        return (
+          form.first_name.trim().length > 0 &&
+          form.gender !== "" &&
+          (pseudo === "" ||
+            (pseudo.length >= PSEUDO_MIN && pseudo.length <= PSEUDO_MAX))
+        );
+      }
       case 3:
         return isAdultBirthDate(form.birth_date);
       case 4:
@@ -266,6 +276,8 @@ export function OnboardingWizard({
         patch = {
           id: user.id,
           first_name: form.first_name.trim(),
+          // Pseudo facultatif (migration 53) : vide → NULL, repli sur le prénom.
+          pseudo: form.pseudo.trim() || null,
           gender: form.gender as Gender,
         };
         break;
@@ -471,8 +483,10 @@ export function OnboardingWizard({
             {currentStep === 2 ? (
               <GenderStep
                 firstName={form.first_name}
+                pseudo={form.pseudo}
                 value={form.gender}
                 onFirstNameChange={(v) => update("first_name", v)}
+                onPseudoChange={(v) => update("pseudo", v)}
                 onChange={(v) => update("gender", v)}
                 disabled={busy}
               />
