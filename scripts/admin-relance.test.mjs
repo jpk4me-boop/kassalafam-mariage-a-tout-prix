@@ -6,11 +6,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [page, helper, nav, pkg] = await Promise.all([
+const [page, helper, nav, pkg, completion] = await Promise.all([
   readFile("src/app/admin/relance/page.tsx", "utf8"),
   readFile("src/lib/admin/relance.ts", "utf8"),
   readFile("src/components/admin/admin-nav.tsx", "utf8"),
   readFile("package.json", "utf8"),
+  readFile("src/lib/onboarding/completion.ts", "utf8"),
 ]);
 
 test("la page est un Server Component gardé par requireAdmin", () => {
@@ -40,7 +41,10 @@ test("le helper réutilise la source de vérité de complétude, sans duplicatio
   assert.doesNotMatch(helper, /profile\.(first_name|birth_date|marital_status|bio)/);
 });
 
-test("les 8 étapes du parcours ont un libellé back-office", () => {
+test("les 8 étapes du parcours ont un libellé, en source unique", () => {
+  // Depuis le volet B, les libellés vivent dans completion.ts (partagés avec
+  // l'écran de reprise du wizard) ; le helper admin les IMPORTE sans les
+  // redéfinir.
   for (const label of [
     "Source d’inscription",
     "Identité",
@@ -51,8 +55,10 @@ test("les 8 étapes du parcours ont un libellé back-office", () => {
     "Projet matrimonial",
     "Photos",
   ]) {
-    assert.match(helper, new RegExp(label), `libellé manquant : ${label}`);
+    assert.match(completion, new RegExp(label), `libellé manquant : ${label}`);
   }
+  assert.match(helper, /ONBOARDING_STEP_LABELS/);
+  assert.doesNotMatch(helper, /Projet matrimonial/);
 });
 
 test("le canal de contact privilégie WhatsApp puis replie sur l'email", () => {

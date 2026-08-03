@@ -7,22 +7,14 @@
 import {
   computeStepCompletion,
   firstIncompleteStep,
+  ONBOARDING_STEP_LABELS,
   ONBOARDING_TOTAL_STEPS,
   type OnboardingProfileData,
   type OnboardingStep,
 } from "@/lib/onboarding/completion";
 
-/** Libellés back-office des 8 étapes du wizard (même ordre que le parcours). */
-export const ONBOARDING_STEP_LABELS: Record<OnboardingStep, string> = {
-  1: "Source d’inscription",
-  2: "Identité",
-  3: "Date de naissance",
-  4: "Situation & religion",
-  5: "Profession & études",
-  6: "Localisation",
-  7: "Projet matrimonial",
-  8: "Photos",
-};
+// Les libellés des 8 étapes vivent désormais dans completion.ts (source
+// unique, partagée avec l'écran de reprise du wizard) — aucune duplication.
 
 export type RelanceContact =
   | { channel: "whatsapp"; value: string; href: string }
