@@ -817,6 +817,24 @@ export type WhatsappNotificationsStatusRow = {
   consent_active: boolean;
 };
 
+/**
+ * Ligne renvoyée par `admin_list_showcase_candidates` (migration 56) : état
+ * vitrine d'un membre finalisé. Contient des données PRIVÉES (nom, téléphone) —
+ * service_role UNIQUEMENT, jamais exposé à un membre ni à une page publique.
+ */
+export type AdminShowcaseCandidateRow = {
+  profile_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  whatsapp_phone: string | null;
+  blur_photos: boolean;
+  has_primary_photo: boolean;
+  /** Motif calculé par la base (`candidate_showcase_eligibility_reason`). */
+  eligibility_reason: string;
+  is_published: boolean;
+  onboarding_completed_at: string | null;
+};
+
 // ---------------------------------------------------------------------------
 // C1b — Premium autoritatif fournisseur-neutre.
 // ---------------------------------------------------------------------------
@@ -1264,6 +1282,12 @@ export interface Database {
       withdraw_my_whatsapp_notifications: {
         Args: Record<string, never>;
         Returns: undefined;
+      };
+      // Back-office : état vitrine de chaque membre finalisé (service_role
+      // uniquement — encapsule la fonction d'éligibilité interne).
+      admin_list_showcase_candidates: {
+        Args: Record<string, never>;
+        Returns: AdminShowcaseCandidateRow[];
       };
       // Partage PR2 — création d'un lien (service_role uniquement, jamais
       // authenticated). p_actor_id vient d'une session admin validée serveur.

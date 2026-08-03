@@ -9,6 +9,7 @@ import {
   BellRing,
   Flag,
   Megaphone,
+  Sparkles,
   Users,
   ScrollText,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const ADMIN_LINKS: AdminNavLink[] = [
   { label: "Vue d’ensemble", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Statistiques", href: "/admin/analytics", icon: BarChart3 },
   { label: "Membres", href: "/admin/members", icon: Users },
+  { label: "Vitrine", href: "/admin/vitrine", icon: Sparkles },
   { label: "À prévenir", href: "/admin/notifications", icon: BellRing },
   { label: "Relance", href: "/admin/relance", icon: Megaphone },
   { label: "Vérification", href: "/admin/verification", icon: BadgeCheck },
