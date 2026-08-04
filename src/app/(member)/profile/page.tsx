@@ -119,6 +119,7 @@ type FormState = {
   bio: string;
   partner_expectations: string;
   blur_photos: boolean;
+  discreet_visits: boolean;
 };
 
 const EMPTY_FORM: FormState = {
@@ -145,6 +146,7 @@ const EMPTY_FORM: FormState = {
   bio: "",
   partner_expectations: "",
   blur_photos: true,
+  discreet_visits: false,
 };
 
 /** Miroir de `profiles_valid_choice_set(..., 2, 3)` : vide OU 2 à 3 valeurs. */
@@ -218,6 +220,7 @@ export default function ProfilePage() {
           bio: profile.bio ?? "",
           partner_expectations: profile.partner_expectations ?? "",
           blur_photos: profile.blur_photos ?? true,
+          discreet_visits: profile.discreet_visits ?? false,
         });
         setVerificationStatus(profile.verification_status ?? "pending");
         setRejectionReason(profile.verification_rejection_reason ?? null);
@@ -421,6 +424,7 @@ export default function ProfilePage() {
       bio: form.bio.trim() || null,
       partner_expectations: form.partner_expectations.trim() || null,
       blur_photos: form.blur_photos,
+      discreet_visits: form.discreet_visits,
     };
 
     // Défense en profondeur : après finalisation, ces propriétés sont
@@ -924,6 +928,27 @@ export default function ProfilePage() {
             <span className="mt-1 block text-xs text-ink-700/60">
               Vos photos restent floutées tant que vous n’autorisez pas leur
               affichage. Recommandé pour votre confidentialité.
+            </span>
+          </span>
+        </label>
+
+        {/* Visites discrètes (Lot 3) */}
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-champagne-500/30 bg-cream-100/40 p-4">
+          <input
+            type="checkbox"
+            checked={form.discreet_visits}
+            onChange={(e) => update("discreet_visits", e.target.checked)}
+            disabled={saving}
+            className="mt-0.5 h-5 w-5 shrink-0 rounded border-champagne-500/50 text-choco-600 accent-choco-600"
+          />
+          <span>
+            <span className="flex items-center gap-2 text-sm font-medium text-ink-800">
+              <ShieldCheck size={16} className="text-choco-600" />
+              Visites discrètes
+            </span>
+            <span className="mt-1 block text-xs text-ink-700/60">
+              Lorsque vous consultez le détail d’un profil, votre visite n’est
+              ni enregistrée ni visible par le membre consulté.
             </span>
           </span>
         </label>

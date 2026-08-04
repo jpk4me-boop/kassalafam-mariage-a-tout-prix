@@ -1,32 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   BadgeCheck,
-  Compass,
-  Heart,
+  Eye,
   Lock,
   MapPin,
   UserRound,
 } from "lucide-react";
 
 import { CandidateDetailsToggle } from "@/components/member/candidate-details";
-import { FavoriteButton } from "@/components/member/favorite-button";
 import { InterestButton } from "@/components/member/interest-button";
 import type {
-  FavoriteCandidateWithPhoto,
   MaritalStatus,
+  ProfileVisitorWithPhoto,
 } from "@/lib/types/database";
 import { UNIVERSE_LABEL } from "@/lib/discovery/universe";
 
 /**
- * Favoris (Lot 2) — affichage des profils conservés (Client Component).
+ * Visites (Lot 3) — affichage des membres ayant consulté le profil du viewer.
  *
- * Ne reçoit QUE des données sûres (champs DiscoverCandidate + favorited_at +
- * signedUrl). Écritures possibles depuis cette vue :
- *   - retrait d'un favori (DELETE RLS via FavoriteButton) — la carte disparaît ;
- *   - expression d'un intérêt (RPC express_interest via InterestButton).
+ * Ne reçoit QUE des données sûres (champs carte + last_visited_at + signedUrl),
+ * issues de la RPC `list_profile_visitors` (mode discret exclu, visibilité
+ * revalidée). Écritures possibles : expression d'intérêt (RPC) et visite en
+ * retour via le volet « Voir plus » (RPC).
  */
 
 const MARITAL_LABEL: Record<MaritalStatus, string> = {
@@ -36,38 +33,38 @@ const MARITAL_LABEL: Record<MaritalStatus, string> = {
   separe: "Séparé(e)",
 };
 
-const DATE_FMT = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" });
+const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
-export function FavoritesView({
-  favorites,
+export function VisitorsView({
+  visitors,
   initialStates,
 }: {
-  favorites: FavoriteCandidateWithPhoto[];
+  visitors: ProfileVisitorWithPhoto[];
   initialStates: Record<string, "sent" | "matched">;
 }) {
-  const [removed, setRemoved] = useState<Set<string>>(new Set());
-
-  const visible = favorites.filter((f) => !removed.has(f.id));
-
-  if (favorites.length === 0 || visible.length === 0) {
+  if (visitors.length === 0) {
     return (
       <section className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-champagne-500/40 bg-cream-100/30 p-8 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full border border-champagne-500/40 bg-champagne-400/15 text-choco-700">
-          <Heart size={20} />
+          <Eye size={20} />
         </span>
         <h2 className="font-serif text-xl font-semibold text-choco-700">
-          Aucun favori pour le moment
+          Aucune visite pour le moment
         </h2>
         <p className="mx-auto max-w-xl text-sm text-ink-700/70">
-          Ajoutez des profils à vos favoris depuis la découverte pour les
-          retrouver facilement ici.
+          Lorsqu’un membre consultera le détail de votre profil, vous le
+          retrouverez ici. Un profil complet avec photo attire plus de
+          visites.
         </p>
         <Link
-          href="/discover"
+          href="/profile"
           className="mt-1 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
         >
-          <Compass size={16} />
-          Ouvrir la découverte
+          <UserRound size={16} />
+          Améliorer mon profil
         </Link>
       </section>
     );
@@ -75,7 +72,7 @@ export function FavoritesView({
 
   return (
     <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-      {visible.map((c) => (
+      {visitors.map((c) => (
         <li
           key={c.id}
           className="flex flex-col overflow-hidden rounded-3xl border border-champagne-500/30 bg-cream-50/60 shadow-card"
@@ -137,8 +134,9 @@ export function FavoritesView({
               </span>
             ) : null}
 
-            <p className="text-xs text-ink-700/50">
-              Ajouté le {DATE_FMT.format(new Date(c.favorited_at))}
+            <p className="flex items-center gap-1.5 text-xs text-ink-700/50">
+              <Eye size={13} className="shrink-0" />
+              Dernière visite le {DATE_FMT.format(new Date(c.last_visited_at))}
             </p>
 
             {/* Actions */}
@@ -151,17 +149,6 @@ export function FavoritesView({
                   initial={initialStates[c.id]}
                 />
               ) : null}
-              <FavoriteButton
-                targetId={c.id}
-                initialFavorited
-                onRemoved={() =>
-                  setRemoved((prev) => {
-                    const next = new Set(prev);
-                    next.add(c.id);
-                    return next;
-                  })
-                }
-              />
             </div>
           </div>
         </li>
