@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 
+import { CandidateDetailsToggle } from "@/components/member/candidate-details";
 import { FavoriteButton } from "@/components/member/favorite-button";
 import { InterestButton } from "@/components/member/interest-button";
 import type {
@@ -205,6 +206,7 @@ export function DiscoverFeedView({
 
                 {/* Actions */}
                 <div className="mt-auto flex flex-col gap-2 pt-2">
+                  <CandidateDetailsToggle targetId={c.id} />
                   <InterestButton
                     targetId={c.id}
                     universe={universe}

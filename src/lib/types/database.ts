@@ -155,6 +155,10 @@ export type ProfileRow = {
   // continue de voir le vrai prénom et le vrai nom.
   pseudo: string | null;
   blur_photos: boolean;
+  // Visites discrètes (Lot 3, migration 20260804110000) — librement éditable.
+  // Si true : les consultations de profils par ce membre ne sont ni
+  // enregistrées ni visibles chez les membres consultés.
+  discreet_visits: boolean;
   // Statut Premium — LECTURE SEULE côté membre (C1a). Écrit UNIQUEMENT par les
   // futurs flux serveur (service_role) ; protégé en base par la garde
   // trg_profiles_guard_admin_fields (INSERT + UPDATE, upsert inclus).
@@ -228,6 +232,7 @@ export type ProfileInsert = {
   // Pseudo affiché — écrivable par le membre, librement modifiable.
   pseudo?: string | null;
   blur_photos?: boolean;
+  discreet_visits?: boolean;
   // NB : is_premium est VOLONTAIREMENT absent de Insert (et donc de Update) —
   // C1a : champ administratif en lecture seule pour le membre, rejeté en
   // écriture directe par la garde en base (PROFILE_ADMIN_FIELDS_READ_ONLY).
@@ -325,6 +330,31 @@ export type FavoriteCandidate = DiscoverCandidate & {
 };
 
 export type FavoriteCandidateWithPhoto = FavoriteCandidate & {
+  signedUrl: string | null;
+};
+
+/**
+ * Visites (Lot 3) — détail sûr renvoyé par la RPC `view_candidate_details`
+ * (0 ou 1 ligne). N'expose QUE bio et partner_expectations (déjà exposés
+ * dans la vitrine publique) — jamais la religion ni les coordonnées.
+ * L'appel enregistre la visite, sauf viewer en visites discrètes.
+ */
+export type CandidateDetails = {
+  bio: string | null;
+  partner_expectations: string | null;
+};
+
+/**
+ * Visites (Lot 3) — visiteur renvoyé par la RPC `list_profile_visitors` :
+ * champs sûrs du modèle carte (règle pseudo appliquée) + dernière visite.
+ * Les visiteurs en mode discret sont exclus ; visibilité revalidée à chaque
+ * lecture.
+ */
+export type ProfileVisitor = DiscoverCandidate & {
+  last_visited_at: string;
+};
+
+export type ProfileVisitorWithPhoto = ProfileVisitor & {
   signedUrl: string | null;
 };
 
@@ -1227,6 +1257,16 @@ export interface Database {
       list_favorites: {
         Args: Record<string, never>;
         Returns: FavoriteCandidate[];
+      };
+      // Visites (Lot 3) — détail sûr d'une carte + enregistrement de la visite.
+      view_candidate_details: {
+        Args: { p_target: string };
+        Returns: CandidateDetails[];
+      };
+      // Visites (Lot 3) — visiteurs de MON profil (mode discret exclu).
+      list_profile_visitors: {
+        Args: Record<string, never>;
+        Returns: ProfileVisitor[];
       };
       // L3D-C — réponse à un intérêt reçu (seule la cible, sur un match pending).
       respond_to_interest: {
