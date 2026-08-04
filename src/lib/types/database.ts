@@ -301,6 +301,33 @@ export type DiscoverCandidateWithPhoto = DiscoverCandidate & {
  */
 export type ExpressInterestResult = "created" | "already" | "matched";
 
+/**
+ * Favoris (Lot 2) — résultat de la RPC `add_favorite` (SECURITY DEFINER,
+ * UNIQUE chemin d'ajout ; idempotente via ON CONFLICT DO NOTHING) :
+ *   - `added`   : favori créé ;
+ *   - `already` : la cible était déjà dans les favoris du viewer.
+ */
+export type AddFavoriteResult = "added" | "already";
+
+export type MemberFavoriteRow = {
+  user_id: string;
+  target_profile_id: string;
+  created_at: string;
+};
+
+/**
+ * Élément renvoyé par la RPC `list_favorites` : champs sûrs du modèle
+ * DiscoverCandidate + date de mise en favori. La RPC revalide la visibilité
+ * de la cible à chaque lecture (approuvée, active, profil complet).
+ */
+export type FavoriteCandidate = DiscoverCandidate & {
+  favorited_at: string;
+};
+
+export type FavoriteCandidateWithPhoto = FavoriteCandidate & {
+  signedUrl: string | null;
+};
+
 export type MatchRow = {
   id: string;
   user_a: string;
@@ -1064,6 +1091,15 @@ export interface Database {
         Update: Partial<MemberNotificationInsert>;
         Relationships: [];
       };
+      // Favoris (Lot 2) — SELECT/DELETE propriétaire uniquement (RLS).
+      // Insert/Update volontairement `never` : l'ajout passe EXCLUSIVEMENT
+      // par la RPC add_favorite (aucune policy INSERT, aucun update métier).
+      member_favorites: {
+        Row: MemberFavoriteRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       // L3F-C1 — LECTURE SEULE côté back-office (client service_role serveur).
       // Aucune écriture directe via ce client : les seules écritures légitimes
       // passent par les RPC SECURITY DEFINER (report_message). Insert/Update
@@ -1181,6 +1217,16 @@ export interface Database {
       express_interest: {
         Args: { p_target: string; p_universe: string };
         Returns: ExpressInterestResult;
+      };
+      // Favoris (Lot 2) — ajout contrôlé (idempotent) dans member_favorites.
+      add_favorite: {
+        Args: { p_target: string };
+        Returns: AddFavoriteResult;
+      };
+      // Favoris (Lot 2) — lecture curée des favoris encore visibles.
+      list_favorites: {
+        Args: Record<string, never>;
+        Returns: FavoriteCandidate[];
       };
       // L3D-C — réponse à un intérêt reçu (seule la cible, sur un match pending).
       respond_to_interest: {

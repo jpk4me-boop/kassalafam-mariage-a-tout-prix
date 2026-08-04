@@ -61,6 +61,7 @@ export async function DiscoverFeed({
   const result = await loadDiscoveryCandidates({
     universe,
     includeRelationshipStates: true,
+    includeFavoriteStates: true,
   });
 
   if (
@@ -119,6 +120,7 @@ export async function DiscoverFeed({
       candidates={result.candidates}
       universe={result.universe}
       initialStates={result.initialStates}
+      favoriteIds={result.favoriteIds}
     />
   );
 }
