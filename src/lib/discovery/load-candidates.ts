@@ -34,6 +34,7 @@ export type DiscoveryLoadResult =
         string,
         DiscoveryRelationshipState
       >;
+      favoriteIds: string[];
     }>
   | DiscoveryGuardResult;
 
@@ -41,6 +42,7 @@ type LoadDiscoveryCandidatesOptions = Readonly<{
   universe?: DiscoveryUniverse | null;
   limit?: number;
   includeRelationshipStates?: boolean;
+  includeFavoriteStates?: boolean;
 }>;
 
 function normalizeLimit(
@@ -56,6 +58,7 @@ export async function loadDiscoveryCandidates({
   universe,
   limit,
   includeRelationshipStates = false,
+  includeFavoriteStates = false,
 }: LoadDiscoveryCandidatesOptions = {}): Promise<DiscoveryLoadResult> {
   const supabase = await createClient();
 
@@ -199,11 +202,39 @@ export async function loadDiscoveryCandidates({
       }
     }
 
+    const favoriteIds: string[] = [];
+
+    if (includeFavoriteStates && candidates.length > 0) {
+      // Lecture RLS : le membre ne voit que ses propres favoris.
+      const { data: favorites, error: favoritesError } =
+        await supabase
+          .from("member_favorites")
+          .select("target_profile_id")
+          .eq("user_id", user.id)
+          .in(
+            "target_profile_id",
+            candidates.map((candidate) => candidate.id),
+          );
+
+      if (favoritesError) {
+        console.error(
+          "[discovery-loader] lecture favoris échouée:",
+          favoritesError.message,
+        );
+      }
+      else {
+        for (const favorite of favorites ?? []) {
+          favoriteIds.push(favorite.target_profile_id);
+        }
+      }
+    }
+
     return {
       status: "ready",
       universe: selectedUniverse,
       candidates,
       initialStates,
+      favoriteIds,
     };
   }
   catch (error) {

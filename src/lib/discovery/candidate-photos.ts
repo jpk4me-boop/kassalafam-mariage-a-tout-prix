@@ -1,8 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type {
-  DiscoverCandidate,
-  DiscoverCandidateWithPhoto,
-} from "@/lib/types/database";
+import type { DiscoverCandidate } from "@/lib/types/database";
 
 /**
  * L3D-B PR1 — Signature SERVEUR des photos de candidats de découverte.
@@ -30,9 +27,9 @@ const SIGNED_URL_TTL = 300; // 5 minutes
  * pour leur photo principale, dans le strict respect de `is_blurred`/`has_photo`.
  * Ne renvoie jamais `storage_path`.
  */
-export async function attachSignedPhotos(
-  candidates: DiscoverCandidate[],
-): Promise<DiscoverCandidateWithPhoto[]> {
+export async function attachSignedPhotos<T extends DiscoverCandidate>(
+  candidates: T[],
+): Promise<(T & { signedUrl: string | null })[]> {
   if (typeof window !== "undefined") {
     throw new Error(
       "attachSignedPhotos est server-only (service_role) et ne doit jamais être appelé côté client.",
