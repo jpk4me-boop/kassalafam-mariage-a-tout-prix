@@ -41,6 +41,8 @@ const PRIMARY_LINKS = [
     label: "Tableau de bord",
     href: "/dashboard",
     icon: LayoutDashboard,
+    // Libellé court : la grille mobile ne dispose que d'une colonne étroite.
+    short: "Tableau",
   },
   {
     label: "Découverte",
@@ -120,13 +122,18 @@ export function MemberHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-champagne-500/20 bg-cream-50/95 shadow-[0_10px_35px_-28px_rgba(43,26,18,0.5)] backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 lg:px-8">
         <Link
           href="/dashboard"
           aria-label="Tableau de bord KASSALAFAM"
-          className="shrink-0"
+          className="flex min-w-0 shrink items-center overflow-hidden lg:shrink-0"
         >
-          <Logo className="[&_span]:text-base" />
+          <Logo
+            className="min-w-0 gap-2 sm:gap-3"
+            markClassName="h-10 w-10 sm:h-11 sm:w-11"
+            wordmarkClassName="truncate text-[0.9rem] max-[359px]:text-[0.72rem] sm:text-base"
+            baselineClassName="truncate text-[0.55rem] tracking-[0.12em] max-[359px]:hidden sm:text-[0.62rem] sm:tracking-[0.28em]"
+          />
         </Link>
 
         <nav
@@ -163,7 +170,7 @@ export function MemberHeader({
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1 lg:ml-3">
+        <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1 lg:ml-3">
           {ACTION_LINKS.map((link) => {
             const Icon = link.icon;
 
@@ -173,7 +180,7 @@ export function MemberHeader({
                 href={link.href}
                 aria-label={link.label}
                 title={link.label}
-                className="flex h-10 min-w-10 items-center justify-center gap-2 rounded-full px-2.5 text-ink-700/65 transition-colors hover:bg-champagne-400/15 hover:text-choco-700 xl:px-3"
+                className="flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-ink-700/65 transition-colors hover:bg-champagne-400/15 hover:text-choco-700 sm:h-10 sm:w-10 xl:w-auto xl:px-3"
               >
                 <Icon size={19} />
                 <span className="hidden text-xs font-semibold xl:inline">
@@ -183,10 +190,10 @@ export function MemberHeader({
             );
           })}
 
-          <details className="group relative">
+          <details className="group relative shrink-0">
             <summary
               aria-label="Ouvrir le menu du profil"
-              className="flex h-11 w-11 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full border-2 border-champagne-400 bg-choco-700 text-cream-50 shadow-sm outline-none transition-transform hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-champagne-500/60 [&::-webkit-details-marker]:hidden"
+              className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full border-2 border-champagne-400 bg-choco-700 text-cream-50 shadow-sm outline-none transition-transform hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-champagne-500/60 sm:h-11 sm:w-11 [&::-webkit-details-marker]:hidden"
             >
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -254,13 +261,19 @@ export function MemberHeader({
         </div>
       </div>
 
+      {/*
+        Mobile : grille au lieu d'une rangée qui débordait vers la droite.
+        4 colonnes sous 640 px (2 rangées, « Premium » occupe la place restante),
+        7 colonnes au-delà — plus aucun défilement horizontal.
+      */}
       <nav
         aria-label="Navigation membre mobile"
-        className="scrollbar-none flex items-center gap-1 overflow-x-auto border-t border-champagne-500/15 px-3 py-2 lg:hidden"
+        className="grid grid-cols-4 gap-1 border-t border-champagne-500/15 px-2 py-2 sm:gap-1.5 sm:px-3 sm:grid-cols-7 lg:hidden"
       >
         {PRIMARY_LINKS.map((link) => {
           const active = isRouteActive(pathname, link.href);
           const Icon = link.icon;
+          const premium = "premium" in link && link.premium;
 
           return (
             <Link
@@ -268,8 +281,9 @@ export function MemberHeader({
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-w-[82px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-2 text-[11px] font-semibold transition-all",
-                "premium" in link && link.premium
+                "flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-1 py-2 text-[10px] font-semibold transition-all sm:px-1.5 sm:text-[11px]",
+                premium ? "col-span-2 sm:col-span-1" : undefined,
+                premium
                   ? active
                     ? "border-champagne-600/75 bg-gradient-to-br from-champagne-300 via-champagne-200 to-champagne-500 text-choco-900 shadow-sm"
                     : "border-champagne-500/55 bg-gradient-to-br from-champagne-200/80 via-cream-50 to-champagne-300/70 text-champagne-800 shadow-sm"
@@ -278,8 +292,10 @@ export function MemberHeader({
                     : "border-transparent text-ink-700/60 hover:bg-cream-100 hover:text-choco-700",
               )}
             >
-              <Icon size={17} />
-              {link.label}
+              <Icon size={17} className="shrink-0" />
+              <span className="w-full truncate text-center">
+                {"short" in link ? link.short : link.label}
+              </span>
             </Link>
           );
         })}
