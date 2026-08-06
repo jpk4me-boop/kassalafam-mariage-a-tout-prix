@@ -51,15 +51,53 @@ test("le logo de l'en-tête peut rétrécir au lieu de pousser les actions", asy
   );
 });
 
-test("la baseline du logo est masquée sous 640 px", async () => {
+test("la baseline du logo reste visible sur mobile, à format réduit", async () => {
   const source = await readSource(HEADER);
 
   const baseline = source.match(/baselineClassName="([^"]+)"/);
   assert.ok(baseline, "l'en-tête doit piloter la baseline du logo");
+
+  const classes = baseline[1];
+
+  // À sa taille d'origine (0.62rem / 0.28em) la baseline mesure 165 px, contre
+  // ~126 px disponibles à 360 px. Réduite à 0.55rem / 0.12em elle tombe à
+  // 119 px — soit exactement la largeur du mot-marque, les deux lignes
+  // s'alignent. Mesures relevées au rendu, pas estimées.
+  assert.match(classes, /text-\[0\.55rem\]/, "taille réduite requise sur mobile");
+  assert.match(classes, /tracking-\[0\.12em\]/, "tracking réduit requis sur mobile");
+  assert.match(
+    classes,
+    /sm:text-\[0\.62rem\]/,
+    "la taille d'origine doit revenir à partir de 640 px",
+  );
+  assert.match(
+    classes,
+    /sm:tracking-\[0\.28em\]/,
+    "le tracking d'origine doit revenir à partir de 640 px",
+  );
+  assert.match(classes, /\btruncate\b/, "filet de sécurité si la place manque");
+  assert.doesNotMatch(
+    classes,
+    /(^|\s)hidden(\s|$)/,
+    "la baseline ne doit plus disparaître à 360 px : demande du 06/08",
+  );
+});
+
+test("sous 360 px, le logo se replie sur le seul mot-marque", async () => {
+  const source = await readSource(HEADER);
+
+  const baseline = source.match(/baselineClassName="([^"]+)"/);
   assert.match(
     baseline[1],
-    /\bhidden\b[^"]*\bsm:block\b/,
-    "« Mariage à Tout Prix » (tracking 0.28em) ne tient pas sur un mobile",
+    /max-\[359px\]:hidden/,
+    "à 320 px la colonne ne fait que 86 px : deux lignes tronquées valent moins qu'une nette",
+  );
+
+  const wordmark = source.match(/wordmarkClassName="([^"]+)"/);
+  assert.match(
+    wordmark[1],
+    /max-\[359px\]:text-\[0\.72rem\]/,
+    "le mot-marque doit rétrécir pour tenir entier à 320 px",
   );
 });
 

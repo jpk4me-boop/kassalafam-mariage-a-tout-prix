@@ -131,8 +131,8 @@ export function MemberHeader({
           <Logo
             className="min-w-0 gap-2 sm:gap-3"
             markClassName="h-10 w-10 sm:h-11 sm:w-11"
-            wordmarkClassName="truncate text-[0.9rem] sm:text-base"
-            baselineClassName="hidden truncate sm:block"
+            wordmarkClassName="truncate text-[0.9rem] max-[359px]:text-[0.72rem] sm:text-base"
+            baselineClassName="truncate text-[0.55rem] tracking-[0.12em] max-[359px]:hidden sm:text-[0.62rem] sm:tracking-[0.28em]"
           />
         </Link>
 
