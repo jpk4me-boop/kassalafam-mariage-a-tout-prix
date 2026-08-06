@@ -36,6 +36,11 @@ import {
 } from "@/lib/onboarding/options";
 import { VerificationBadge } from "@/components/member/verification-badge";
 import { PageBackNav } from "@/components/member/page-back-nav";
+import {
+  CONTACT_DETAILS_MESSAGES,
+  contactDetailsErrorMessage,
+  firstFieldWithContactDetails,
+} from "@/lib/profile/contact-details";
 import { CountryCityFields } from "@/components/profile/country-city-fields";
 import { RegionField } from "@/components/profile/region-field";
 import { ProfilePhotos } from "@/components/member/profile-photos";
@@ -434,12 +439,29 @@ export default function ProfilePage() {
       profilePayload.birth_date = form.birth_date || null;
     }
 
+    // Champs publics : on prévient AVANT l'aller-retour. La base reste
+    // l'autorité (trigger profiles_reject_contact_details, migration 59+).
+    const offendingField = firstFieldWithContactDetails({
+      bio: profilePayload.bio,
+      partner_expectations: profilePayload.partner_expectations,
+      pseudo: profilePayload.pseudo,
+    });
+
+    if (offendingField) {
+      setError(CONTACT_DETAILS_MESSAGES[offendingField]);
+      setSaving(false);
+      return;
+    }
+
     const { error: upsertError } = await supabase
       .from("profiles")
       .upsert(profilePayload, { onConflict: "id" });
 
     if (upsertError) {
-      setError("Enregistrement impossible pour le moment. Réessayez.");
+      setError(
+        contactDetailsErrorMessage(upsertError.message, upsertError.details) ??
+          "Enregistrement impossible pour le moment. Réessayez.",
+      );
       setSaving(false);
       return;
     }

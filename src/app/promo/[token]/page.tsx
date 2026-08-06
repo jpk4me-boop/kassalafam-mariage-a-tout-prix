@@ -6,6 +6,7 @@ import { ArrowRight, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/landing/logo";
 import { SharedProfileCard } from "@/components/share/shared-profile-card";
 import { getPublicPromotedProfile } from "@/lib/server/public-profile-promotion";
+import { WhatsappContactButton } from "@/components/public/whatsapp-contact-button";
 
 export const dynamic = "force-dynamic";
 
@@ -177,6 +178,7 @@ export default async function PublicPromotionProfilePage({
           droits réservés.
         </p>
       </footer>
+      <WhatsappContactButton context="profil-partage" />
     </main>
   );
 }

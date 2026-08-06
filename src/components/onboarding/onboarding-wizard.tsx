@@ -60,6 +60,11 @@ import { ProfessionalStep } from "@/components/onboarding/steps/professional-ste
 import { LocationStep } from "@/components/onboarding/steps/location-step";
 import { MatrimonialStep } from "@/components/onboarding/steps/matrimonial-step";
 import { PhotosStep } from "@/components/onboarding/steps/photos-step";
+import {
+  CONTACT_DETAILS_MESSAGES,
+  contactDetailsErrorMessage,
+  firstFieldWithContactDetails,
+} from "@/lib/profile/contact-details";
 
 /**
  * Wizard d'onboarding KASSALAFAM (client). Reçoit du Server Component la ligne
@@ -333,12 +338,33 @@ export function OnboardingWizard({
         return true;
     }
 
+    // Champs publics : message aimable AVANT l'aller-retour. La base reste
+    // l'autorité (trigger profiles_reject_contact_details).
+    const offendingField = firstFieldWithContactDetails({
+      bio: typeof patch.bio === "string" ? patch.bio : null,
+      partner_expectations:
+        typeof patch.partner_expectations === "string"
+          ? patch.partner_expectations
+          : null,
+      first_name:
+        typeof patch.first_name === "string" ? patch.first_name : null,
+      pseudo: typeof patch.pseudo === "string" ? patch.pseudo : null,
+    });
+
+    if (offendingField) {
+      setError(CONTACT_DETAILS_MESSAGES[offendingField]);
+      return false;
+    }
+
     const { error: upsertError } = await supabase
       .from("profiles")
       .upsert(patch, { onConflict: "id" });
 
     if (upsertError) {
-      setError("Enregistrement impossible pour le moment. Réessayez.");
+      setError(
+        contactDetailsErrorMessage(upsertError.message, upsertError.details) ??
+          "Enregistrement impossible pour le moment. Réessayez.",
+      );
       return false;
     }
     return true;
