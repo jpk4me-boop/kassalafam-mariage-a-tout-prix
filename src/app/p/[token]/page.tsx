@@ -136,8 +136,7 @@ export default async function SharedProfilePage({
           droits réservés.
         </p>
       </footer>
-          <WhatsappContactButton context="profil-partage" />
-
-</main>
+      <WhatsappContactButton context="profil-partage" />
+    </main>
   );
 }

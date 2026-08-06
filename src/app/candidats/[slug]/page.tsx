@@ -149,8 +149,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
           </p>
         </footer>
       </div>
-          <WhatsappContactButton context="vitrine" />
-
-</main>
+      <WhatsappContactButton context="vitrine" />
+    </main>
   );
 }

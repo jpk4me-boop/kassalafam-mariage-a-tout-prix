@@ -27,8 +27,7 @@ export default function Home() {
         <Cta />
       </main>
       <Footer />
-          <WhatsappContactButton context="accueil" />
-
-</>
+      <WhatsappContactButton context="accueil" />
+    </>
   );
 }

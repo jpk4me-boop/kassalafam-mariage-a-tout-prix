@@ -178,8 +178,7 @@ export default async function PublicPromotionProfilePage({
           droits réservés.
         </p>
       </footer>
-          <WhatsappContactButton context="profil-partage" />
-
-</main>
+      <WhatsappContactButton context="profil-partage" />
+    </main>
   );
-}
+}
