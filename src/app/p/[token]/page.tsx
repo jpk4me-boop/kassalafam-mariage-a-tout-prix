@@ -6,6 +6,7 @@ import { ArrowRight, Lock, ShieldCheck } from "lucide-react";
 import { getPublicSharedProfile } from "@/lib/server/public-profile-share";
 import { Logo } from "@/components/landing/logo";
 import { SharedProfileCard } from "@/components/share/shared-profile-card";
+import { WhatsappContactButton } from "@/components/public/whatsapp-contact-button";
 
 /**
  * Partage PR3 — Page PUBLIQUE limitée d'un profil partagé.
@@ -135,6 +136,8 @@ export default async function SharedProfilePage({
           droits réservés.
         </p>
       </footer>
-    </main>
+          <WhatsappContactButton context="profil-partage" />
+
+</main>
   );
 }

@@ -7,6 +7,7 @@ import {
   LegalSection,
 } from "@/components/legal/legal-page-shell";
 import { buildPublicPageMetadata } from "@/lib/seo-metadata";
+import { WhatsappContactButton } from "@/components/public/whatsapp-contact-button";
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: "Centre d’aide | KASSALAFAM",
@@ -57,6 +58,10 @@ export default function AidePage() {
           Merci de préciser l’adresse email associée à votre compte pour nous
           aider à traiter votre demande plus rapidement.
         </p>
+        <p>
+          Vous pouvez également nous écrire sur WhatsApp, depuis le bouton en
+          bas de cette page. La réponse y est généralement plus rapide.
+        </p>
       </LegalSection>
 
       <LegalSection id="securite" title="Conseils de sécurité">
@@ -90,6 +95,8 @@ export default function AidePage() {
           écrivez-nous à <ContactEmailLink /> en décrivant les faits.
         </p>
       </LegalSection>
+
+      <WhatsappContactButton context="aide" />
     </LegalPageShell>
   );
 }

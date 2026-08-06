@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 
 import { Logo } from "@/components/landing/logo";
 import { PublicCandidateProfile } from "@/components/showcase/public-candidate-profile";
+import { WhatsappContactButton } from "@/components/public/whatsapp-contact-button";
 import {
   getPublicCandidateShowcase,
   isPublicCandidateSlug,
@@ -148,6 +149,8 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
           </p>
         </footer>
       </div>
-    </main>
+          <WhatsappContactButton context="vitrine" />
+
+</main>
   );
 }

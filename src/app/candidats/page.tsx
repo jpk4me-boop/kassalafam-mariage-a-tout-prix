@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ShieldCheck, UsersRound } from "lucide-react";
 import { Logo } from "@/components/landing/logo";
 import { PublicCandidateCard } from "@/components/showcase/public-candidate-card";
 import { listPublicCandidateShowcases } from "@/lib/server/public-candidate-showcase";
+import { WhatsappContactButton } from "@/components/public/whatsapp-contact-button";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -147,6 +148,8 @@ export default async function CandidatesPage() {
           </p>
         </footer>
       </div>
-    </main>
+          <WhatsappContactButton context="vitrine" />
+
+</main>
   );
 }
