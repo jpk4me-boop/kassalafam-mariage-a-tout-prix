@@ -1075,6 +1075,27 @@ export type PremiumStatusRow = {
   source: PremiumSubscriptionSource | null;
 };
 
+/**
+ * Ligne renvoyée par `get_contact_exchange` (migration 20260806075800) : état
+ * de l'échange de coordonnées pour la conversation courante.
+ *
+ *   - `state`      : seule une demande VIVANTE est restituée — `none` couvre
+ *     aussi les demandes closes (refusée, retirée, expirée), sans motif ;
+ *   - les numéros ne sont non-null QUE si `state === "accepted"` ET que la
+ *     conversation reste autorisée (`can_send_message`) ; jamais de chaîne vide ;
+ *   - `can_request` : conversation autorisée + premium actif + aucune demande
+ *     vivante + aucun verrou (le plafond quotidien est contrôlé À PART via
+ *     `requests_left_today`).
+ */
+export type ContactExchangeStatus = {
+  state: "none" | "pending" | "accepted";
+  i_requested: boolean;
+  other_whatsapp: string | null;
+  my_whatsapp: string | null;
+  can_request: boolean;
+  requests_left_today: number;
+};
+
 
 export interface Database {
   public: {
@@ -1545,6 +1566,30 @@ export interface Database {
       // Retourne l'id du signalement (idempotent : même id si déjà signalé).
       report_message: {
         Args: { p_message: string; p_reason: string; p_details?: string | null };
+        Returns: string;
+      };
+      // Échange de coordonnées (migr. 60) — état pour la conversation courante.
+      // STABLE : ne révèle un numéro que si accepted ET conversation autorisée.
+      get_contact_exchange: {
+        Args: { p_match: string };
+        Returns: ContactExchangeStatus[];
+      };
+      // Échange de coordonnées — SEUL chemin de création (premium requis).
+      // Issues d'échec : exceptions nommées CONTACT_EXCHANGE_* traduites par l'UI.
+      request_contact_exchange: {
+        Args: { p_match: string };
+        Returns: string;
+      };
+      // Échange de coordonnées — la personne SOLLICITÉE décide ('accept'|'decline').
+      // Un refus ne notifie personne côté demandeur.
+      respond_to_contact_exchange: {
+        Args: { p_match: string; p_decision: string };
+        Returns: string;
+      };
+      // Échange de coordonnées — l'un OU l'autre reprend son accord (sans
+      // can_send_message : le retrait reste possible même après un blocage).
+      revoke_contact_exchange: {
+        Args: { p_match: string };
         Returns: string;
       };
       // L3F-C2A — transition transactionnelle d'un signalement (service_role
