@@ -22,6 +22,7 @@ import {
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
+import { ContactExchangeCard } from "@/components/member/contact-exchange-card";
 import type {
   MessageRow,
   RelationshipItem,
@@ -795,6 +796,13 @@ export function ConversationView({
           onUnblock={doUnblock}
         />
       </header>
+
+      {/* Échange de coordonnées (migr. 60) : demander / répondre / retirer */}
+      <ContactExchangeCard
+        matchId={matchId}
+        otherName={otherName}
+        messagingAvailable={relation.messaging_available}
+      />
 
       {/* Fil de messages (toujours visible, même après blocage) */}
       <section

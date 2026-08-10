@@ -34,7 +34,8 @@
     "test:member-header-mobile-layout": "node --test scripts/member-header-mobile-layout.test.mjs",
     "test:public-whatsapp-contact": "node --test scripts/public-whatsapp-contact.test.mjs",
     "test:profile-contact-details": "node --test scripts/profile-contact-details.test.mjs",
-    "test:contact-exchange": "node --test scripts/contact-exchange.test.mjs"
+    "test:contact-exchange": "node --test scripts/contact-exchange.test.mjs",
+    "test:contact-exchange-card": "node --test scripts/contact-exchange-card.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
