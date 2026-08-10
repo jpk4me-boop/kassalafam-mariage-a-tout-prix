@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Crown, Sparkles } from "lucide-react";
+import { Check, Crown, Sparkles, Zap } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 import { cn } from "@/lib/utils";
@@ -66,8 +66,8 @@ export function Pricing() {
                 )}
               >
                 {plan.highlighted ? (
-                  <span className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-champagne-500 to-champagne-300 px-3 py-1 text-xs font-semibold text-choco-800 shadow-sm">
-                    <Crown size={12} /> Recommandé
+                  <span className="absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-champagne-500 to-champagne-300 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-choco-800 shadow-[0_10px_24px_-10px_rgba(43,26,18,0.5)]">
+                    <Zap size={12} /> Offre de lancement
                   </span>
                 ) : null}
 
