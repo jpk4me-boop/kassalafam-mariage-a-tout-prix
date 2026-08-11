@@ -7,12 +7,13 @@ import {
   ChevronDown,
   Crown,
   Eye,
-  EyeOff,
   Gem,
   Heart,
   Infinity,
+  Lock,
   LockKeyhole,
   MessageCircle,
+  PhoneCall,
   Rocket,
   ShieldCheck,
   Sparkles,
@@ -26,6 +27,14 @@ import { getPremiumHeroCopy } from "@/lib/premium/hero-copy";
 import { PremiumCheckout } from "@/components/member/premium-checkout";
 
 const BENEFITS = [
+  {
+    icon: PhoneCall,
+    title: "Échange de coordonnées WhatsApp",
+    description:
+      "Demande l’échange des numéros dans une conversation acceptée. L’autre membre reste seul décisionnaire : le Premium ouvre le droit de demander, jamais le numéro.",
+    standard: "Indisponible",
+    premium: "Inclus",
+  },
   {
     icon: Eye,
     title: "Découvre qui visite ton profil",
@@ -150,6 +159,11 @@ const FAQS = [
     question: "Quels seront les tarifs ?",
     answer:
       "Les tarifs officiels de lancement sont de 2 500 FCFA pour 1 mois, 6 000 FCFA pour 3 mois et 10 000 FCFA pour 6 mois. Aucun montant affiché sur une autre plateforme ne constitue un tarif officiel KASSALAFAM.",
+  },
+  {
+    question: "Premium donne-t-il accès aux numéros WhatsApp ?",
+    answer:
+      "Non, et c’est volontaire. Premium ouvre le droit de DEMANDER l’échange des numéros dans une conversation existante. La personne sollicitée décide seule ; si elle accepte, les deux numéros deviennent visibles des deux côtés, et chacun peut retirer son accord à tout moment. Personne ne peut acheter le numéro de quelqu’un.",
   },
   {
     question: "L’abonnement sera-t-il renouvelé automatiquement ?",
@@ -362,9 +376,9 @@ export function PremiumExperience({
                 </div>
 
                 <div className="flex items-center justify-between gap-3 md:contents">
-                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 md:mx-auto">
-                    <EyeOff size={13} />
-                    {benefit.standard}
+                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700/80 md:mx-auto">
+                    <Lock size={13} />
+                    <s className="decoration-red-700/50">{benefit.standard}</s>
                   </span>
 
                   <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
