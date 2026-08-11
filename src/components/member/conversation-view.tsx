@@ -79,7 +79,11 @@ function Avatar({ other }: { other: RelationshipItemWithPhoto }) {
         <img
           src={other.signedUrl}
           alt={`Photo de ${other.first_name ?? "ce membre"}`}
-          className="h-full w-full object-cover"
+          className={
+            other.is_blurred
+              ? "h-full w-full scale-110 object-cover blur-[3px]"
+              : "h-full w-full object-cover"
+          }
         />
       ) : other.is_blurred ? (
         <Lock size={18} className="text-ink-700/45" />

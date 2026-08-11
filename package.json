@@ -41,7 +41,8 @@
     "test:auth-split-shell": "node --test scripts/auth-split-shell.test.mjs",
     "test:profile-completion": "node --test scripts/profile-completion.test.mjs",
     "test:premium-exchange-benefit": "node --test scripts/premium-exchange-benefit.test.mjs",
-    "test:member-unread-badges": "node --test scripts/member-unread-badges.test.mjs"
+    "test:member-unread-badges": "node --test scripts/member-unread-badges.test.mjs",
+    "test:blurred-photo-cards": "node --test scripts/blurred-photo-cards.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -53,6 +54,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "0.0.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

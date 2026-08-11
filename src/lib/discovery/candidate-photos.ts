@@ -12,20 +12,93 @@ import type { DiscoverCandidate } from "@/lib/types/database";
  *   - le `storage_path` est lu UNIQUEMENT côté serveur et n'est JAMAIS
  *     sérialisé vers le client : la charge utile exposable ne contient que les
  *     champs sûrs de `DiscoverCandidate` + `signedUrl` ;
- *   - on ne signe une URL que pour les candidats `has_photo === true` ET
- *     `is_blurred === false` ; sinon `signedUrl` vaut `null` (la carte affichera
- *     un placeholder « Photo protégée ») ;
- *   - les candidats proviennent EXCLUSIVEMENT de la RPC `discover_candidates`
- *     (donc déjà : approuvés, genre opposé, univers correct).
+ *   - photo NON floutée : URL signée de l'ORIGINALE (inchangé) ;
+ *   - photo FLOUTÉE : URL signée d'un DÉRIVÉ DÉGRADÉ généré côté serveur
+ *     (≈28 px + flou gaussien, WebP) — l'originale ne part JAMAIS vers le
+ *     navigateur ; même sans le flou CSS d'affichage, le dérivé ne contient
+ *     plus l'information du visage. Le flou Farata (filtre CSS sur l'image
+ *     réelle) est VOLONTAIREMENT exclu : il serait réversible en deux clics.
+ *   - en cas d'échec de génération, `signedUrl` reste `null` et la carte
+ *     retombe sur le placeholder « Photo protégée » (comportement historique) ;
+ *   - les candidats proviennent EXCLUSIVEMENT de RPC sécurisées (donc déjà :
+ *     approuvés, périmètre correct).
  */
 
 const BUCKET = "profile-photos";
 const SIGNED_URL_TTL = 300; // 5 minutes
 
+// Dérivé dégradé : préfixe de cache dans le bucket + géométrie volontairement
+// PAUVRE (28×35 ≈ l'aspect 4/5 des cartes). L'irréversibilité vient de la
+// résolution, le flou gaussien lisse le rendu après agrandissement CSS.
+const BLURRED_PREFIX = "blurred";
+const BLURRED_WIDTH = 28;
+const BLURRED_HEIGHT = 35;
+const BLURRED_SIGMA = 4;
+const BLURRED_QUALITY = 40;
+
+/**
+ * Garantit l'existence du dérivé dégradé d'une photo et renvoie son chemin
+ * (`blurred/<chemin original>.webp`), ou `null` si la génération échoue.
+ * Cache-first : un dérivé déjà présent dans le bucket n'est jamais régénéré
+ * (le chemin original étant unique par téléversement, il n'est jamais périmé).
+ */
+async function ensureBlurredDerivative(
+  admin: ReturnType<typeof createAdminClient>,
+  originalPath: string,
+): Promise<string | null> {
+  const derivativePath = `${BLURRED_PREFIX}/${originalPath}.webp`;
+
+  // Test d'existence économique : signer un objet absent échoue proprement.
+  const cached = await admin.storage
+    .from(BUCKET)
+    .createSignedUrl(derivativePath, 60);
+  if (!cached.error) return derivativePath;
+
+  const original = await admin.storage.from(BUCKET).download(originalPath);
+  if (original.error || !original.data) {
+    console.error(
+      "[candidate-photos] téléchargement original échoué:",
+      original.error?.message,
+    );
+    return null;
+  }
+
+  try {
+    const { default: sharp } = await import("sharp");
+    const degraded = await sharp(Buffer.from(await original.data.arrayBuffer()))
+      .rotate()
+      .resize(BLURRED_WIDTH, BLURRED_HEIGHT, { fit: "cover" })
+      .blur(BLURRED_SIGMA)
+      .webp({ quality: BLURRED_QUALITY })
+      .toBuffer();
+
+    const uploaded = await admin.storage
+      .from(BUCKET)
+      .upload(derivativePath, degraded, {
+        contentType: "image/webp",
+        upsert: true,
+      });
+    if (uploaded.error) {
+      console.error(
+        "[candidate-photos] écriture dérivé échouée:",
+        uploaded.error.message,
+      );
+      return null;
+    }
+    return derivativePath;
+  } catch (error) {
+    console.error(
+      "[candidate-photos] génération dérivé échouée:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
+
 /**
  * Enrichit une liste de candidats (issue de la RPC) d'une URL signée éphémère
- * pour leur photo principale, dans le strict respect de `is_blurred`/`has_photo`.
- * Ne renvoie jamais `storage_path`.
+ * pour leur photo principale : l'originale si la photo est publique, le dérivé
+ * dégradé si le membre floute. Ne renvoie jamais `storage_path`.
  */
 export async function attachSignedPhotos<T extends DiscoverCandidate>(
   candidates: T[],
@@ -36,12 +109,10 @@ export async function attachSignedPhotos<T extends DiscoverCandidate>(
     );
   }
 
-  // Candidats éligibles à une URL signée : photo présente ET non floutée.
-  const eligible = candidates.filter((c) => c.has_photo && !c.is_blurred);
-
+  const withPhoto = candidates.filter((c) => c.has_photo);
   const urlByProfile = new Map<string, string>();
 
-  if (eligible.length > 0) {
+  if (withPhoto.length > 0) {
     const admin = createAdminClient();
 
     // Chemins des photos principales — récupérés UNIQUEMENT côté serveur.
@@ -50,7 +121,7 @@ export async function attachSignedPhotos<T extends DiscoverCandidate>(
       .select("profile_id, storage_path")
       .in(
         "profile_id",
-        eligible.map((c) => c.id),
+        withPhoto.map((c) => c.id),
       )
       .eq("is_primary", true);
 
@@ -60,18 +131,37 @@ export async function attachSignedPhotos<T extends DiscoverCandidate>(
         rowsError.message,
       );
     } else {
-      const pathByProfile = new Map<string, string>();
+      const blurredById = new Map(candidates.map((c) => [c.id, c.is_blurred]));
       const profileByPath = new Map<string, string>();
+      const toSign: string[] = [];
+
+      // Photos publiques : l'originale, telle quelle (comportement historique).
       for (const r of rows ?? []) {
-        pathByProfile.set(r.profile_id, r.storage_path);
-        profileByPath.set(r.storage_path, r.profile_id);
+        if (blurredById.get(r.profile_id) === false) {
+          profileByPath.set(r.storage_path, r.profile_id);
+          toSign.push(r.storage_path);
+        }
       }
 
-      const paths = [...pathByProfile.values()];
-      if (paths.length > 0) {
+      // Photos floutées : le DÉRIVÉ dégradé, jamais l'originale. Chaque échec
+      // individuel retombe sur le placeholder, sans bloquer les autres.
+      const blurredRows = (rows ?? []).filter(
+        (r) => blurredById.get(r.profile_id) === true,
+      );
+      const derivatives = await Promise.all(
+        blurredRows.map((r) => ensureBlurredDerivative(admin, r.storage_path)),
+      );
+      derivatives.forEach((derivativePath, i) => {
+        if (derivativePath) {
+          profileByPath.set(derivativePath, blurredRows[i].profile_id);
+          toSign.push(derivativePath);
+        }
+      });
+
+      if (toSign.length > 0) {
         const { data: signed, error: signError } = await admin.storage
           .from(BUCKET)
-          .createSignedUrls(paths, SIGNED_URL_TTL);
+          .createSignedUrls(toSign, SIGNED_URL_TTL);
 
         if (signError) {
           console.error(

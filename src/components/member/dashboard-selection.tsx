@@ -136,15 +136,27 @@ function CandidateMedia({
   return (
     <div className="relative aspect-[4/5] bg-cream-100/50">
       {candidate.signedUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={candidate.signedUrl}
-          alt={
-            "Photo de " +
-            (candidate.first_name ?? "ce membre")
-          }
-          className="h-full w-full object-cover"
-        />
+        <div className="relative h-full w-full overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={candidate.signedUrl}
+            alt={
+              "Photo de " +
+              (candidate.first_name ?? "ce membre")
+            }
+            className={
+              candidate.is_blurred
+                ? "h-full w-full scale-110 object-cover blur-md"
+                : "h-full w-full object-cover"
+            }
+          />
+          {candidate.is_blurred ? (
+            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-ink-900/55 px-2.5 py-1 text-[10px] font-medium text-cream-50">
+              <Lock size={10} />
+              Photo protégée
+            </span>
+          ) : null}
+        </div>
       ) : candidate.is_blurred ? (
         <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center text-ink-700/45">
           <Lock size={25} />
