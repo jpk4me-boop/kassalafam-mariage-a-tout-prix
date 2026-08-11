@@ -120,10 +120,12 @@ test("les actions de l'en-tête sont de largeur fixe et ne s'étirent pas", asyn
   assert.ok(actionRow, "la rangée d'actions doit être identifiable");
   assert.match(actionRow[1], /\bshrink-0\b/, "les actions ne doivent jamais être comprimées");
 
-  // Les boutons ronds : largeur fixe sur mobile, libellé seulement à partir de xl.
+  // Les boutons ronds : largeur fixe sur mobile, libellé seulement à partir de
+  // xl. (`relative` ajouté pour ancrer la pastille de non-lus — sans effet sur
+  // la largeur.)
   assert.match(
     source,
-    /className="flex h-9 w-9 shrink-0 items-center justify-center[^"]*sm:h-10 sm:w-10 xl:w-auto/,
+    /className="(?:relative )?flex h-9 w-9 shrink-0 items-center justify-center[^"]*sm:h-10 sm:w-10 xl:w-auto/,
     "les boutons d'action doivent être de largeur fixe, élargis seulement en xl",
   );
   assert.doesNotMatch(
