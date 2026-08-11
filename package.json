@@ -36,7 +36,8 @@
     "test:profile-contact-details": "node --test scripts/profile-contact-details.test.mjs",
     "test:contact-exchange": "node --test scripts/contact-exchange.test.mjs",
     "test:contact-exchange-card": "node --test scripts/contact-exchange-card.test.mjs",
-    "test:landing-home-sections": "node --test scripts/landing-home-sections.test.mjs"
+    "test:landing-home-sections": "node --test scripts/landing-home-sections.test.mjs",
+    "test:onboarding-uplift": "node --test scripts/onboarding-uplift.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
