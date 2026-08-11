@@ -26,6 +26,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [remember, setRemember] = useState(false);
+  // Consentement EXPLICITE (conditions + confidentialité + démarche sincère) :
+  // requis avant soumission — remplace l'ancienne mention passive de bas de
+  // formulaire. L'état n'est jamais pré-coché.
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -203,7 +207,45 @@ export default function RegisterPage() {
           Se souvenir de moi
         </label>
 
-        <PrimaryButton type="submit" disabled={loading} className="mt-2">
+        {/* Consentement explicite : liens RÉELS vers les pages légales +
+            engagement de démarche sincère. Le bouton reste désactivé tant que
+            la case n'est pas cochée. */}
+        <label className="flex cursor-pointer select-none items-start gap-2.5 rounded-2xl border border-champagne-500/35 bg-champagne-400/10 px-3.5 py-3 text-xs leading-relaxed text-ink-700/85">
+          <input
+            type="checkbox"
+            name="consent"
+            required
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            disabled={loading}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-champagne-500/40 accent-choco-600 focus:ring-2 focus:ring-champagne-400/40"
+          />
+          <span>
+            J’accepte les{" "}
+            <Link
+              href="/conditions-utilisation"
+              target="_blank"
+              className="font-semibold text-choco-700 underline underline-offset-2 hover:text-choco-600"
+            >
+              conditions d’utilisation
+            </Link>{" "}
+            et la{" "}
+            <Link
+              href="/confidentialite"
+              target="_blank"
+              className="font-semibold text-choco-700 underline underline-offset-2 hover:text-choco-600"
+            >
+              politique de confidentialité
+            </Link>
+            , et je m’engage dans une démarche sincère de recherche de mariage.
+          </span>
+        </label>
+
+        <PrimaryButton
+          type="submit"
+          disabled={loading || !consent}
+          className="mt-2"
+        >
           {loading ? (
             <>
               <Loader2 size={18} className="animate-spin" />
@@ -213,11 +255,6 @@ export default function RegisterPage() {
             "Créer mon compte"
           )}
         </PrimaryButton>
-
-        <p className="text-center text-xs text-ink-700/60">
-          En créant un compte, vous acceptez notre charte de confidentialité et
-          de modération.
-        </p>
       </form>
     </AuthShell>
   );

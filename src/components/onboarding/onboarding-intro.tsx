@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, HeartHandshake, Lock, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, HeartHandshake, Lock, Sparkles } from "lucide-react";
 
 import { PrimaryButton } from "@/components/ui/field";
 
@@ -29,6 +29,9 @@ export function OnboardingIntro({
         <h2 className="font-serif text-2xl font-semibold text-choco-700 sm:text-3xl">
           {greeting}
         </h2>
+        <p className="text-sm font-medium text-champagne-600">
+          Votre projet de foyer commence ici.
+        </p>
         <p className="max-w-md text-sm text-ink-700/75">
           Quelques étapes simples pour vous présenter avec sincérité. Tout est
           enregistré au fur et à mesure : vous pourrez reprendre à tout moment.
@@ -48,6 +51,13 @@ export function OnboardingIntro({
           <span className="text-sm text-ink-700/80">
             Vos photos restent privées et floutées par défaut. Vous gardez la
             main sur ce que vous partagez.
+          </span>
+        </li>
+        <li className="flex items-start gap-3 rounded-2xl border border-champagne-500/30 bg-cream-50/60 p-4">
+          <BadgeCheck size={18} className="mt-0.5 shrink-0 text-choco-600" />
+          <span className="text-sm text-ink-700/80">
+            Votre profil sera vérifié à la main par notre équipe avant d’être
+            proposé aux autres membres.
           </span>
         </li>
       </ul>
