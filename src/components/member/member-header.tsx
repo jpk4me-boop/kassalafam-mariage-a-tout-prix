@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -24,6 +24,7 @@ import { Logo } from "@/components/landing/logo";
 import { clearContinueLaterCookie } from "@/lib/onboarding/continue-later";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import type { RelationshipItem } from "@/lib/types/database";
 
 type MemberHeaderProps = Readonly<{
   isAdmin?: boolean;
@@ -82,13 +83,20 @@ const ACTION_LINKS = [
     label: "Messages",
     href: "/matches?tab=matched",
     icon: MessageCircle,
+    badge: "messages",
   },
   {
     label: "Notifications",
     href: "/notifications",
     icon: Bell,
+    badge: "notifications",
   },
 ] as const;
+
+/** Plafond d'affichage des compteurs : au-delà, « 99+ ». */
+function formatBadgeCount(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
 
 function routePath(href: string): string {
   return href.split("?")[0] ?? href;
@@ -108,6 +116,55 @@ export function MemberHeader({
   const router = useRouter();
   const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
+  // Compteurs de NON-LUS (messages, notifications) — signal visuel sur les
+  // deux icônes d'action. Sources EXISTANTES uniquement : la RPC
+  // `list_my_relationships` (champ unread_count par conversation) et un
+  // comptage RLS sur `member_notifications` (read_at null, lignes du membre).
+  // Rafraîchi au montage, À CHAQUE navigation (les non-lus retombent après
+  // lecture) et au retour de focus/visibilité — AUCUN polling en continu.
+  const [unread, setUnread] = useState<{
+    messages: number;
+    notifications: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+
+    const load = async () => {
+      const [relationships, notifications] = await Promise.all([
+        supabase.rpc("list_my_relationships"),
+        supabase
+          .from("member_notifications")
+          .select("id", { count: "exact", head: true })
+          .is("read_at", null),
+      ]);
+      if (cancelled) return;
+      const messages =
+        relationships.error || !relationships.data
+          ? 0
+          : (relationships.data as RelationshipItem[]).reduce(
+              (sum, r) => sum + (r.unread_count ?? 0),
+              0,
+            );
+      setUnread({
+        messages,
+        notifications: notifications.error ? 0 : (notifications.count ?? 0),
+      });
+    };
+
+    void load();
+    const onVisible = () => {
+      if (!document.hidden) void load();
+    };
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [pathname]);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -173,19 +230,33 @@ export function MemberHeader({
         <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1 lg:ml-3">
           {ACTION_LINKS.map((link) => {
             const Icon = link.icon;
+            const count =
+              "badge" in link && unread ? unread[link.badge] : 0;
+            const ariaLabel =
+              count > 0
+                ? `${link.label} — ${formatBadgeCount(count)} non lu${count > 1 ? "s" : ""}`
+                : link.label;
 
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                aria-label={link.label}
-                title={link.label}
-                className="flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-ink-700/65 transition-colors hover:bg-champagne-400/15 hover:text-choco-700 sm:h-10 sm:w-10 xl:w-auto xl:px-3"
+                aria-label={ariaLabel}
+                title={ariaLabel}
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-ink-700/65 transition-colors hover:bg-champagne-400/15 hover:text-choco-700 sm:h-10 sm:w-10 xl:w-auto xl:px-3"
               >
                 <Icon size={19} />
                 <span className="hidden text-xs font-semibold xl:inline">
                   {link.label}
                 </span>
+                {count > 0 ? (
+                  <span
+                    aria-hidden
+                    className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-cream-50 ring-2 ring-cream-50 xl:right-0.5"
+                  >
+                    {formatBadgeCount(count)}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
