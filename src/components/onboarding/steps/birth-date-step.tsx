@@ -1,10 +1,35 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Check } from "lucide-react";
 
 import { isAdultBirthDate, ONBOARDING_MIN_AGE } from "@/lib/onboarding/completion";
 import { Input, Label } from "@/components/ui/field";
 import { StepShell } from "@/components/onboarding/step-shell";
+
+/** Âge révolu à aujourd'hui, ou null si la date est vide/invalide/future. */
+function computeAge(value: string): number | null {
+  if (!value) return null;
+  const birth = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const anniversaryPassed =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+  if (!anniversaryPassed) age -= 1;
+  return age >= 0 && age <= 120 ? age : null;
+}
+
+/** « 27 décembre 1995 » — jamais d'heure, jamais de fuseau surprise. */
+function formatBirthDate(value: string): string {
+  const date = new Date(`${value}T00:00:00`);
+  return date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export function BirthDateStep({
   value,
@@ -18,6 +43,10 @@ export function BirthDateStep({
   // Avertissement inline dès qu'une date < 18 ans est saisie (exigence 7). La
   // validation « dure » (blocage du bouton Continuer) est faite par le wizard.
   const tooYoung = value !== "" && !isAdultBirthDate(value);
+  // Confirmation VIVANTE : la date reformulée + l'âge calculé, uniquement
+  // quand la date est valide ET majeure — une faute de frappe se voit tout de
+  // suite (« 13 ans » ou « 130 ans » saute aux yeux).
+  const age = !tooYoung ? computeAge(value) : null;
 
   return (
     <StepShell
@@ -36,6 +65,20 @@ export function BirthDateStep({
           aria-describedby="birth_date_help"
           aria-invalid={tooYoung}
         />
+        {age !== null ? (
+          <p
+            role="status"
+            className="mt-2 flex items-center justify-between gap-2 rounded-2xl border border-emerald-600/25 bg-emerald-50/70 px-3.5 py-2.5 text-sm text-emerald-800"
+          >
+            <span className="flex items-center gap-1.5">
+              <Check size={14} className="shrink-0" />
+              {formatBirthDate(value)}
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums">
+              {age} ans
+            </span>
+          </p>
+        ) : null}
         <p
           id="birth_date_help"
           className={
