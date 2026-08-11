@@ -38,7 +38,8 @@
     "test:contact-exchange-card": "node --test scripts/contact-exchange-card.test.mjs",
     "test:landing-home-sections": "node --test scripts/landing-home-sections.test.mjs",
     "test:onboarding-uplift": "node --test scripts/onboarding-uplift.test.mjs",
-    "test:auth-split-shell": "node --test scripts/auth-split-shell.test.mjs"
+    "test:auth-split-shell": "node --test scripts/auth-split-shell.test.mjs",
+    "test:profile-completion": "node --test scripts/profile-completion.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

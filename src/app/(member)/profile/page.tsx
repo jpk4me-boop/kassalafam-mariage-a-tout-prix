@@ -43,7 +43,15 @@ import {
 } from "@/lib/profile/contact-details";
 import { CountryCityFields } from "@/components/profile/country-city-fields";
 import { RegionField } from "@/components/profile/region-field";
-import { ProfilePhotos } from "@/components/member/profile-photos";
+import {
+  ProfilePhotos,
+  type ProfilePhotosState,
+} from "@/components/member/profile-photos";
+import {
+  ProfileCompletionPanel,
+  type ProfileCompletionItem,
+  type ProfileSection,
+} from "@/components/member/profile-completion-panel";
 import { ProfileShareConsentCard } from "@/components/member/profile-share-consent-card";
 import { ProfilePromotionConsentCard } from "@/components/member/profile-promotion-consent-card";
 import { CandidateShowcaseCard } from "@/components/member/candidate-showcase-card";
@@ -166,6 +174,10 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  // État des photos (compte + photo principale), remonté par ProfilePhotos —
+  // alimente UNIQUEMENT le panneau de complétion. null tant que non chargé :
+  // l'élément « Photo principale » n'apparaît qu'une fois l'état connu.
+  const [photosState, setPhotosState] = useState<ProfilePhotosState | null>(null);
   // Vérification admin — LECTURE SEULE. Jamais envoyée dans l'upsert.
   const [verificationStatus, setVerificationStatus] =
     useState<ProfileVerificationStatus>("pending");
@@ -470,6 +482,111 @@ export default function ProfilePage() {
     setSaving(false);
   }
 
+  // --- Panneau de complétion : chaque élément correspond à un champ RÉEL du
+  //     formulaire ci-dessous (aucun pourcentage en dur). L'élément « photo
+  //     principale » n'apparaît qu'une fois l'état des photos chargé.
+  const completionItems: ProfileCompletionItem[] = [
+    {
+      id: "whatsapp",
+      label: "Votre numéro WhatsApp",
+      done: form.whatsapp_phone.trim() !== "",
+      anchor: "identite",
+    },
+    {
+      id: "origin",
+      label: "Votre pays et ville d’origine",
+      done: form.origin_country !== "" && form.origin_city !== "",
+      anchor: "localisation",
+    },
+    {
+      id: "residence",
+      label: "Votre résidence actuelle",
+      done: form.country !== "" && form.city !== "",
+      anchor: "localisation",
+    },
+    {
+      id: "profession",
+      label: "Votre profession",
+      done: form.profession.trim() !== "",
+      anchor: "parcours",
+    },
+    {
+      id: "situation",
+      label: "Votre situation matrimoniale",
+      done: form.marital_status !== "",
+      anchor: "situation",
+    },
+    {
+      id: "religion",
+      label: "Votre religion",
+      done: form.religion !== "",
+      anchor: "situation",
+    },
+    {
+      id: "intention",
+      label: "Votre intention de mariage",
+      done: form.marriage_goals.length > 0,
+      anchor: "projet",
+    },
+    {
+      id: "polygamie",
+      label: "Votre positionnement sur la polygamie",
+      done: form.polygamy_preference !== "",
+      anchor: "projet",
+    },
+    {
+      id: "enfants",
+      label: "Votre projet d’enfants",
+      done: form.children_intent !== "",
+      anchor: "projet",
+    },
+    {
+      id: "bio",
+      label: "Votre présentation",
+      done: form.bio.trim() !== "",
+      anchor: "presentation",
+    },
+    {
+      id: "attentes",
+      label: "Vos attentes envers le futur conjoint",
+      done:
+        form.desired_partner_traits.length > 0 ||
+        form.partner_expectations.trim() !== "",
+      anchor: "presentation",
+    },
+    ...(photosState
+      ? [
+          {
+            id: "photo",
+            label: "Votre photo principale",
+            done: photosState.hasPrimary,
+            anchor: "photos",
+          },
+        ]
+      : []),
+  ];
+
+  const anchorComplete = (anchor: string): boolean =>
+    completionItems
+      .filter((item) => item.anchor === anchor)
+      .every((item) => item.done);
+
+  const profileSections: ProfileSection[] = [
+    { id: "identite", label: "Identité", anchor: "identite", complete: anchorComplete("identite") },
+    { id: "localisation", label: "Origine & résidence", anchor: "localisation", complete: anchorComplete("localisation") },
+    { id: "parcours", label: "Parcours", anchor: "parcours", complete: anchorComplete("parcours") },
+    { id: "situation", label: "Situation", anchor: "situation", complete: anchorComplete("situation") },
+    { id: "projet", label: "Projet", anchor: "projet", complete: anchorComplete("projet") },
+    { id: "presentation", label: "Présentation", anchor: "presentation", complete: anchorComplete("presentation") },
+    ...(photosState
+      ? [{ id: "photos", label: "Photos", anchor: "photos", complete: photosState.hasPrimary }]
+      : [{ id: "photos", label: "Photos", anchor: "photos" }]),
+    { id: "confidentialite", label: "Confidentialité", anchor: "confidentialite" },
+    { id: "notifications", label: "Notifications", anchor: "notifications" },
+    { id: "vitrine", label: "Vitrine", anchor: "vitrine" },
+    { id: "partage", label: "Partage", anchor: "partage" },
+  ];
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-ink-700/60">
@@ -507,6 +624,10 @@ export default function ProfilePage() {
         ) : null}
       </section>
 
+      {/* Panneau de complétion + sommaire à ancres (inspiration Farata,
+          pourcentage RÉEL — voir completionItems ci-dessus). */}
+      <ProfileCompletionPanel items={completionItems} sections={profileSections} />
+
       <form
         onSubmit={handleSubmit}
         className="glass flex flex-col gap-5 rounded-3xl p-6 shadow-card sm:p-8"
@@ -515,7 +636,7 @@ export default function ProfilePage() {
         {error ? <FormError message={error} /> : null}
         {success ? <FormSuccess message={success} /> : null}
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div id="identite" className="grid scroll-mt-28 gap-5 sm:grid-cols-2">
           <div>
             <Label htmlFor="first_name">Prénom</Label>
             <Input
@@ -662,7 +783,7 @@ export default function ProfilePage() {
             historiques (origin_city NULL) : l'enregistrement des autres
             champs n'est jamais bloqué ; le bandeau « Profil incomplet » du
             dashboard incite à compléter. */}
-        <fieldset className="flex flex-col gap-5">
+        <fieldset id="localisation" className="flex scroll-mt-28 flex-col gap-5">
           <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
             Origine
           </legend>
@@ -706,7 +827,7 @@ export default function ProfilePage() {
         </fieldset>
 
         {/* PROFESSION ET PARCOURS — étape 5 de l'inscription. */}
-        <fieldset className="flex flex-col gap-5">
+        <fieldset id="parcours" className="flex scroll-mt-28 flex-col gap-5">
           <legend className="mb-1 text-sm font-semibold uppercase tracking-wide text-choco-700/80">
             Profession et parcours
           </legend>
@@ -773,7 +894,7 @@ export default function ProfilePage() {
           </div>
         </fieldset>
 
-        <div>
+        <div id="situation" className="scroll-mt-28">
           <Label htmlFor="marital_status">Situation matrimoniale</Label>
           <Select
             id="marital_status"
@@ -826,7 +947,7 @@ export default function ProfilePage() {
         {/* INTENTION — étape 7 de l'inscription. Le cadre de la plateforme
             (« mariage sérieux ») reste invariant côté base et côté affichage
             public ; ces cases précisent l'intention personnelle du membre. */}
-        <div>
+        <div id="projet" className="scroll-mt-28">
           <MultiChoiceChips
             legend="Intention"
             options={MARRIAGE_GOAL_OPTIONS}
@@ -889,7 +1010,7 @@ export default function ProfilePage() {
           </div>
         </fieldset>
 
-        <div>
+        <div id="presentation" className="scroll-mt-28">
           <Label htmlFor="bio">Présentation</Label>
           <Textarea
             id="bio"
@@ -934,7 +1055,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Confidentialité des photos */}
-        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-champagne-500/30 bg-cream-100/40 p-4">
+        <label
+          id="confidentialite"
+          className="flex scroll-mt-28 cursor-pointer items-start gap-3 rounded-2xl border border-champagne-500/30 bg-cream-100/40 p-4"
+        >
           <input
             type="checkbox"
             checked={form.blur_photos}
@@ -987,17 +1111,26 @@ export default function ProfilePage() {
         </PrimaryButton>
       </form>
 
-      {/* Photos de profil — gestion privée du membre connecté (L3D-A) */}
-      <ProfilePhotos />
+      {/* Photos de profil — gestion privée du membre connecté (L3D-A).
+          onStateChange alimente le panneau de complétion (photo principale). */}
+      <div id="photos" className="scroll-mt-28">
+        <ProfilePhotos onStateChange={setPhotosState} />
+      </div>
 
       {/* Vitrine publique /candidats — consentement puis publication, deux
           gestes explicites et séparés, retrait à tout moment. */}
-      <WhatsappNotificationsCard />
+      <div id="notifications" className="scroll-mt-28">
+        <WhatsappNotificationsCard />
+      </div>
 
-      <CandidateShowcaseCard />
+      <div id="vitrine" className="scroll-mt-28">
+        <CandidateShowcaseCard />
+      </div>
 
       {/* Consentement au partage public limité (PR1 partage de profils) */}
-      <ProfileShareConsentCard />
+      <div id="partage" className="scroll-mt-28">
+        <ProfileShareConsentCard />
+      </div>
 
       {/* Consentement distinct pour la promotion sur les réseaux sociaux */}
       <ProfilePromotionConsentCard />
