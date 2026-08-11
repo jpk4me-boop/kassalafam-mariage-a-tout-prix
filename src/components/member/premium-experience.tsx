@@ -5,6 +5,7 @@ import {
   BellRing,
   Check,
   ChevronDown,
+  Clock,
   Crown,
   Eye,
   Gem,
@@ -73,20 +74,20 @@ const BENEFITS = [
   {
     icon: Radio,
     title: "Vois qui est en ligne",
-    badge: "nouveau",
+    badge: "bientot",
     description:
-      "Repère les membres actifs récemment pour écrire au bon moment et recevoir des réponses plus vite.",
+      "Repérer les membres actifs récemment pour écrire au bon moment. Cet avantage est en préparation : il n’est pas encore disponible dans l’espace membre.",
     standard: "Non inclus",
-    premium: "Inclus",
+    premium: "Bientôt",
   },
   {
     icon: Mic,
     title: "Messages vocaux",
-    badge: "nouveau",
+    badge: "bientot",
     description:
-      "Fais entendre ta voix dans la messagerie pour créer une connexion plus authentique.",
+      "Faire entendre ta voix dans la messagerie. Cet avantage est en préparation : il n’est pas encore disponible dans l’espace membre.",
     standard: "Non inclus",
-    premium: "Inclus",
+    premium: "Bientôt",
   },
   {
     icon: Rocket,
@@ -170,6 +171,11 @@ const FAQS = [
     question: "Les paiements Premium sont-ils déjà actifs ?",
     answer:
       "Non. Cette page présente l’expérience prévue, mais aucun paiement et aucune collecte Mobile Money ne peuvent actuellement être lancés.",
+  },
+  {
+    question: "Tous les avantages sont-ils déjà actifs ?",
+    answer:
+      "Non, et la page le dit clairement. Les avantages marqués « Bientôt » sont en préparation et ne sont pas encore utilisables : aujourd’hui « Vois qui est en ligne » et « Messages vocaux ». Seul « Échange de coordonnées WhatsApp » porte la mention « Déjà actif », parce qu’il fonctionne réellement en production. Aucun avantage ne passera au vert avant d’être livré.",
   },
   {
     question: "Quels moyens de paiement sont prévus ?",
@@ -426,9 +432,10 @@ export function PremiumExperience({
                   <div>
                     <h3 className="flex flex-wrap items-center gap-2 font-semibold text-choco-800">
                       {benefit.title}
-                      {"badge" in benefit && benefit.badge === "nouveau" ? (
-                        <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-cream-50">
-                          Nouveau
+                      {"badge" in benefit && benefit.badge === "bientot" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">
+                          <Clock size={11} strokeWidth={3} />
+                          Bientôt
                         </span>
                       ) : null}
                       {"badge" in benefit && benefit.badge === "actif" ? (
@@ -450,10 +457,17 @@ export function PremiumExperience({
                     <s className="decoration-red-700/50">{benefit.standard}</s>
                   </span>
 
-                  <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
-                    <Check size={13} strokeWidth={3} />
-                    {benefit.premium}
-                  </span>
+                  {"badge" in benefit && benefit.badge === "bientot" ? (
+                    <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 md:mx-auto">
+                      <Clock size={13} strokeWidth={3} />
+                      {benefit.premium}
+                    </span>
+                  ) : (
+                    <span className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 md:mx-auto">
+                      <Check size={13} strokeWidth={3} />
+                      {benefit.premium}
+                    </span>
+                  )}
                 </div>
               </article>
             );
