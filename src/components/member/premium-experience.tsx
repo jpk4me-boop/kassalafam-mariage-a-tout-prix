@@ -13,7 +13,9 @@ import {
   Lock,
   LockKeyhole,
   MessageCircle,
+  Mic,
   PhoneCall,
+  Radio,
   Rocket,
   ShieldCheck,
   Sparkles,
@@ -30,6 +32,7 @@ const BENEFITS = [
   {
     icon: PhoneCall,
     title: "Échange de coordonnées WhatsApp",
+    badge: "actif",
     description:
       "Demande l’échange des numéros dans une conversation acceptée. L’autre membre reste seul décisionnaire : le Premium ouvre le droit de demander, jamais le numéro.",
     standard: "Indisponible",
@@ -66,6 +69,24 @@ const BENEFITS = [
       "Profite d’une expérience de conversation plus complète avec tes connexions mutuelles.",
     standard: "Essentiel",
     premium: "Enrichi",
+  },
+  {
+    icon: Radio,
+    title: "Vois qui est en ligne",
+    badge: "nouveau",
+    description:
+      "Repère les membres actifs récemment pour écrire au bon moment et recevoir des réponses plus vite.",
+    standard: "Non inclus",
+    premium: "Inclus",
+  },
+  {
+    icon: Mic,
+    title: "Messages vocaux",
+    badge: "nouveau",
+    description:
+      "Fais entendre ta voix dans la messagerie pour créer une connexion plus authentique.",
+    standard: "Non inclus",
+    premium: "Inclus",
   },
   {
     icon: Rocket,
@@ -324,6 +345,44 @@ export function PremiumExperience({
         </p>
       </aside>
 
+      {/* Bandeau de preuves chiffrées — équivalent du bandeau concurrent,
+          composé UNIQUEMENT de faits vérifiables (aucun « 3X », aucun
+          « 200 000+ », aucune garantie inventée). */}
+      <section
+        aria-label="Nos repères"
+        className="rounded-3xl border border-champagne-500/35 bg-gradient-to-br from-champagne-300/25 via-cream-50 to-champagne-300/15 px-6 py-6 shadow-card sm:px-8"
+      >
+        <div className="grid divide-y divide-champagne-500/25 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="font-serif text-3xl font-semibold text-gold-gradient">
+              1 par 1
+            </span>
+            <span className="text-xs font-medium leading-5 text-ink-700/70">
+              profils vérifiés
+              <br />à la main
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="font-serif text-3xl font-semibold text-gold-gradient">
+              0 FCFA
+            </span>
+            <span className="text-xs font-medium leading-5 text-ink-700/70">
+              pour commencer :
+              <br />l’essentiel reste gratuit
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="font-serif text-3xl font-semibold text-gold-gradient">
+              2 500 F
+            </span>
+            <span className="text-xs font-medium leading-5 text-ink-700/70">
+              le mois Premium
+              <br />au tarif de lancement
+            </span>
+          </div>
+        </div>
+      </section>
+
       <section
         id="avantages-premium"
         className="scroll-mt-36 overflow-hidden rounded-3xl border border-champagne-500/30 bg-cream-50/70 shadow-card"
@@ -365,8 +424,18 @@ export function PremiumExperience({
                   </span>
 
                   <div>
-                    <h3 className="font-semibold text-choco-800">
+                    <h3 className="flex flex-wrap items-center gap-2 font-semibold text-choco-800">
                       {benefit.title}
+                      {"badge" in benefit && benefit.badge === "nouveau" ? (
+                        <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-cream-50">
+                          Nouveau
+                        </span>
+                      ) : null}
+                      {"badge" in benefit && benefit.badge === "actif" ? (
+                        <span className="rounded-full border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">
+                          Déjà actif
+                        </span>
+                      ) : null}
                     </h3>
 
                     <p className="mt-1 text-sm leading-6 text-ink-700/62">
@@ -439,6 +508,11 @@ export function PremiumExperience({
               key={duration.name}
               className="relative overflow-hidden rounded-3xl border border-champagne-500/30 bg-gradient-to-br from-cream-50 to-champagne-300/10 p-5"
             >
+              {duration.code === "premium_1_mois" ? (
+                <span className="absolute left-1/2 top-0 -translate-x-1/2 rounded-b-xl bg-gradient-to-r from-champagne-500 to-champagne-300 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-choco-900">
+                  Recommandée
+                </span>
+              ) : null}
               <span
                 aria-hidden="true"
                 className="absolute right-0 top-0 h-20 w-20 rounded-bl-full bg-champagne-400/10"
@@ -610,7 +684,9 @@ export function PremiumExperience({
           </span>
 
           <h2 className="mt-5 font-serif text-3xl font-semibold sm:text-4xl">
-            Le bon moment pour préparer ton profil, c’est maintenant.
+            {firstName
+              ? `${firstName}, le bon moment pour préparer ton profil, c’est maintenant.`
+              : "Le bon moment pour préparer ton profil, c’est maintenant."}
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-cream-100/72 sm:text-base">
