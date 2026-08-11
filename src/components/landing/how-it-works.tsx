@@ -55,7 +55,42 @@ export function HowItWorks() {
           description="Un parcours simple et balisé, conçu pour des personnes qui savent ce qu'elles veulent : un foyer."
         />
 
-        <div className="relative mt-16">
+        {/* Frise HORIZONTALE numérotée — desktop (lg+) uniquement. */}
+        <div className="relative mt-16 hidden lg:block">
+          {/* Ligne de progression horizontale, à hauteur des pastilles. */}
+          <div
+            aria-hidden
+            className="absolute left-10 right-10 top-7 h-px bg-gradient-to-r from-champagne-500/50 via-champagne-500/35 to-transparent"
+          />
+          <ol className="relative grid grid-cols-5 gap-6">
+            {STEPS.map((step, i) => (
+              <Reveal key={step.title} delay={i * 0.08}>
+                <li className="group flex flex-col items-center text-center">
+                  <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-choco-600 to-choco-800 font-serif text-lg font-semibold text-cream-50 shadow-[0_14px_30px_-16px_rgba(43,26,18,0.9)] ring-1 ring-inset ring-champagne-400/30 transition-transform duration-300 group-hover:-translate-y-1">
+                    {String(i + 1).padStart(2, "0")}
+                    <span
+                      aria-hidden
+                      className="absolute -inset-1.5 rounded-[1.2rem] border border-dashed border-champagne-500/40"
+                    />
+                  </span>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-champagne-600">
+                    <step.icon size={13} />
+                    Étape {i + 1}
+                  </span>
+                  <h3 className="mt-1.5 font-serif text-lg leading-snug text-choco-700">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-700/80">
+                    {step.description}
+                  </p>
+                </li>
+              </Reveal>
+            ))}
+          </ol>
+        </div>
+
+        {/* Parcours VERTICAL — mobile et tablette (sous lg), inchangé. */}
+        <div className="relative mt-16 lg:hidden">
           {/* Ligne de progression verticale */}
           <div className="absolute left-[1.65rem] top-2 bottom-2 hidden w-px bg-gradient-to-b from-champagne-500/50 via-champagne-500/30 to-transparent sm:block" />
 
