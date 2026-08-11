@@ -42,7 +42,8 @@
     "test:profile-completion": "node --test scripts/profile-completion.test.mjs",
     "test:premium-exchange-benefit": "node --test scripts/premium-exchange-benefit.test.mjs",
     "test:member-unread-badges": "node --test scripts/member-unread-badges.test.mjs",
-    "test:blurred-photo-cards": "node --test scripts/blurred-photo-cards.test.mjs"
+    "test:blurred-photo-cards": "node --test scripts/blurred-photo-cards.test.mjs",
+    "test:premium-page-uplift": "node --test scripts/premium-page-uplift.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
