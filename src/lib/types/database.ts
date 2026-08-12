@@ -159,6 +159,11 @@ export type ProfileRow = {
   // Si true : les consultations de profils par ce membre ne sont ni
   // enregistrées ni visibles chez les membres consultés.
   discreet_visits: boolean;
+  // Favoris discrets (Lot B, migration 20260812002000) — librement éditable.
+  // Si true : les profils que ce membre ajoute en favori ne sont jamais
+  // révélés aux personnes concernées, ni dans la liste ni dans le compteur.
+  // Le membre conserve sa propre liste de favoris (list_favorites).
+  discreet_favorites: boolean;
   // Statut Premium — LECTURE SEULE côté membre (C1a). Écrit UNIQUEMENT par les
   // futurs flux serveur (service_role) ; protégé en base par la garde
   // trg_profiles_guard_admin_fields (INSERT + UPDATE, upsert inclus).
@@ -233,6 +238,7 @@ export type ProfileInsert = {
   pseudo?: string | null;
   blur_photos?: boolean;
   discreet_visits?: boolean;
+  discreet_favorites?: boolean;
   // NB : is_premium est VOLONTAIREMENT absent de Insert (et donc de Update) —
   // C1a : champ administratif en lecture seule pour le membre, rejeté en
   // écriture directe par la garde en base (PROFILE_ADMIN_FIELDS_READ_ONLY).
@@ -330,6 +336,18 @@ export type FavoriteCandidate = DiscoverCandidate & {
 };
 
 export type FavoriteCandidateWithPhoto = FavoriteCandidate & {
+  signedUrl: string | null;
+};
+
+/**
+ * Lot B — favoris ENTRANTS renvoyés par la RPC premium `list_favorited_by` :
+ * les membres qui M'ONT ajouté en favori. Même forme que FavoriteCandidate
+ * (modèle carte + favorited_at), mais le sens est inverse et l'accès est
+ * réservé au Premium. Les membres en favoris discrets en sont exclus.
+ */
+export type FavoritedByCandidate = FavoriteCandidate;
+
+export type FavoritedByCandidateWithPhoto = FavoritedByCandidate & {
   signedUrl: string | null;
 };
 
@@ -1285,9 +1303,27 @@ export interface Database {
         Returns: CandidateDetails[];
       };
       // Visites (Lot 3) — visiteurs de MON profil (mode discret exclu).
+      // Lot B : RÉSERVÉE AU PREMIUM. Renvoie 0 ligne sans erreur si
+      // l'abonnement est absent, expiré ou révoqué.
       list_profile_visitors: {
         Args: Record<string, never>;
         Returns: ProfileVisitor[];
+      };
+      // Lot B — compteur LIBRE des visiteurs visibles. Un entier seul, aucune
+      // identité : il porte l'état verrouillé quand la liste est fermée.
+      count_profile_visitors: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      // Lot B — favoris ENTRANTS, RÉSERVÉS AU PREMIUM (favoris discrets exclus).
+      list_favorited_by: {
+        Args: Record<string, never>;
+        Returns: FavoritedByCandidate[];
+      };
+      // Lot B — compteur LIBRE des favoris entrants.
+      count_favorited_by: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       // L3D-C — réponse à un intérêt reçu (seule la cible, sur un match pending).
       respond_to_interest: {

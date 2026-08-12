@@ -133,6 +133,7 @@ type FormState = {
   partner_expectations: string;
   blur_photos: boolean;
   discreet_visits: boolean;
+  discreet_favorites: boolean;
 };
 
 const EMPTY_FORM: FormState = {
@@ -160,6 +161,7 @@ const EMPTY_FORM: FormState = {
   partner_expectations: "",
   blur_photos: true,
   discreet_visits: false,
+  discreet_favorites: false,
 };
 
 /** Miroir de `profiles_valid_choice_set(..., 2, 3)` : vide OU 2 à 3 valeurs. */
@@ -238,6 +240,7 @@ export default function ProfilePage() {
           partner_expectations: profile.partner_expectations ?? "",
           blur_photos: profile.blur_photos ?? true,
           discreet_visits: profile.discreet_visits ?? false,
+          discreet_favorites: profile.discreet_favorites ?? false,
         });
         setVerificationStatus(profile.verification_status ?? "pending");
         setRejectionReason(profile.verification_rejection_reason ?? null);
@@ -442,6 +445,7 @@ export default function ProfilePage() {
       partner_expectations: form.partner_expectations.trim() || null,
       blur_photos: form.blur_photos,
       discreet_visits: form.discreet_visits,
+      discreet_favorites: form.discreet_favorites,
     };
 
     // Défense en profondeur : après finalisation, ces propriétés sont
@@ -1095,6 +1099,28 @@ export default function ProfilePage() {
             <span className="mt-1 block text-xs text-ink-700/60">
               Lorsque vous consultez le détail d’un profil, votre visite n’est
               ni enregistrée ni visible par le membre consulté.
+            </span>
+          </span>
+        </label>
+
+        {/* Favoris discrets (Lot B) */}
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-champagne-500/30 bg-cream-100/40 p-4">
+          <input
+            type="checkbox"
+            checked={form.discreet_favorites}
+            onChange={(e) => update("discreet_favorites", e.target.checked)}
+            disabled={saving}
+            className="mt-0.5 h-5 w-5 shrink-0 rounded border-champagne-500/50 text-choco-600 accent-choco-600"
+          />
+          <span>
+            <span className="flex items-center gap-2 text-sm font-medium text-ink-800">
+              <ShieldCheck size={16} className="text-choco-600" />
+              Favoris discrets
+            </span>
+            <span className="mt-1 block text-xs text-ink-700/60">
+              Les profils que vous ajoutez en favori ne sont jamais révélés aux
+              personnes concernées. Vous conservez votre propre liste de
+              favoris.
             </span>
           </span>
         </label>
