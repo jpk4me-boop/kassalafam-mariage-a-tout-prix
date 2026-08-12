@@ -1,5 +1,6 @@
 import { Eye } from "lucide-react";
 
+import { PremiumLockedSignal } from "@/components/member/premium-locked-signal";
 import { VisitorsView } from "@/components/member/visitors-view";
 import { attachSignedPhotos } from "@/lib/discovery/candidate-photos";
 import { createClient } from "@/lib/supabase/server";
@@ -9,12 +10,18 @@ import type {
 } from "@/lib/types/database";
 
 /**
- * Visiteurs (Lot 3) — rendu serveur.
+ * Visiteurs (Lot 3, gating Lot B) — rendu serveur.
  *
  * Lecture via la RPC sécurisée `list_profile_visitors` (visiteurs en mode
  * discret exclus, visibilité revalidée, règle pseudo appliquée), puis
  * signature serveur des photos. Les états d'intérêt initiaux reprennent la
  * même lecture RLS de `matches` que la découverte et les favoris.
+ *
+ * Lot B — la liste est réservée au Premium et renvoie 0 ligne sans erreur
+ * lorsqu'elle est fermée. Le compteur libre `count_profile_visitors` applique
+ * EXACTEMENT les mêmes prédicats : liste vide alors que le compteur est > 0
+ * signifie donc « verrouillé », jamais « aucune visite ». C'est ce qui évite
+ * d'annoncer à un membre gratuit qu'il n'a aucun visiteur alors qu'il en a.
  */
 export default async function VisitorsPage() {
   const supabase = await createClient();
@@ -26,9 +33,21 @@ export default async function VisitorsPage() {
   let visitors: ProfileVisitorWithPhoto[] = [];
   const initialStates: Record<string, "sent" | "matched"> = {};
   let loadFailed = false;
+  let visitorCount = 0;
 
   if (user) {
     const { data, error } = await supabase.rpc("list_profile_visitors");
+
+    const { data: countData, error: countError } = await supabase.rpc(
+      "count_profile_visitors",
+    );
+
+    if (countError) {
+      // Non bloquant : sans compteur, on retombe sur l'état vide habituel.
+      console.error("[visiteurs] compteur échoué:", countError.message);
+    } else {
+      visitorCount = Number(countData ?? 0);
+    }
 
     if (error) {
       console.error("[visiteurs] lecture échouée:", error.message);
@@ -112,6 +131,13 @@ export default async function VisitorsPage() {
           Vos visiteurs sont momentanément indisponibles. Réessayez dans un
           instant.
         </p>
+      ) : visitors.length === 0 && visitorCount > 0 ? (
+        <PremiumLockedSignal
+          count={visitorCount}
+          title="ont consulté votre profil"
+          description="Le détail de vos visiteurs est réservé aux membres Premium. Le nombre affiché est réel : ces visites ont bien eu lieu. Les membres en visites discrètes n’y figurent pas."
+          ctaLabel="Voir qui a consulté mon profil"
+        />
       ) : (
         <VisitorsView
           visitors={visitors}

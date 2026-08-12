@@ -1,22 +1,31 @@
 import { Heart } from "lucide-react";
 
+import { FavoritedByView } from "@/components/member/favorited-by-view";
 import { FavoritesView } from "@/components/member/favorites-view";
+import { PremiumLockedSignal } from "@/components/member/premium-locked-signal";
 import { attachSignedPhotos } from "@/lib/discovery/candidate-photos";
 import { createClient } from "@/lib/supabase/server";
 import type {
   FavoriteCandidate,
   FavoriteCandidateWithPhoto,
+  FavoritedByCandidate,
+  FavoritedByCandidateWithPhoto,
 } from "@/lib/types/database";
 
 /**
- * Favoris (Lot 2) — rendu serveur.
+ * Favoris (Lot 2, favoris entrants Lot B) — rendu serveur.
  *
- * Lecture via la RPC sécurisée `list_favorites` (champs sûrs uniquement,
- * cibles revalidées à chaque lecture) puis signature serveur des photos
- * (attachSignedPhotos, service_role côté serveur exclusivement).
- * Les états d'intérêt initiaux (`sent`/`matched`) reprennent la même lecture
- * RLS de `matches` que le flux de découverte — jamais un intérêt entrant en
- * attente.
+ * DEUX sens, deux règles :
+ *   · SORTANT — `list_favorites` : les profils que le membre a lui-même
+ *     enregistrés. C'est SA liste, elle reste GRATUITE. On ne reprend jamais
+ *     au membre le contenu qu'il a créé.
+ *   · ENTRANT — `list_favorited_by` : les membres qui l'ont ajouté. C'est
+ *     l'avantage Premium « Vois qui t'ajoute en favori ». Fermée sans
+ *     abonnement actif ; le compteur libre `count_favorited_by` porte alors
+ *     l'état verrouillé, avec le nombre RÉEL.
+ *
+ * Les favoris discrets sont exclus des deux côtés entrants (liste ET compteur).
+ * Signature des photos par attachSignedPhotos (service_role, serveur seul).
  */
 export default async function FavoritesPage() {
   const supabase = await createClient();
@@ -26,8 +35,11 @@ export default async function FavoritesPage() {
   } = await supabase.auth.getUser();
 
   let favorites: FavoriteCandidateWithPhoto[] = [];
+  let admirers: FavoritedByCandidateWithPhoto[] = [];
   const initialStates: Record<string, "sent" | "matched"> = {};
   let loadFailed = false;
+  let admirerCount = 0;
+  let admirersFailed = false;
 
   if (user) {
     const { data, error } = await supabase.rpc("list_favorites");
@@ -38,48 +50,78 @@ export default async function FavoritesPage() {
     } else {
       const rows = (data ?? []) as FavoriteCandidate[];
       favorites = await attachSignedPhotos(rows);
+    }
 
-      if (favorites.length > 0) {
-        const ids = favorites.map((f) => f.id);
-        const list = ids.join(",");
+    // Sens ENTRANT — indépendant du sortant : un échec ici ne doit pas priver
+    // le membre de sa propre liste.
+    const { data: admirerData, error: admirerError } =
+      await supabase.rpc("list_favorited_by");
 
-        const relationshipFilter =
-          "and(user_a.eq." +
-          user.id +
-          ",user_b.in.(" +
-          list +
-          ")),and(user_b.eq." +
-          user.id +
-          ",user_a.in.(" +
-          list +
-          "))";
+    if (admirerError) {
+      console.error("[favoris entrants] lecture échouée:", admirerError.message);
+      admirersFailed = true;
+    } else {
+      const rows = (admirerData ?? []) as FavoritedByCandidate[];
+      admirers = await attachSignedPhotos(rows);
+    }
 
-        const { data: relationships, error: relationshipError } =
-          await supabase
-            .from("matches")
-            .select("user_a, user_b, status")
-            .or(relationshipFilter);
+    const { data: countData, error: countError } = await supabase.rpc(
+      "count_favorited_by",
+    );
 
-        if (relationshipError) {
-          console.error(
-            "[favorites] lecture intérêts échouée:",
-            relationshipError.message,
-          );
-        } else {
-          for (const relationship of relationships ?? []) {
-            const otherId =
-              relationship.user_a === user.id
-                ? relationship.user_b
-                : relationship.user_a;
+    if (countError) {
+      // Non bloquant : sans compteur, on retombe sur l'état vide habituel.
+      console.error("[favoris entrants] compteur échoué:", countError.message);
+    } else {
+      admirerCount = Number(countData ?? 0);
+    }
 
-            if (relationship.status === "accepted") {
-              initialStates[otherId] = "matched";
-            } else if (
-              relationship.status === "pending" &&
-              relationship.user_a === user.id
-            ) {
-              initialStates[otherId] = "sent";
-            }
+    // Un seul aller-retour sur `matches` pour les deux listes.
+    const ids = Array.from(
+      new Set([
+        ...favorites.map((f) => f.id),
+        ...admirers.map((a) => a.id),
+      ]),
+    );
+
+    if (ids.length > 0) {
+      const list = ids.join(",");
+
+      const relationshipFilter =
+        "and(user_a.eq." +
+        user.id +
+        ",user_b.in.(" +
+        list +
+        ")),and(user_b.eq." +
+        user.id +
+        ",user_a.in.(" +
+        list +
+        "))";
+
+      const { data: relationships, error: relationshipError } = await supabase
+        .from("matches")
+        .select("user_a, user_b, status")
+        .or(relationshipFilter);
+
+      if (relationshipError) {
+        console.error(
+          "[favorites] lecture intérêts échouée:",
+          relationshipError.message,
+        );
+      } else {
+        for (const relationship of relationships ?? []) {
+          const otherId =
+            relationship.user_a === user.id
+              ? relationship.user_b
+              : relationship.user_a;
+
+          if (relationship.status === "accepted") {
+            initialStates[otherId] = "matched";
+          } else if (
+            relationship.status === "pending" &&
+            relationship.user_a === user.id
+          ) {
+            initialStates[otherId] = "sent";
           }
         }
       }
@@ -120,6 +162,38 @@ export default async function FavoritesPage() {
           initialStates={initialStates}
         />
       )}
+
+      {/* Sens ENTRANT — avantage Premium. */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-serif text-2xl font-semibold text-choco-700">
+            Ils vous ont ajouté
+          </h2>
+          <p className="text-sm leading-6 text-ink-700/70">
+            Les membres qui vous ont enregistré dans leurs favoris. Ceux qui ont
+            activé les favoris discrets n’apparaissent pas ici.
+          </p>
+        </div>
+
+        {admirersFailed ? (
+          <p className="rounded-2xl border border-red-500/25 bg-red-500/5 px-4 py-3 text-sm text-red-800">
+            Cette liste est momentanément indisponible. Réessayez dans un
+            instant.
+          </p>
+        ) : admirers.length === 0 && admirerCount > 0 ? (
+          <PremiumLockedSignal
+            count={admirerCount}
+            title="vous ont ajouté en favori"
+            description="Savoir qui vous a enregistré est réservé aux membres Premium. Le nombre affiché est réel : ces personnes existent. Les membres en favoris discrets n’y figurent pas."
+            ctaLabel="Voir qui m’a ajouté"
+          />
+        ) : (
+          <FavoritedByView
+            admirers={admirers}
+            initialStates={initialStates}
+          />
+        )}
+      </section>
     </div>
   );
 }
