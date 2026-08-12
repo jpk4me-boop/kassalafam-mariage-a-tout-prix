@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   BadgeCheck,
+  LayoutDashboard,
   LayoutGrid,
   Lock,
   MapPin,
@@ -86,7 +87,7 @@ const ETAPES_EXPLORER: TourStep[] = [
   {
     title: "Bonne découverte",
     body:
-      "Un profil passé ne revient pas dans cette session, mais rien n'est enregistré : vous pouvez tout reprendre depuis le début. La vue en grille par univers reste disponible à tout moment.",
+      "Un profil passé ne revient pas dans cette session, mais rien n'est enregistré : vous pouvez tout reprendre depuis le début. Au bout du parcours, votre tableau de bord rassemble visiteurs, demandes et conversations.",
   },
 ];
 
@@ -196,15 +197,26 @@ export function ExplorerDeck({
             Vous avez parcouru tous les profils proposés
           </h2>
           <p className="mx-auto max-w-md text-sm text-ink-700/70">
-            Rien n’a été enregistré : vous pouvez reprendre depuis le début, ou
-            passer à la vue en grille. De nouveaux profils apparaîtront au fil
-            des vérifications.
+            Rien n’a été enregistré. Votre tableau de bord rassemble la suite :
+            vos visiteurs, vos demandes et vos conversations. De nouveaux profils
+            apparaîtront au fil des vérifications.
           </p>
+
+          {/* ATTERRISSAGE (Lot G) : au bout du parcours, l'action principale
+              ramène le membre à sa base. Le faire reboucler sur le même deck
+              serait un tapis roulant — pas une démarche de mariage. */}
           <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
+            >
+              <LayoutDashboard size={16} />
+              Aller à mon tableau de bord
+            </Link>
             <button
               type="button"
               onClick={() => setIndex(0)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-choco-600 to-choco-800 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_12px_30px_-12px_rgba(43,26,18,0.8)] ring-1 ring-inset ring-champagne-400/30 transition-transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-champagne-500/40 bg-cream-50/60 px-5 py-2.5 text-sm font-semibold text-choco-700 transition-colors hover:bg-champagne-400/15"
             >
               <RotateCcw size={16} />
               Reprendre depuis le début
