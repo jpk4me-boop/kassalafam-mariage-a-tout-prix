@@ -8,15 +8,19 @@ import styles from "./premium-page.module.css";
  * (drapeaux non secrets de la fondation SebPay). Configuration absente ou
  * invalide = fermé — la page reste identique à l'existant.
  */
-function arePaymentsOpen(): boolean {
+function readPaymentFlags(): { paymentsOpen: boolean; pilotMode: boolean } {
   try {
-    return loadSebPayFoundationConfig().enabled;
+    const config = loadSebPayFoundationConfig();
+
+    return { paymentsOpen: config.enabled, pilotMode: config.pilotMode };
   } catch {
-    return false;
+    // Configuration absente ou invalide = fermé, comme avant.
+    return { paymentsOpen: false, pilotMode: false };
   }
 }
 
 export default async function PremiumPage() {
+  const { paymentsOpen, pilotMode } = readPaymentFlags();
   const supabase = await createClient();
 
   const {
@@ -49,7 +53,8 @@ export default async function PremiumPage() {
         religion={
           religion as Parameters<typeof PremiumExperience>[0]["religion"]
         }
-        paymentsOpen={arePaymentsOpen()}
+        paymentsOpen={paymentsOpen}
+        pilotMode={pilotMode}
       />
     </div>
   );

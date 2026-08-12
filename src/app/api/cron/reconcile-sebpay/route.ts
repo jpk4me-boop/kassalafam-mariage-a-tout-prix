@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   VerifiedSebPayProvider,
   createSebPayProvider,
+  logSebPayFailure,
 } from "@/lib/server/sebpay";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -42,6 +43,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const RECONCILE_BATCH_SIZE = 25;
 const RECONCILE_MIN_AGE_MS = 10 * 60 * 1000;
+/**
+ * Lot J — plafond d'âge. Une transaction que SebPay n'a jamais connue (appel
+ * sortant échoué avant que la collecte existe chez eux) est interrogée en vain
+ * à CHAQUE passage, indéfiniment : le `failures` du cron ne redescend jamais à
+ * zéro et cesse d'être un signal. Au-delà de ce délai, l'annulation
+ * automatique des `initiated` a de toute façon libéré le membre.
+ */
+const RECONCILE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const EXPIRY_BATCH_SIZE = 500;
 
 /**
@@ -61,7 +70,8 @@ async function expirerAbonnementsEchus(): Promise<number | null> {
     if (error) throw error;
 
     return Number(data ?? 0);
-  } catch {
+  } catch (error) {
+    logSebPayFailure("expiry-sweep", error);
     return null;
   }
 }
@@ -97,7 +107,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const admin = createAdminClient();
-    const cutoff = new Date(Date.now() - RECONCILE_MIN_AGE_MS).toISOString();
+    const now = Date.now();
+    const cutoff = new Date(now - RECONCILE_MIN_AGE_MS).toISOString();
+    const floor = new Date(now - RECONCILE_MAX_AGE_MS).toISOString();
 
     const { data, error } = await admin
       .from("payment_transactions")
@@ -105,6 +117,7 @@ export async function GET(request: NextRequest) {
       .eq("provider", "sebpay")
       .in("status", ["initiated", "pending"])
       .lt("requested_at", cutoff)
+      .gt("requested_at", floor)
       .order("requested_at", { ascending: true })
       .limit(RECONCILE_BATCH_SIZE);
 
@@ -138,9 +151,10 @@ export async function GET(request: NextRequest) {
         }
 
         applied += 1;
-      } catch {
+      } catch (error) {
         // Une transaction en échec n'interrompt pas le lot ; le prochain
-        // passage du cron la reprendra.
+        // passage du cron la reprendra — dans la limite du plafond d'âge.
+        logSebPayFailure("reconciliation", error);
         failures += 1;
       }
     }

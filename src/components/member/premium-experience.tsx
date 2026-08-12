@@ -242,6 +242,13 @@ type PremiumExperienceProps = {
    * false : la page reste strictement identique tant que SebPay est fermé.
    */
   paymentsOpen?: boolean;
+  /**
+   * Lot J : `SEBPAY_PILOT_MODE`, drapeau non secret. Tant qu'il est vrai, seuls
+   * les numéros déclarés peuvent payer — annoncer « Disponible » à tout le
+   * monde serait faux. La page dit donc « Phase pilote », et le membre
+   * comprend son refus avant de saisir quoi que ce soit.
+   */
+  pilotMode?: boolean;
 };
 
 export function PremiumExperience({
@@ -249,8 +256,28 @@ export function PremiumExperience({
   gender,
   religion,
   paymentsOpen = false,
+  pilotMode = false,
 }: PremiumExperienceProps) {
   const copy = getPremiumHeroCopy({ firstName, gender, religion });
+
+  // Lot J : ces trois libellés étaient écrits en dur pour l'état fermé. Ils
+  // restaient affichés à l'ouverture des paiements, à côté d'un formulaire qui
+  // demandait exactement ce qu'ils juraient ne pas demander.
+  const mobileMoneyBadge = !paymentsOpen
+    ? "Bientôt disponible"
+    : pilotMode
+      ? "Phase pilote"
+      : "Disponible";
+
+  const mobileMoneyNote = !paymentsOpen
+    ? "Intégration prévue"
+    : pilotMode
+      ? "Ouvert à une liste restreinte de numéros"
+      : "Paiement confirmé sur ton téléphone";
+
+  const paymentPrivacyNote = paymentsOpen
+    ? "Ton numéro est transmis une seule fois à SebPay pour confirmer le paiement, et n'est jamais conservé par KASSALAFAM."
+    : "Aucun numéro de téléphone, aucun opérateur et aucun montant ne sont demandés sur cette version de la page.";
 
   return (
     <div className="mx-auto grid w-full max-w-[900px] gap-6 pb-12">
@@ -570,12 +597,12 @@ export function PremiumExperience({
               <div>
                 <p className="font-semibold">MTN Mobile Money</p>
                 <p className="mt-1 text-xs text-cream-100/60">
-                  Intégration prévue
+                  {mobileMoneyNote}
                 </p>
               </div>
 
               <span className="rounded-full bg-champagne-300/15 px-3 py-1 text-xs font-semibold text-champagne-200">
-                Bientôt disponible
+                {mobileMoneyBadge}
               </span>
             </div>
 
@@ -583,12 +610,12 @@ export function PremiumExperience({
               <div>
                 <p className="font-semibold">Orange Money</p>
                 <p className="mt-1 text-xs text-cream-100/60">
-                  Intégration prévue
+                  {mobileMoneyNote}
                 </p>
               </div>
 
               <span className="rounded-full bg-champagne-300/15 px-3 py-1 text-xs font-semibold text-champagne-200">
-                Bientôt disponible
+                {mobileMoneyBadge}
               </span>
             </div>
 
@@ -613,8 +640,7 @@ export function PremiumExperience({
             />
 
             <p className="text-xs leading-5 text-cream-100/70">
-              Aucun numéro de téléphone, aucun opérateur et aucun montant ne
-              sont demandés sur cette version de la page.
+              {paymentPrivacyNote}
             </p>
           </div>
         </article>

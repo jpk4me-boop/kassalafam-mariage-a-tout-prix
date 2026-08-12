@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   VerifiedSebPayProvider,
   createSebPayProvider,
+  logSebPayFailure,
 } from "@/lib/server/sebpay";
 import {
   SebPayCheckoutError,
@@ -89,7 +90,15 @@ export async function POST(request: Request) {
         throw new Error("SebPay provider is locked.");
       }
 
-      return provider.initiateCollection(input);
+      try {
+        return await provider.initiateCollection(input);
+      } catch (error) {
+        // Lot J : seule frontière où l'on sait ENCORE pourquoi l'appel a
+        // échoué. Au-delà, `handleSebPayCheckout` rend un 502 sans détail —
+        // à dessein pour le membre, aveuglant pour l'exploitation.
+        logSebPayFailure("collection", error);
+        throw error;
+      }
     },
     applyUpdate: async (input) => {
       const { error } = await admin.rpc("apply_sebpay_payment_update", {
