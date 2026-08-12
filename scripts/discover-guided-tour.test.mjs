@@ -99,11 +99,23 @@ test("le halo reste dans l'écran, quelle que soit la taille de l'ancre", () => 
 });
 
 test("le halo suit le défilement doux jusqu'à son terme", () => {
-  // Constaté en production : une mesure unique à 320 ms fige le halo 60 px
-  // au-dessus de sa cible, le mouvement n'étant pas terminé.
-  assert.match(visite, /const rendezVous = cible \? \[80, 200, 360, 600, 900\]/);
+  // Constaté en production : aucune mesure à délai fixe ne suffit — la durée
+  // d'un défilement doux dépend de la distance. On suit image par image
+  // jusqu'à immobilisation, avec un plafond.
+  assert.match(visite, /requestAnimationFrame\(suivre\)/);
+  assert.match(visite, /stables < 3 && performance\.now\(\) - debut < 2000/);
   assert.match(visite, /"onscrollend" in window/);
   assert.match(visite, /addEventListener\("scrollend", mesurer\)/);
+});
+
+test("le halo est punaisé sur son ancre, jamais animé", () => {
+  // Une transition CSS sur la position fait poursuivre la cible au halo avec un
+  // temps de retard : 302 px de décalage mesurés en production.
+  const halo = visite.slice(
+    visite.indexOf("pointer-events-none absolute rounded-3xl"),
+    visite.indexOf("boxShadow"),
+  );
+  assert.doesNotMatch(halo, /transition/);
 });
 
 test("la bulle ne recouvre jamais ce qu'elle désigne", () => {
