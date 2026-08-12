@@ -140,16 +140,35 @@ export function GuidedTour({
       });
     }
 
-    // Le défilement doux dure plus longtemps qu'une mesure unique : constaté en
-    // production le 12/08, le halo se figeait 60 px au-dessus de sa cible parce
-    // qu'on mesurait à 320 ms, avant la fin du mouvement. On re-mesure donc
-    // plusieurs fois, jusqu'à ce que la page se soit arrêtée.
-    const rendezVous = cible ? [80, 200, 360, 600, 900] : [0];
-    const minuteurs = rendezVous.map((delai) =>
-      window.setTimeout(mesurer, delai),
-    );
+    // Le défilement doux dure plus longtemps qu'une mesure unique — et sa durée
+    // dépend de la distance, donc d'aucun délai devinable. On suit le mouvement
+    // IMAGE PAR IMAGE jusqu'à ce que l'ancre s'immobilise, avec un plafond de
+    // sécurité pour ne jamais tourner en boucle.
+    let annule = false;
+    let precedent = Number.NaN;
+    let stables = 0;
+    const debut = performance.now();
 
-    return () => minuteurs.forEach((t) => window.clearTimeout(t));
+    function suivre() {
+      if (annule) return;
+
+      mesurer();
+
+      const actuel = cible?.getBoundingClientRect().top ?? 0;
+      stables = actuel === precedent ? stables + 1 : 0;
+      precedent = actuel;
+
+      // Trois images identiques = la page ne bouge plus. Plafond : 2 secondes.
+      if (stables < 3 && performance.now() - debut < 2000) {
+        window.requestAnimationFrame(suivre);
+      }
+    }
+
+    window.requestAnimationFrame(suivre);
+
+    return () => {
+      annule = true;
+    };
   }, [ouvert, etape, mesurer]);
 
   // `scrollend` là où il existe : la mesure définitive, sans deviner un délai.
@@ -274,7 +293,12 @@ export function GuidedTour({
       ) : (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute rounded-3xl ring-4 ring-champagne-300/90 transition-all duration-300"
+          /* AUCUNE transition sur la position : constaté en production le
+             12/08, un `transition-all duration-300` fait poursuivre la cible au
+             halo avec un temps de retard — pendant un défilement, il reste
+             visiblement décalé (302 px mesurés). Le halo doit être PUNAISÉ sur
+             son ancre, pas l'animer. */
+          className="pointer-events-none absolute rounded-3xl ring-4 ring-champagne-300/90"
           style={{
             top: spot.top,
             left: spot.left,
