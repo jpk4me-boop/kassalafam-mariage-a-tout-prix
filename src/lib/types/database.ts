@@ -164,6 +164,11 @@ export type ProfileRow = {
   // révélés aux personnes concernées, ni dans la liste ni dans le compteur.
   // Le membre conserve sa propre liste de favoris (list_favorites).
   discreet_favorites: boolean;
+  // Visite guidée de la Découverte (Lot E, migration 20260812060000).
+  // NULL = jamais jouée : elle se déclenchera au prochain passage sur un
+  // univers. Librement écrivable par le membre sur sa propre ligne — la
+  // remettre à NULL est la fonction « Revoir la visite guidée » de /profile.
+  tour_completed_at: string | null;
   // Statut Premium — LECTURE SEULE côté membre (C1a). Écrit UNIQUEMENT par les
   // futurs flux serveur (service_role) ; protégé en base par la garde
   // trg_profiles_guard_admin_fields (INSERT + UPDATE, upsert inclus).
@@ -239,6 +244,11 @@ export type ProfileInsert = {
   blur_photos?: boolean;
   discreet_visits?: boolean;
   discreet_favorites?: boolean;
+  // Témoin de visite guidée — écrivable par le membre (poser une date = vue,
+  // remettre à NULL = rejouer). Absent des upserts de /profile : la visite
+  // écrit son témoin toute seule, un enregistrement de profil ne doit ni
+  // l'effacer ni le poser par ricochet.
+  tour_completed_at?: string | null;
   // NB : is_premium est VOLONTAIREMENT absent de Insert (et donc de Update) —
   // C1a : champ administratif en lecture seule pour le membre, rejeté en
   // écriture directe par la garde en base (PROFILE_ADMIN_FIELDS_READ_ONLY).

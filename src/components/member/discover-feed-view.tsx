@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   BadgeCheck,
   Lock,
   MapPin,
-  Sparkles,
   UserRound,
   X,
 } from "lucide-react";
 
 import { CandidateDetailsToggle } from "@/components/member/candidate-details";
 import { FavoriteButton } from "@/components/member/favorite-button";
+import { GuidedTour, type TourStep } from "@/components/member/guided-tour";
 import { InterestButton } from "@/components/member/interest-button";
 import type {
   DiscoverCandidateWithPhoto,
@@ -35,7 +35,47 @@ import { UNIVERSE_LABEL } from "@/lib/discovery/universe";
  * intérêts mutuels (`matched`) ; jamais un intérêt entrant en attente.
  */
 
-const TUTO_KEY = "kassalafam_discover_tuto_dismissed";
+/**
+ * Visite guidée du premier passage (Lot E) — six bulles ancrées sur les vrais
+ * boutons de la PREMIÈRE carte. Chaque texte décrit une fonction RÉELLEMENT
+ * livrée : rien n'est annoncé ici qui n'existe pas déjà dans l'écran.
+ */
+const ETAPES_VISITE: TourStep[] = [
+  {
+    title: "Bienvenue dans la découverte",
+    body:
+      "Voici les profils vérifiés compatibles avec votre univers. Six repères rapides pour savoir quoi faire — vous pouvez passer à tout moment.",
+  },
+  {
+    anchor: "photo",
+    title: "Des photos protégées",
+    body:
+      "Les photos restent floutées tant que leur propriétaire ne les ouvre pas. Les vôtres suivent la même règle : c'est vous qui décidez, dans votre profil.",
+  },
+  {
+    anchor: "voir-plus",
+    title: "Voir plus",
+    body:
+      "Ouvre la présentation du membre et ses attentes. À savoir : cette consultation compte comme une visite, et la personne peut la voir. Vos visites peuvent rester discrètes — le réglage est dans votre profil.",
+  },
+  {
+    anchor: "interet",
+    title: "Exprimer un intérêt",
+    body:
+      "C'est votre première main tendue. La personne reste seule décisionnaire : la conversation ne s'ouvre que si l'intérêt devient mutuel.",
+  },
+  {
+    anchor: "favori",
+    title: "Mettre de côté",
+    body:
+      "Gardez un profil sous la main pour y revenir. Vous pouvez rendre vos favoris discrets dans votre profil : personne ne saura que vous l'avez enregistré.",
+  },
+  {
+    title: "Vous êtes prêt",
+    body:
+      "« Passer ce profil » masque simplement une carte pour cette session, sans rien enregistrer. Prenez votre temps : ici, on cherche un foyer, pas un défilement.",
+  },
+];
 
 const MARITAL_LABEL: Record<MaritalStatus, string> = {
   celibataire: "Célibataire",
@@ -49,35 +89,19 @@ export function DiscoverFeedView({
   universe,
   initialStates,
   favoriteIds = [],
+  tourCompleted = true,
 }: {
   candidates: DiscoverCandidateWithPhoto[];
   universe: DiscoveryUniverse;
   initialStates: Record<string, "sent" | "matched">;
   favoriteIds?: string[];
+  /**
+   * Témoin `profiles.tour_completed_at` (migration 65). Par défaut TRUE : en
+   * cas de doute, on ne dérange personne avec une visite déjà vue.
+   */
+  tourCompleted?: boolean;
 }) {
-  const [showTuto, setShowTuto] = useState(false);
   const [passed, setPassed] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    // Lecture localStorage après montage (évite tout décalage d'hydratation).
-    let dismissed = true;
-    try {
-      dismissed = window.localStorage.getItem(TUTO_KEY) !== null;
-    } catch {
-      // localStorage indisponible : on n'affiche simplement pas le tuto.
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!dismissed) setShowTuto(true);
-  }, []);
-
-  function dismissTuto() {
-    setShowTuto(false);
-    try {
-      window.localStorage.setItem(TUTO_KEY, "1");
-    } catch {
-      // ignore
-    }
-  }
 
   function skip(id: string) {
     setPassed((prev) => {
@@ -115,24 +139,10 @@ export function DiscoverFeedView({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Mini-tutoriel premier usage (fermable, mémorisé). */}
-      {showTuto ? (
-        <div className="relative flex items-start gap-3 rounded-2xl border border-champagne-500/30 bg-champagne-400/10 p-4 pr-10">
-          <Sparkles size={18} className="mt-0.5 shrink-0 text-choco-600" />
-          <p className="text-sm text-ink-700/80">
-            Voici des profils compatibles avec votre univers. Prenez le temps :
-            ici, on privilégie le sérieux, le respect et le projet de foyer.
-          </p>
-          <button
-            type="button"
-            onClick={dismissTuto}
-            aria-label="Fermer le message"
-            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-ink-700/50 transition-colors hover:bg-cream-100/60 hover:text-ink-800"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      ) : null}
+      {/* Visite guidée du premier passage. Elle remplace l'ancien bandeau
+          « mini-tuto » : même intention, mais ancrée sur les vrais boutons et
+          mémorisée par PERSONNE (base) et non par navigateur. */}
+      <GuidedTour steps={ETAPES_VISITE} active={!tourCompleted} />
 
       {visible.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-champagne-500/40 bg-cream-100/30 p-6 text-center text-sm text-ink-700/60">
@@ -140,13 +150,18 @@ export function DiscoverFeedView({
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {visible.map((c) => (
+          {visible.map((c, i) => (
             <li
               key={c.id}
               className="flex flex-col overflow-hidden rounded-3xl border border-champagne-500/30 bg-cream-50/60 shadow-card"
             >
-              {/* Média */}
-              <div className="relative aspect-[4/5] bg-cream-100/50">
+              {/* Média. La PREMIÈRE carte porte les ancres de la visite guidée
+                  (data-tour) : une seule carte est mise en avant, jamais
+                  plusieurs à la fois. */}
+              <div
+                data-tour={i === 0 ? "photo" : undefined}
+                className="relative aspect-[4/5] bg-cream-100/50"
+              >
                 {c.signedUrl ? (
                   <div className="relative h-full w-full overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -218,16 +233,36 @@ export function DiscoverFeedView({
 
                 {/* Actions */}
                 <div className="mt-auto flex flex-col gap-2 pt-2">
-                  <CandidateDetailsToggle targetId={c.id} />
-                  <InterestButton
-                    targetId={c.id}
-                    universe={universe}
-                    initial={initialStates[c.id]}
-                  />
-                  <FavoriteButton
-                    targetId={c.id}
-                    initialFavorited={favoriteIds.includes(c.id)}
-                  />
+                  {/* `flex flex-col` sur les enveloppes : sans lui, un bouton
+                      `inline-flex` cesse d'être étiré par la colonne parente et
+                      la carte se déforme. L'enveloppe existe uniquement pour
+                      porter l'ancre `data-tour` (un `display:contents` n'aurait
+                      aucune boîte à mesurer). */}
+                  <div
+                    data-tour={i === 0 ? "voir-plus" : undefined}
+                    className="flex flex-col"
+                  >
+                    <CandidateDetailsToggle targetId={c.id} />
+                  </div>
+                  <div
+                    data-tour={i === 0 ? "interet" : undefined}
+                    className="flex flex-col"
+                  >
+                    <InterestButton
+                      targetId={c.id}
+                      universe={universe}
+                      initial={initialStates[c.id]}
+                    />
+                  </div>
+                  <div
+                    data-tour={i === 0 ? "favori" : undefined}
+                    className="flex flex-col"
+                  >
+                    <FavoriteButton
+                      targetId={c.id}
+                      initialFavorited={favoriteIds.includes(c.id)}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => skip(c.id)}
