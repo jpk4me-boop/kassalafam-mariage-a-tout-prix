@@ -7,6 +7,7 @@ import {
 
 import { DiscoverFeedView } from "@/components/member/discover-feed-view";
 import { loadDiscoveryCandidates } from "@/lib/discovery/load-candidates";
+import { createClient } from "@/lib/supabase/server";
 import type {
   DiscoveryUniverse,
 } from "@/lib/types/database";
@@ -115,12 +116,42 @@ export async function DiscoverFeed({
     );
   }
 
+  // Visite guidée (migration 65) : le témoin vit sur le PROFIL, pas dans le
+  // navigateur. Toute lecture qui échoue est traitée comme « déjà vue » : une
+  // panne de lecture ne doit jamais rejouer un tutoriel à quelqu'un qui l'a
+  // déjà terminé.
+  let tourCompleted = true;
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("tour_completed_at")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("[visite guidée] témoin illisible:", error.message);
+      } else {
+        tourCompleted = Boolean(data?.tour_completed_at);
+      }
+    }
+  } catch (e) {
+    console.error("[visite guidée] témoin illisible:", e);
+  }
+
   return (
     <DiscoverFeedView
       candidates={result.candidates}
       universe={result.universe}
       initialStates={result.initialStates}
       favoriteIds={result.favoriteIds}
+      tourCompleted={tourCompleted}
     />
   );
 }

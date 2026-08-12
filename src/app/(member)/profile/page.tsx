@@ -56,6 +56,7 @@ import { ProfileShareConsentCard } from "@/components/member/profile-share-conse
 import { ProfilePromotionConsentCard } from "@/components/member/profile-promotion-consent-card";
 import { CandidateShowcaseCard } from "@/components/member/candidate-showcase-card";
 import { WhatsappNotificationsCard } from "@/components/member/whatsapp-notifications-card";
+import { ReplayTourButton } from "@/components/member/replay-tour-button";
 import { ChoiceCard } from "@/components/onboarding/choice-card";
 import { MultiChoiceChips } from "@/components/onboarding/multi-choice-chips";
 import {
@@ -1136,6 +1137,11 @@ export default function ProfilePage() {
           )}
         </PrimaryButton>
       </form>
+
+      {/* Visite guidée (Lot E) — hors du formulaire : elle écrit son propre
+          champ, elle ne doit ni dépendre de l'enregistrement du profil ni le
+          déclencher. */}
+      <ReplayTourButton />
 
       {/* Photos de profil — gestion privée du membre connecté (L3D-A).
           onStateChange alimente le panneau de complétion (photo principale). */}
