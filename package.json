@@ -47,7 +47,8 @@
     "test:premium-locked-signals": "node --test scripts/premium-locked-signals.test.mjs",
     "test:discover-guided-tour": "node --test scripts/discover-guided-tour.test.mjs",
     "test:explorer-deck": "node --test scripts/explorer-deck.test.mjs",
-    "test:dashboard-landing": "node --test scripts/dashboard-landing.test.mjs"
+    "test:dashboard-landing": "node --test scripts/dashboard-landing.test.mjs",
+    "test:member-profile-menu": "node --test scripts/member-profile-menu.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

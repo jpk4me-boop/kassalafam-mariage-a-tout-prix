@@ -98,6 +98,14 @@ test("le halo reste dans l'écran, quelle que soit la taille de l'ancre", () => 
   assert.match(visite, /block: grand \? "start" : "center"/);
 });
 
+test("le halo suit le défilement doux jusqu'à son terme", () => {
+  // Constaté en production : une mesure unique à 320 ms fige le halo 60 px
+  // au-dessus de sa cible, le mouvement n'étant pas terminé.
+  assert.match(visite, /const rendezVous = cible \? \[80, 200, 360, 600, 900\]/);
+  assert.match(visite, /"onscrollend" in window/);
+  assert.match(visite, /addEventListener\("scrollend", mesurer\)/);
+});
+
 test("la bulle ne recouvre jamais ce qu'elle désigne", () => {
   assert.match(visite, /const placeDessous =/);
   assert.match(visite, /const placeDessus =/);

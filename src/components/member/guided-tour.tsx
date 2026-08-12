@@ -140,9 +140,26 @@ export function GuidedTour({
       });
     }
 
-    const t = window.setTimeout(mesurer, cible ? 320 : 0);
-    return () => window.clearTimeout(t);
+    // Le défilement doux dure plus longtemps qu'une mesure unique : constaté en
+    // production le 12/08, le halo se figeait 60 px au-dessus de sa cible parce
+    // qu'on mesurait à 320 ms, avant la fin du mouvement. On re-mesure donc
+    // plusieurs fois, jusqu'à ce que la page se soit arrêtée.
+    const rendezVous = cible ? [80, 200, 360, 600, 900] : [0];
+    const minuteurs = rendezVous.map((delai) =>
+      window.setTimeout(mesurer, delai),
+    );
+
+    return () => minuteurs.forEach((t) => window.clearTimeout(t));
   }, [ouvert, etape, mesurer]);
+
+  // `scrollend` là où il existe : la mesure définitive, sans deviner un délai.
+  useEffect(() => {
+    if (!ouvert) return;
+    if (!("onscrollend" in window)) return;
+
+    window.addEventListener("scrollend", mesurer);
+    return () => window.removeEventListener("scrollend", mesurer);
+  }, [ouvert, mesurer]);
 
   useEffect(() => {
     if (!ouvert) return;
