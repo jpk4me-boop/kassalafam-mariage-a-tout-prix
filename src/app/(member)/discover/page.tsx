@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Compass,
   HeartHandshake,
+  Layers,
   ListChecks,
   Sparkles,
   UserRound,
@@ -79,6 +80,30 @@ export default function DiscoverPage() {
             </span>
           ))}
         </div>
+      </section>
+
+      {/* Explorer (Lot F) — deuxième façon de parcourir, un profil à la fois.
+          Placé AVANT les critères : c'est le geste que la plupart des membres
+          viennent faire. La grille par univers reste juste en dessous. */}
+      <section className="flex flex-col gap-3 rounded-3xl border border-champagne-500/30 bg-gradient-to-br from-choco-700 via-choco-800 to-choco-900 p-6 text-cream-50 shadow-card sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div>
+          <h2 className="flex items-center gap-2 font-serif text-xl font-semibold">
+            <Layers size={18} className="text-champagne-300" />
+            Explorer un profil à la fois
+          </h2>
+          <p className="mt-1 max-w-xl text-sm leading-6 text-cream-100/80">
+            Les mêmes profils vérifiés, en grand, un par un. Faire défiler
+            n’enregistre rien : seule l’ouverture du détail compte comme une
+            visite.
+          </p>
+        </div>
+        <Link
+          href="/explorer"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-champagne-400/20 px-5 py-2.5 text-sm font-semibold text-cream-50 ring-1 ring-inset ring-champagne-300/40 transition-transform hover:-translate-y-0.5"
+        >
+          Ouvrir l’Explorer
+          <ArrowRight size={16} />
+        </Link>
       </section>
 
       {/* Mes critères de découverte (L3C-C) — résumé du profil du membre connecté */}
