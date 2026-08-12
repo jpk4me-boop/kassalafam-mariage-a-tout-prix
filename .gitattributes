@@ -1,0 +1,8 @@
+# Fins de ligne — le dépôt stocke du LF, les copies de travail Windows sont
+# libres d'être en CRLF (comportement déjà en place via core.autocrlf).
+* text=auto
+
+# Les scripts destinés à un hôte Linux (VPS, CI) DOIVENT être en LF quelle que
+# soit la plateforme de checkout : un shebang suivi d'un CR donne
+# « bad interpreter: /usr/bin/env bash^M ».
+*.sh text eol=lf
