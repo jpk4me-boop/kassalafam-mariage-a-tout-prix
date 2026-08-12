@@ -90,12 +90,34 @@ export function GuidedTour({
     }
 
     const r = cible.getBoundingClientRect();
-    setSpot({
-      top: r.top - MARGE,
-      left: r.left - MARGE,
-      width: r.width + MARGE * 2,
-      height: r.height + MARGE * 2,
-    });
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+
+    // Le halo est BORNÉ À L'ÉCRAN, et à la moitié de sa hauteur.
+    //
+    // Constaté en production le 12/08 : la photo d'une carte de découverte
+    // mesure 596 × 1059 px dans une fenêtre de 855 px de haut. Sans borne, le
+    // trou déborde de tous les côtés : le voile n'apparaît plus, la bulle se
+    // pose sur la photo, et la mise en avant ne montre plus rien. Mieux vaut
+    // encadrer le HAUT d'un grand élément que prétendre l'entourer en entier.
+    const hauteurMax = Math.round(vh * 0.5);
+
+    const hauteurVoulue = r.height + MARGE * 2;
+    const height = Math.max(48, Math.min(hauteurVoulue, hauteurMax));
+
+    const largeurVoulue = r.width + MARGE * 2;
+    const width = Math.max(48, Math.min(largeurVoulue, vw - MARGE * 2));
+
+    const top = Math.max(
+      MARGE,
+      Math.min(r.top - MARGE, vh - MARGE - height),
+    );
+    const left = Math.max(
+      MARGE,
+      Math.min(r.left - MARGE, vw - MARGE - width),
+    );
+
+    setSpot({ top, left, width, height });
   }, [ouvert, etape]);
 
   // Amener l'ancre dans le champ de vision, puis mesurer.
@@ -107,7 +129,15 @@ export function GuidedTour({
       : null;
 
     if (cible) {
-      cible.scrollIntoView({ block: "center", behavior: "smooth" });
+      // Un élément plus haut que l'écran ne se « centre » pas : on l'amène par
+      // le haut, sinon son sommet part hors champ et le halo semble flotter.
+      const grand =
+        cible.getBoundingClientRect().height > window.innerHeight * 0.6;
+
+      cible.scrollIntoView({
+        block: grand ? "start" : "center",
+        behavior: "smooth",
+      });
     }
 
     const t = window.setTimeout(mesurer, cible ? 320 : 0);
@@ -179,19 +209,40 @@ export function GuidedTour({
 
   if (!ouvert || !etape) return null;
 
-  // Bulle sous l'ancre s'il y a la place, au-dessus sinon, centrée sans ancre.
-  const hauteurEstimee = 210;
+  // La bulle va dans la plus grande bande LIBRE : sous le halo, au-dessus, ou
+  // centrée s'il n'y a pas d'ancre. Elle ne doit jamais recouvrir ce qu'elle
+  // désigne — sinon la mise en avant ne sert à rien.
+  const hauteurEstimee = 230;
   const hauteurFenetre =
     typeof window === "undefined" ? 0 : window.innerHeight;
+
   const placeDessous =
-    spot !== null && spot.top + spot.height + hauteurEstimee < hauteurFenetre;
+    spot !== null &&
+    hauteurFenetre - (spot.top + spot.height) >= hauteurEstimee + 24;
+  const placeDessus = spot !== null && spot.top >= hauteurEstimee + 24;
 
   const styleBulle: CSSProperties =
     spot === null
       ? { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
       : placeDessous
-        ? { top: spot.top + spot.height + 12, left: "50%", transform: "translateX(-50%)" }
-        : { top: Math.max(12, spot.top - hauteurEstimee - 12), left: "50%", transform: "translateX(-50%)" };
+        ? {
+            top: spot.top + spot.height + 12,
+            left: "50%",
+            transform: "translateX(-50%)",
+          }
+        : placeDessus
+          ? {
+              top: spot.top - hauteurEstimee - 12,
+              left: "50%",
+              transform: "translateX(-50%)",
+            }
+          : // Écran trop court des deux côtés : on ancre la bulle en bas, là où
+            // le pouce l'atteint, plutôt que de la centrer sur le halo.
+            {
+              bottom: 16,
+              left: "50%",
+              transform: "translateX(-50%)",
+            };
 
   return (
     <div
