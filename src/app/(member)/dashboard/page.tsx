@@ -7,7 +7,10 @@ import {
 } from "lucide-react";
 
 import { AcquisitionSourceCard } from "@/components/member/acquisition-source-card";
+import { DashboardDailyTip } from "@/components/member/dashboard-daily-tip";
 import { DashboardNextSteps } from "@/components/member/dashboard-next-steps";
+import { DashboardQuickAccess } from "@/components/member/dashboard-quick-access";
+import { DashboardTourWelcome } from "@/components/member/dashboard-tour-welcome";
 import { DashboardProfileOverview } from "@/components/member/dashboard-profile-overview";
 import { DashboardGuidance } from "@/components/member/dashboard-guidance";
 import { DashboardProfileVisibility } from "@/components/member/dashboard-profile-visibility";
@@ -50,6 +53,10 @@ export default function DashboardPage() {
     useState(true);
   const [justRecorded, setJustRecorded] =
     useState(false);
+
+  // Fin de la visite guidée (migration 65) — sert au bandeau d'atterrissage.
+  const [tourCompletedAt, setTourCompletedAt] =
+    useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -122,6 +129,10 @@ export default function DashboardPage() {
         profile?.acquisition_source_recorded_at != null,
       );
 
+      setTourCompletedAt(
+        profile?.tour_completed_at ?? null,
+      );
+
       setLoading(false);
     }
 
@@ -142,6 +153,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Atterrissage du nouveau membre (Lot G) : juste après la visite guidée,
+          et une seule fois. */}
+      <DashboardTourWelcome
+        tourCompletedAt={tourCompletedAt}
+        firstName={firstName}
+      />
+
       <DashboardProfileOverview
         firstName={firstName}
         city={city}
@@ -149,6 +167,11 @@ export default function DashboardPage() {
         completionPercentage={completionPercentage}
         verificationStatus={verificationStatus}
       />
+
+      {/* Quatre chiffres réels, quatre raccourcis. */}
+      <DashboardQuickAccess />
+
+      <DashboardDailyTip />
 
       <DashboardSelection />
 
