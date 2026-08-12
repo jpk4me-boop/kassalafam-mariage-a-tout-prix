@@ -88,6 +88,23 @@ test("une ancre absente ne fige pas la visite", () => {
   assert.match(visite, /if \(!cible\) \{\s*\n\s*setSpot\(null\);/);
 });
 
+test("le halo reste dans l'écran, quelle que soit la taille de l'ancre", () => {
+  // Constaté en production : une photo de carte mesure 596 × 1059 px dans une
+  // fenêtre de 855 px. Sans borne, le trou déborde et le voile disparaît.
+  assert.match(visite, /const hauteurMax = Math\.round\(vh \* 0\.5\)/);
+  assert.match(visite, /Math\.min\(hauteurVoulue, hauteurMax\)/);
+  assert.match(visite, /Math\.min\(largeurVoulue, vw - MARGE \* 2\)/);
+  // Et un élément plus haut que l'écran est amené par le haut, pas centré.
+  assert.match(visite, /block: grand \? "start" : "center"/);
+});
+
+test("la bulle ne recouvre jamais ce qu'elle désigne", () => {
+  assert.match(visite, /const placeDessous =/);
+  assert.match(visite, /const placeDessus =/);
+  // Dernier recours sur écran court : la bulle se pose en bas, pas sur le halo.
+  assert.match(visite, /bottom: 16,/);
+});
+
 test("les gabarits du voile ne laissent filtrer aucune donnée", () => {
   // Le composant ne reçoit que des textes et un booléen.
   assert.match(visite, /steps: TourStep\[\]/);
