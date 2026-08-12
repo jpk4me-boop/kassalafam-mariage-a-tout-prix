@@ -16,6 +16,9 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/profile",
   "/discover",
+  // Explorer (Lot F) : mêmes profils que la découverte, donc MÊMES gardes.
+  // L'oublier ici ouvrirait un parcours de profils à un visiteur non connecté.
+  "/explorer",
   "/matches",
   "/premium",
   "/admin",
@@ -35,6 +38,7 @@ const MEMBER_APP_PREFIXES = [
   "/dashboard",
   "/profile",
   "/discover",
+  "/explorer",
   "/matches",
   "/premium",
   "/onboarding",

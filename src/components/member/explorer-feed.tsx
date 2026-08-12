@@ -1,24 +1,18 @@
-import { DiscoverFeedView } from "@/components/member/discover-feed-view";
 import { DiscoveryStateCard } from "@/components/member/discovery-state-card";
+import { ExplorerDeck } from "@/components/member/explorer-deck";
 import { loadDiscoveryCandidates } from "@/lib/discovery/load-candidates";
 import { createClient } from "@/lib/supabase/server";
-import type {
-  DiscoveryUniverse,
-} from "@/lib/types/database";
 
 /**
- * Les cartes d'état vivent désormais dans <DiscoveryStateCard>, partagée avec
- * l'Explorer : deux modes derrière les mêmes gardes doivent tenir le même
- * discours au membre.
+ * Explorer (Lot F) — chargement serveur.
+ *
+ * Aucun paramètre d'univers : l'Explorer suit la préférence enregistrée du
+ * membre (`profiles.discovery_universe`), que le chargeur applique déjà quand
+ * on ne lui impose rien. Un membre qui n'a pas encore choisi son univers est
+ * renvoyé vers le hub — même garde que le flux en grille, même message.
  */
-
-export async function DiscoverFeed({
-  universe,
-}: {
-  universe: DiscoveryUniverse;
-}) {
+export async function ExplorerFeed() {
   const result = await loadDiscoveryCandidates({
-    universe,
     includeRelationshipStates: true,
     includeFavoriteStates: true,
   });
@@ -31,10 +25,7 @@ export async function DiscoverFeed({
       <DiscoveryStateCard
         title="Votre profil doit être vérifié avant la découverte."
         text="Notre équipe vérifie chaque profil pour garantir des rencontres sérieuses et sûres. Vous serez prévenu(e) dès validation."
-        cta={{
-          href: "/profile",
-          label: "Voir mon profil",
-        }}
+        cta={{ href: "/profile", label: "Voir mon profil" }}
       />
     );
   }
@@ -44,10 +35,7 @@ export async function DiscoverFeed({
       <DiscoveryStateCard
         title="Complétez votre profil pour découvrir des profils."
         text="Indiquez votre genre dans votre profil : il nous aide à proposer des personnes réellement compatibles."
-        cta={{
-          href: "/profile",
-          label: "Compléter mon profil",
-        }}
+        cta={{ href: "/profile", label: "Compléter mon profil" }}
       />
     );
   }
@@ -56,11 +44,8 @@ export async function DiscoverFeed({
     return (
       <DiscoveryStateCard
         title="Choisissez votre univers matrimonial."
-        text="Votre univers permet de proposer des profils cohérents avec votre démarche."
-        cta={{
-          href: "/discover",
-          label: "Choisir mon univers",
-        }}
+        text="L'Explorer parcourt les profils de votre univers. Choisissez-le une fois, vous pourrez en changer quand vous voudrez."
+        cta={{ href: "/discover", label: "Choisir mon univers" }}
       />
     );
   }
@@ -74,10 +59,10 @@ export async function DiscoverFeed({
     );
   }
 
-  // Visite guidée (migration 65) : le témoin vit sur le PROFIL, pas dans le
-  // navigateur. Toute lecture qui échoue est traitée comme « déjà vue » : une
-  // panne de lecture ne doit jamais rejouer un tutoriel à quelqu'un qui l'a
-  // déjà terminé.
+  // Visite guidée (migration 65) : même témoin que le flux en grille. Un membre
+  // ne voit la visite qu'UNE fois, sur le premier des deux écrans qu'il ouvre.
+  // Toute lecture en échec vaut « déjà vue » : mieux vaut rater une visite que
+  // la rejouer à quelqu'un qui l'a terminée.
   let tourCompleted = true;
 
   try {
@@ -94,17 +79,17 @@ export async function DiscoverFeed({
         .maybeSingle();
 
       if (error) {
-        console.error("[visite guidée] témoin illisible:", error.message);
+        console.error("[explorer] témoin de visite illisible:", error.message);
       } else {
         tourCompleted = Boolean(data?.tour_completed_at);
       }
     }
   } catch (e) {
-    console.error("[visite guidée] témoin illisible:", e);
+    console.error("[explorer] témoin de visite illisible:", e);
   }
 
   return (
-    <DiscoverFeedView
+    <ExplorerDeck
       candidates={result.candidates}
       universe={result.universe}
       initialStates={result.initialStates}
