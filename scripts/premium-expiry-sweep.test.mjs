@@ -48,7 +48,11 @@ test("il tourne AVANT SebPay : un octroi manuel expire aussi", () => {
 
 test("un échec du balayage n'interrompt pas la réconciliation", () => {
   assert.match(route, /Promise<number \| null>/);
-  assert.match(route, /catch \{\s*\n\s*return null;/);
+  // Lot J : le `catch` renvoie toujours null — mais il ne se tait plus.
+  assert.match(
+    route,
+    /catch \(error\) \{\s*\n\s*logSebPayFailure\("expiry-sweep", error\);\s*\n\s*return null;/,
+  );
 });
 
 test("le cron reste protégé", () => {

@@ -78,10 +78,27 @@ export type PaymentFoundationErrorCode =
 export class PaymentFoundationError extends Error {
   readonly code: PaymentFoundationErrorCode;
 
-  constructor(code: PaymentFoundationErrorCode, message: string) {
+  /**
+   * Statut HTTP renvoyé par le fournisseur, lorsque l'échec vient de SA
+   * réponse (`PAYMENT_REQUEST_FAILED`). `null` pour toute autre cause :
+   * configuration invalide, origine refusée, délai dépassé, réponse illisible.
+   *
+   * Lot J. Sans ce champ, un refus d'authentification (401), un blocage
+   * d'allowlist (403), une référence inconnue (404) et une panne du
+   * fournisseur (5xx) étaient rigoureusement indiscernables : tous
+   * ressortaient en un seul 502 « provider_unavailable », sans trace.
+   */
+  readonly httpStatus: number | null;
+
+  constructor(
+    code: PaymentFoundationErrorCode,
+    message: string,
+    httpStatus: number | null = null,
+  ) {
     super(message);
     this.name = "PaymentFoundationError";
     this.code = code;
+    this.httpStatus = httpStatus;
   }
 }
 
@@ -469,10 +486,14 @@ export class GuardedJsonTransport {
       });
 
       if (!response.ok) {
+        // Le corps reste annulé sans être lu : il peut contenir des données du
+        // fournisseur qui n'ont rien à faire dans nos journaux. Seul le statut
+        // est conservé — il suffit à nommer la cause, il ne peut rien divulguer.
         await cancelResponseBodySilently(response);
         throw new PaymentFoundationError(
           "PAYMENT_REQUEST_FAILED",
           "Payment provider returned an unsuccessful response.",
+          response.status,
         );
       }
 
