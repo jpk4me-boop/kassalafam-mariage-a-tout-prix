@@ -23,10 +23,48 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * réconciliation interroge le fournisseur sur notre propre référence unique ;
  * le contrôle de cohérence montant/devise du webhook garde tout son sens
  * pour les payloads entrants, pas pour ce chemin sortant authentifié.
+ *
+ * ── BALAYAGE DES ABONNEMENTS ÉCHUS (Lot I) ──────────────────────────────────
+ * `expire_due_premium_subscriptions` existait sans qu'AUCUN appelant ne la
+ * déclenche : ni cron Vercel, ni pg_cron (extension absente). Trois chemins
+ * rattrapaient déjà l'essentiel — le tri de la découverte et toutes les gardes
+ * passent par `profile_has_active_premium` (qui compare `ends_at` à
+ * maintenant), et `get_my_premium_status` répare l'abonnement du membre qui
+ * consulte son statut. Restait le cas du membre DORMANT : sa ligne garde
+ * `status = 'active'` et son `profiles.is_premium` reste vrai, ce que
+ * l'administration et les exports affichent tels quels.
+ *
+ * Le balayage tourne AVANT toute considération SebPay, et volontairement :
+ * un abonnement accordé à la main (`admin_grant_premium_subscription`) expire
+ * aussi, y compris quand les paiements sont fermés. Un échec du balayage
+ * n'interrompt pas la réconciliation, et inversement.
  */
 
 const RECONCILE_BATCH_SIZE = 25;
 const RECONCILE_MIN_AGE_MS = 10 * 60 * 1000;
+const EXPIRY_BATCH_SIZE = 500;
+
+/**
+ * Bascule en `expired` les abonnements dont la fin est passée. Renvoie le
+ * nombre traité, ou `null` si le balayage a échoué — auquel cas le cron
+ * continue : mieux vaut réconcilier des paiements que tout abandonner.
+ */
+async function expirerAbonnementsEchus(): Promise<number | null> {
+  try {
+    const admin = createAdminClient();
+
+    const { data, error } = await admin.rpc(
+      "expire_due_premium_subscriptions",
+      { p_limit: EXPIRY_BATCH_SIZE },
+    );
+
+    if (error) throw error;
+
+    return Number(data ?? 0);
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -39,17 +77,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
+  // AVANT SebPay : les abonnements accordés à la main expirent aussi, même
+  // quand les paiements sont fermés.
+  const expired = await expirerAbonnementsEchus();
+
   let provider: ReturnType<typeof createSebPayProvider>;
 
   try {
     provider = createSebPayProvider();
   } catch {
-    // Configuration invalide : fail-closed, sans détail.
-    return NextResponse.json({ ok: false }, { status: 503 });
+    // Configuration invalide : fail-closed pour SebPay, sans détail. Le
+    // balayage des abonnements, lui, a déjà eu lieu.
+    return NextResponse.json({ ok: false, expired }, { status: 503 });
   }
 
   if (!(provider instanceof VerifiedSebPayProvider)) {
-    return NextResponse.json({ ok: true, skipped: true });
+    return NextResponse.json({ ok: true, skipped: true, expired });
   }
 
   try {
@@ -107,8 +150,9 @@ export async function GET(request: NextRequest) {
       checked: data?.length ?? 0,
       applied,
       failures,
+      expired,
     });
   } catch {
-    return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: false, expired }, { status: 500 });
   }
 }
