@@ -4,6 +4,13 @@
 > et la documentation officielle complète, pas la mémoire. En cas de
 > contradiction, cette fiche fait foi.
 >
+> **Rév. 9 — 14/08/2026. LE DOSSIER S'ÉLARGIT À UN SECOND COMPTE.** Relevé du
+> back-office **Cercle des Titans** : **deux encaissements bloqués « En attente »
+> depuis le 06/08, soit 100 000 XAF immobilisés**. Sans rapport avec le 403 de
+> KASSALAFAM, mais même fournisseur et même titulaire. Courriel unique envoyé le
+> 14/08 portant sur les DEUX comptes, quatre demandes. Voir §8. **Deux anomalies
+> relevées au passage, dont une qui touche le modèle économique** (§9).
+>
 > **Rév. 8 — 13/08/2026, 21 h 54 UTC. LA TRANSACTION FANTÔME EST SOLDÉE.**
 > `kslf_b38d981…` passée en `cancelled`. **Le registre `payment_transactions`
 > est propre : 4 lignes SebPay, toutes `cancelled`, aucune `initiated`.**
@@ -362,6 +369,52 @@ place depuis le 12/08 à 12 h 50 UTC.**
 | **~21 h 30 (local)** | **`ipify` → `129.0.60.180`. L'IP approuvée n'existe déjà plus : l'approbation a tenu moins de 4 h.** Piste « IP de poste » abandonnée. |
 | soir | Relance du support : approbation de `148.230.114.82` + option A par écrit. |
 | **21 h 54 UTC** | **Transaction fantôme `kslf_b38d981…` soldée en `cancelled`** depuis le SQL Editor. Registre vérifié : 4 lignes, toutes `cancelled`. |
+| **14/08** | |
+| — | Relevé du back-office **Cercle des Titans** (`acc_20260723065904714537`) : **deux encaissements par lien de paiement bloqués « En attente » depuis le 06/08**, soit **100 000 XAF immobilisés**. Sans rapport avec le 403 de KASSALAFAM, mais même fournisseur et même titulaire. |
+| 08 h 30 (local) | **Courriel envoyé à `contact@sebpay.africa`**, portant sur les DEUX comptes (détail ci-dessous). |
+
+### Courriel du 14/08 — quatre demandes, deux comptes
+
+Envoyé à `contact@sebpay.africa`. Troisième démarche sur le blocage API, la
+première à joindre les deux comptes dans un seul message — le support ayant
+déjà répondu « aucune soumission sur ce compte » là où le geste était parti sur
+l'autre (§2), toute demande doit désormais nommer son compte.
+
+**KASSALAFAM `acc_20260723204641846136`**
+
+1. Approuver `148.230.114.82` (VPS, fixe), associée à `https://kassalafam.com`.
+2. **Confirmer par écrit l'exemption d'allowlist du 11/08** (option A du §2 bis).
+   Argument central : l'approbation du 13/08 d'une IP dynamique, périmée en
+   moins de 4 h, démontre par les faits qu'une adresse de poste ne peut pas
+   fonctionner chez eux.
+3. Le **numéro WhatsApp d'assistance permanente promis au titre du Pack Or**,
+   jamais communiqué — ou une position écrite sur ce que couvre ce pack.
+
+**CERCLE DES TITANS `acc_20260723065904714537`**
+
+4. Traitement des deux encaissements bloqués depuis le 06/08 :
+
+| Référence | Réf. PIM | Montant | Frais affichés | Date |
+|---|---|---|---|---|
+| `20260806210026447715` | `tx_6-MZebUxTnkcJ4WTps` | 95 000 XAF | 10 925 XAF | 06/08 22 h 00 |
+| `20260806204322647132` | `tx_rodmVn0GNvxbSvVoUc` | 5 000 XAF | 575 XAF | 06/08 21 h 43 |
+
+Opérateur ORANGE MONEY, devise XAF, statut « En attente », réf. SPY `N/A` sur
+les deux. Le bouton « Vérifier le statut » ne produit aucun changement.
+
+**Deux anomalies relevées au passage, posées en question dans le courriel :**
+
+- l'écran de détail affiche « brut 95 000 · frais −10 925 · **net 95 000** » :
+  **le net ne déduit pas les frais**, sur les deux transactions. Quel montant
+  sera réellement crédité ?
+- ces frais représentent **11,5 %** du montant encaissé — le double du barème de
+  collecte relevé au §4 (≈ 5,5 %). Barème différent pour les liens de paiement,
+  ou erreur ?
+
+**Et le fait qui contredit tout le reste** : le tableau de bord affiche
+« REPRISE TOTALE DES SERVICES SEBPAY — l'ensemble des services est désormais
+entièrement rétabli et opérationnel », pendant que l'API répond 403 et que
+100 000 XAF sont immobilisés depuis huit jours.
 
 ### Ce qui avait été éliminé, et le reste
 
@@ -387,6 +440,14 @@ soit d'un 403.**
 
 ## 9. Dettes ouvertes
 
+- 🔴 **100 000 XAF immobilisés sur Cercle des Titans** depuis le 06/08 : deux
+  encaissements « En attente », justificatifs déjà fournis, aucune évolution.
+  **C'est le montant le plus élevé en jeu de tout le dossier SebPay.**
+- 🟠 **Barème de collecte à faire confirmer** : 11,5 % constatés sur les liens de
+  paiement contre ≈ 5,5 % documentés au §4. Si le taux réel est 11,5 %, la
+  grille premium de KASSALAFAM (2 500 / 6 000 / 10 000 XAF) est à revoir
+  **avant** ouverture — 2 500 XAF encaissés n'en laisseraient que 2 212. Ce
+  point touche le modèle économique, pas seulement le support.
 - 🔴 **`148.230.114.82` en attente d'approbation** — la seule IP fixe, donc le
   seul chemin possible avec l'option B. Relance envoyée le 13/08.
 - 🔴 **Option A jamais tranchée par écrit** — l'exemption d'allowlist du 11/08
