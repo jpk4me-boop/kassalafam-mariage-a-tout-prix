@@ -111,15 +111,19 @@ $$;
 create function public._oc_seed_complete(p_id uuid)
 returns void language plpgsql as $$
 begin
+  -- Le numéro WhatsApp est EXIGÉ par `complete_member_onboarding_v2` depuis la
+  -- migration 20260803230000, et contrôlé AVANT la date de naissance : sans lui,
+  -- toute assertion postérieure de cette suite reçoit
+  -- ONBOARDING_INCOMPLETE_WHATSAPP au lieu du refus qu'elle vise.
   insert into public.profiles (
-    id, first_name, gender, birth_date, marital_status, religion,
+    id, first_name, gender, whatsapp_phone, birth_date, marital_status, religion,
     profession, education_level, height_cm,
     origin_country, origin_city, country, city, region,
     marriage_goals, desired_partner_traits, polygamy_preference, children_intent,
     bio, partner_expectations,
     acquisition_source, acquisition_source_recorded_at
   ) values (
-    p_id, 'Testeur', 'homme', date '1990-01-01', 'celibataire', 'christianisme',
+    p_id, 'Testeur', 'homme', '237699000001', date '1990-01-01', 'celibataire', 'christianisme',
     'Ingénieur', 'master', 180,
     'Sénégal', 'Dakar', 'Cameroun', 'Douala', 'Littoral',
     array['build_family','stable_home'], array['kindness','sincerity'], 'no', 'wants_children',

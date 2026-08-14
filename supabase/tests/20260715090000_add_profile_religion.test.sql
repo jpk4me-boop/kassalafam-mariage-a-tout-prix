@@ -88,15 +88,19 @@ insert into auth.users (id, email) values
 create function public._rel_seed_complete_sans_religion(p_id uuid)
 returns void language plpgsql as $$
 begin
+  -- Le numéro WhatsApp est EXIGÉ par `complete_member_onboarding_v2` depuis la
+  -- migration 20260803230000, et contrôlé AVANT la date de naissance : sans lui,
+  -- toute assertion postérieure de cette suite reçoit
+  -- ONBOARDING_INCOMPLETE_WHATSAPP au lieu du refus qu'elle vise.
   insert into public.profiles (
-    id, first_name, gender, birth_date, marital_status,
+    id, first_name, gender, whatsapp_phone, birth_date, marital_status,
     profession, education_level, height_cm,
     country, city, origin_country, origin_city, region,
     marriage_goals, desired_partner_traits, polygamy_preference, children_intent,
     bio, partner_expectations,
     acquisition_source, acquisition_source_recorded_at
   ) values (
-    p_id, 'Testeur', 'homme', date '1990-01-01', 'celibataire',
+    p_id, 'Testeur', 'homme', '237699000001', date '1990-01-01', 'celibataire',
     'Ingénieur', 'master', 180,
     'Cameroun', 'Douala', 'Cameroun', 'Yaoundé', 'Littoral',
     array['build_family','stable_home'], array['kindness','sincerity'], 'no', 'wants_children',
