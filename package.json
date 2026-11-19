@@ -50,7 +50,8 @@
     "test:dashboard-landing": "node --test scripts/dashboard-landing.test.mjs",
     "test:member-profile-menu": "node --test scripts/member-profile-menu.test.mjs",
     "test:premium-expiry-sweep": "node --test scripts/premium-expiry-sweep.test.mjs",
-    "test:sebpay-observability": "node --test scripts/sebpay-observability.test.mjs"
+    "test:sebpay-observability": "node --test scripts/sebpay-observability.test.mjs",
+    "test:saaspay": "node --conditions=react-server --test scripts/saaspay.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

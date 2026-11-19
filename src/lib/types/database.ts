@@ -1557,6 +1557,18 @@ export interface Database {
         };
         Returns: ApplySebPayPaymentUpdateResult[];
       };
+      // Saaspay — transition autoritative depuis le webhook signé (même
+      // contrat de retour que la RPC SebPay). service_role uniquement.
+      apply_saaspay_payment_update: {
+        Args: {
+          p_provider_reference: string;
+          p_raw_status: string;
+          p_mapped_status: string;
+          p_amount_xaf: number | null;
+          p_currency: string | null;
+        };
+        Returns: ApplySebPayPaymentUpdateResult[];
+      };
       // SebPay Phase 4 — création autoritative d'une transaction `initiated`
       // AVANT l'appel SebPay (compte actif, plan disponible, pas de premium
       // actif, une seule collecte en vol). service_role uniquement, appelée
