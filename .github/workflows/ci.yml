@@ -1,0 +1,49 @@
+# Contrôles des PR (remplace le check de build qu'assurait Vercel).
+# Aucun secret : les variables NEXT_PUBLIC_* sont factices, le build
+# n'appelle pas Supabase.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://exemple.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: cle-factice-ci
+      NEXT_PUBLIC_SITE_URL: https://kassalafam.com
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Tests (scripts test:*)
+        run: |
+          for t in $(node -e 'console.log(Object.keys(require("./package.json").scripts).filter(k=>k.startsWith("test:")).join(" "))'); do
+            echo "::group::$t"
+            npm run -s "$t"
+            echo "::endgroup::"
+          done
+      - run: npm run build
+
+  image-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build de l'image Coolify
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=https://exemple.supabase.co \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=cle-factice-ci \
+            --build-arg NEXT_PUBLIC_SITE_URL=https://kassalafam.com \
+            -t kassalafam:ci .
