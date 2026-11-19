@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /* Serveur Node autonome (.next/standalone) pour l'image Docker Coolify. */
+  output: "standalone",
   async headers() {
     return [
       {

@@ -1,0 +1,15 @@
+.git
+.next
+node_modules
+.env*
+!.env.example
+.vercel
+.claude
+scratchpad
+graphify-out
+coverage
+docs
+supabase
+*.md
+Dockerfile
+.dockerignore
